@@ -1,6 +1,6 @@
 ![logo light](assets/logo-light.svg#gh-light-mode-only)
 ![logo dark](assets/logo-dark.svg#gh-dark-mode-only)
 
-We should just focus on building great products and services, and not worry about the infrastructure that powers them. We also believe that future is of our systems working in the background for us and solving critical problems requiring huge computational power and infrastructure requirements.
+> Our vision is a world where creators and innovators can fully dedicate themselves to crafting extraordinary products and services, unburdened by the complexities of the underlying infrastructure. We foresee a future where intelligent systems seamlessly operate behind the scenes, tackling intricate, high-scale challenges with immense computational demands and vast data movements.
 
-Hence we are building an open-source infrastructure layer for background AI workflows/agents that is reliable, affordable, and effortless.
+To realize this, we are pioneering an open-source infrastructure layer for background AI workflows and agents that is robust, affordable, and effortless to use, empowering the scalable solutions and transformative tasks of today, tomorrow, and beyond.
