@@ -1,0 +1,11 @@
+[project]
+name = "docs"
+version = "0.1.0"
+description = "This project holds all the documentation for exosphere.host"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "mkdocs-git-authors-plugin>=0.10.0",
+    "mkdocs-git-revision-date-localized-plugin>=1.4.7",
+    "mkdocs-material>=9.6.14",
+]

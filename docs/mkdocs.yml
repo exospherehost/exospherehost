@@ -1,0 +1,54 @@
+site_name: exosphere.host docs
+site_description: Docs exosphere.host (An open-source infrastructure layer for background AI workflows/agents that is reliable, affordable, and effortless)
+site_url: https://docs.exosphere.host
+site_author: exosphere.host
+
+repo_name: exospherehost/exospherehost
+repo_url: https://github.com/exospherehost/exospherehost
+edit_uri: edit/main/docs/docs
+
+copyright: Copyright &copy; 2025 exosphere.host
+
+
+theme: 
+  name: material
+  features:
+    - annouce.dismiss
+    - content.action.edit
+    - content.action.view
+    - announce.dismiss
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+    - content.footnote.tooltips
+    - content.tabs.link
+    - content.tooltips
+    - header.autohide
+    - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.prune
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
+
+plugins:
+  - search
+  - git-authors
+  - git-revision-date-localized:
+      type: date
