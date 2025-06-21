@@ -1,7 +1,8 @@
-site_name: Documentation exosphere.host
+site_name: Docs Exosphere
 site_description: Docs exosphere.host (An open-source infrastructure layer for background AI workflows/agents that is reliable, affordable, and effortless)
 site_url: https://docs.exosphere.host
 site_author: exosphere.host
+
 
 repo_name: exospherehost/exospherehost
 repo_url: https://github.com/exospherehost/exospherehost
@@ -52,18 +53,21 @@ theme:
         icon: material/brightness-auto
         name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
-      scheme: default 
+      scheme: exosphere-light 
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
-      scheme: slate
+      scheme: exosphere-dark
       toggle:
         icon: material/brightness-4
         name: Switch to system preference
 
 extra:
   homepage: https://exosphere.host
+  analytics:
+    provider: google
+    property: G-SZLXWPZSE5
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/exospherehost/
@@ -75,9 +79,14 @@ extra:
       link: https://www.instagram.com/exospherehost/
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/company/exospherehost/
+    - icon: fontawesome/brands/youtube
+      link: https://www.youtube.com/@exospherehost
 
 plugins:
   - search
   - git-authors
   - git-revision-date-localized:
       type: date
+
+extra_css:
+  - stylesheets/extra.css
