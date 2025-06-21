@@ -1,4 +1,4 @@
-site_name: exosphere.host docs
+site_name: Documentation exosphere.host
 site_description: Docs exosphere.host (An open-source infrastructure layer for background AI workflows/agents that is reliable, affordable, and effortless)
 site_url: https://docs.exosphere.host
 site_author: exosphere.host
@@ -12,11 +12,12 @@ copyright: Copyright &copy; 2025 exosphere.host
 
 theme: 
   name: material
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
   features:
-    - annouce.dismiss
+    - announce.dismiss
     - content.action.edit
     - content.action.view
-    - announce.dismiss
     - content.code.annotate
     - content.code.copy
     - content.code.select
@@ -41,11 +42,39 @@ theme:
     - search.suggest
     - toc.follow
     - toc.integrate
-
   icon:
     repo: fontawesome/brands/github
     edit: material/pencil
     view: material/eye
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default 
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+
+extra:
+  homepage: https://exosphere.host
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/exospherehost/
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/exospherehost
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/JzCT6HRN
+    - icon: fontawesome/brands/instagram
+      link: https://www.instagram.com/exospherehost/
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/company/exospherehost/
 
 plugins:
   - search
