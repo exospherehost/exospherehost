@@ -37,6 +37,7 @@ jobs:
     deploy:
         runs-on: ubuntu-latest
         needs: build
+        if: github.repository == 'exospherehost/exospherehost'
         environment:
             name: github-pages
             url: ${{ steps.deploy.outputs.page_url }}
