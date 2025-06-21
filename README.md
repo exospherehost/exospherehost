@@ -5,6 +5,21 @@
 
 To realize this, we are pioneering an open-source infrastructure layer for background AI workflows and agents that is robust, affordable, and effortless to use, empowering the scalable solutions and transformative tasks of today, tomorrow, and beyond.
 
+## Documentation
+
+For more information, please refer to our [documentation](https://docs.exosphere.host).
+
+### Steps to build the Documentation locally
+
+1. Install UV: Follow the offical instructions [here](https://https://docs.astral.sh/uv/#installation).
+2. Clone this repository, use command `git clone https://github.com/exospherehost/exospherehost.git`
+3. Install dependencies by navigating to `docs` folder and executing `uv sync`
+4. Use the command `uv run mkdocs serve` while `docs` folder being your working path.
+
+### Contrinution to Documentation
+
+We encourage contributions to the documentation page, you can simply add a new PR with the `documentation` label.
+
 ## Contributing
 
 We welcome community contributions. For guidelines, refer to our [CONTRIBUTING.md](/CONTRIBUTING.md).
