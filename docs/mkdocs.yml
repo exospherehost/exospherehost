@@ -64,14 +64,20 @@ theme:
 
 extra:
   homepage: https://exosphere.host
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/exospherehost/
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/exospherehost
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/JzCT6HRN
+    - icon: fontawesome/brands/instagram
+      link: https://www.instagram.com/exospherehost/
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/company/exospherehost/
 
 plugins:
   - search
   - git-authors
   - git-revision-date-localized:
       type: date
-  - social:
-      github: exospherehost/exospherehost
-      twitter: exospherehost
-      linkedin: exospherehost
-      instagram: exospherehost

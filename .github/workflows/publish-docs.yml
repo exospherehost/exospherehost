@@ -1,0 +1,46 @@
+name: Publish Docs to GitHub Pages (docs.exosphere.host)
+
+on:
+    push: 
+        branches: 
+            - main
+        paths: 
+            - 'docs/**'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    id-token: write
+    pages: write
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v5
+              with:
+                python-version: '3.12'
+            - name: Setup UV
+              uses: astral-sh/setup-uv@v6 
+            - name: Install dependencies
+              working-directory: ./docs
+              run: uv sync
+            - name: Build documentation
+              working-directory: ./docs
+              run: uv run mkdocs build --strict
+            - name: Package Documentation Artifact
+              uses: actions/upload-artifact@v3
+              with:
+                path: ./docs/site
+
+    deploy:
+        runs-on: ubuntu-latest
+        needs: build
+        environment:
+            name: github-pages
+            url: ${{ steps.deploy.outputs.page_url }}
+        steps:
+            - name: Deploy to GitHub Pages
+              id: deploy
+              uses: actions/deploy-pages@v4
