@@ -1,13 +1,13 @@
 ![logo light](assets/logo-light.svg#gh-light-mode-only)
 ![logo dark](assets/logo-dark.svg#gh-dark-mode-only)
 
-> Our vision is a world where creators and innovators can fully dedicate themselves to crafting extraordinary products and services, unburdened by the complexities of the underlying infrastructure. We foresee a future where intelligent systems seamlessly operate behind the scenes, tackling intricate, high-scale challenges with immense computational demands and vast data movements.
+> We are building a world where creators and innovators can fully dedicate themselves to crafting extraordinary products and services, unburdened by the complexities of the underlying infrastructure. We foresee a future where intelligent systems seamlessly operate behind the scenes, tackling intricate, high-scale challenges with immense computational demands and vast data movements.
 
 To realize this, we are pioneering an open-source infrastructure layer for background AI workflows and agents that is robust, affordable, and effortless to use, empowering the scalable solutions and transformative tasks of today, tomorrow, and beyond.
 
 ## Core Concepts
 
-To have an intution of the first version of the platform, we would highly recommend watching the video below, this explains using our cluster apis with YML input, however we are working on more modalities like pythonic control systems.
+To have an intution of the first version of the platform, we would highly recommend watching the video below, this explains using our cluster apis with YML input, we are working on more modalities like pythonic control systems.
 
 <a href="https://www.youtube.com/watch?v=tfVYXpjyGqQ" target="_blank">
   <img src="assets/cluster-api-yt.png" alt="Cluster API YT">
@@ -15,30 +15,31 @@ To have an intution of the first version of the platform, we would highly recomm
 
 ### Satellite
 
-Satellites are core for exosphere, think of a satellite like lego blocks designed for a specific purpose, you can connect them together to create a much complex systems in matter of minutes without worrying about the underlying infrastructure.
+Satellites are the core building blocks for exosphere.They are lego blocks designed for a specific purpose: you can connect them together to create complex systems in a matter of minutes without worrying about the underlying infrastructure.
 
-Esentially they are a kind of pre-implemented serverless functions highly optimized for workflows and high volume batch processing, optimized for cost, reliability, developer velocity and ease of use.
+They are pre-implemented serverless functions highly optimized for workflows and high volume batch processing, optimized for cost, reliability, developer velocity and ease of use.
 
 Each of these satellites must satisfy the following properties:
 
 1. Should be idempotent and stateless.
 2. Should have a unique identifier of the format `satellite/unique-project-name/satellite-name`, example: `satellite/exospherehost/deepseek-r1-distrill-llama-70b`
-3. Should be take a `config` parameter as an `object` to control or modify the behaviour.
+3. Should take a `config` parameter as an `object` to control or modify the behaviour.
 4. Should be totally independent of any other satellite.
 5. Should return a `list` of `objects`.
-6. Should have following necessary fields: `parents`, `children`, `identifier`, `status`, `retries`, `delay`. Most of these fields are optional are set by the platform itself. 
+6. Should have following necessary fields: `parents`, `children`, `identifier`, `status`, `retries`, `delay`. Most of these fields are optional are set by the platform itself.
 7. Should provide a clean interface for the user to check the status of the satellite and get output data.
 
 Further work is being done to allow users to bring their own satellites and use our core infrastructure to manage their lifecycle.
 
 ### Cluster
-Clusters are a collection of satellites that are connected together to form a complex system, think of this as a series of satellities working togehter to achieve a common goal.
+
+A Cluster is a collection of satellites connected together to form a complete workflow: a series of satellities working togehter to achieve a common goal.
 
 Each of these clusters must satisfy the following properties:
 
-1. Should be a collection of satellites that are connected together to form a complex system.
+1. Should be a collection of satellites that are connected together to form a system.
 2. Should have a unique identifier of the format `cluster/unique-project-name/cluster-name`, example: `cluster/aikin/structured-json`
-3. Should define a necessary parameter of `SLA` denoating the maximum time to complete the cluster, higher the SLA, lower the cost as systems have more time to optimize for the task (currently supported: `6h`, `12h`, `24h`)
+3. Should define a necessary parameter of `SLA` denoating the maximum time to complete the cluster, **higher the SLA, lower the cost** as systems have more time to optimize for the task (currently supported: `6h`, `12h`, `24h`)
 4. Should have a necessary `trigger` parameter to start the cluster, this can be a `cron` expression, or an `api-call` or other possible events.
 5. Each cluster can also define `logs` parameter to configure log forwarding to a specific destination like `NewRelic`, `Kusto`, `CloudWatch` or any other logging service.
 6. Each cluster can also define `failure` steps to handle the cluster in case of failure, this could again be a set of satellites to run in case of failure.
@@ -46,9 +47,11 @@ Each of these clusters must satisfy the following properties:
 Developers can define their own clusters using our cluster api, which supports cluster creation, deletion, status, logs and other operations. Currently we are supporting cluster creation through `YML` files or our APIs and SDKs.
 
 ### Orbit
-Orbit an open source core compute platfrom capable of managing the lifecycle of satellites and clusters optimally across multiple compute platforms including GPUs, CPUs, and other hardware. Further allowing developers to write their own satellites and plug-in with our core exosphere platform. 
+
+Orbit is the core compute platfrom capable of managing the lifecycle of satellites and clusters optimally across multiple computes including GPUs, CPUs, and other hardware. Further allowing developers to write their own satellites and plug-in with our core exosphere platform.
 
 ## Example
+
 Here is an example of using our cluster api to create a satellite cluster to get structured json from PDF files of quaterly financial reports. The workflow in the image could be represented as the `YML` file below.
 
 ![Example Workflow](assets/example-workflow.png)
@@ -88,7 +91,7 @@ cluster:
         - NEW_RELIC_APPLICATION_ID: "your-new-relic-application-id"
         - FAILURE_S3_AWS_ACCESS_KEY: "your-failure-s3-aws-access-key"
         - FAILURE_S3_AWS_SECRET_KEY: "your-failure-s3-aws-secret-key"
-    
+  
     # satellites in order to execute, each satellite returns a list of objects hence computational graph is formed and is executed in parallel.
     satellites:
         - name: Get files from S3
@@ -196,7 +199,8 @@ cluster:
                 details:
                     message: Cluster ${{cluster.identifier}} failed at ${{cluster.trigger}} for file $${{satellites.get-files-from-s3.output.file-path}}  with error ${{satellites.get-files-from-s3.output.error}}, file has been moved to failure bucket with path $${{satellites.move-to-failure-bucket.output.file-uri}}
 ```
-Similarly this could be represented as a pythonic control using our SDK/APIs, checkout [documentation](https://docs.exosphere.host) for more details.
+
+This could also be represented as a pythonic control using our SDK/APIs, checkout [documentation](https://docs.exosphere.host) for more details.
 
 ## Documentation
 
