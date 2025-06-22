@@ -49,7 +49,9 @@ Developers can define their own clusters using our cluster api, which supports c
 Orbit an open source core compute platfrom capable of managing the lifecycle of satellites and clusters optimally across multiple compute platforms including GPUs, CPUs, and other hardware. Further allowing developers to write their own satellites and plug-in with our core exosphere platform. 
 
 ## Example
-Here is an example of using our cluster api to create a satellite cluster to get structured json from PDF files of quaterly financial reports.
+Here is an example of using our cluster api to create a satellite cluster to get structured json from PDF files of quaterly financial reports. The workflow in the image could be represented as the `YML` file below.
+
+![Example Workflow](assets/example-workflow.png)
 
 ```yml
 # define the version of the exosphere apis
@@ -194,7 +196,7 @@ cluster:
                 details:
                     message: Cluster ${{cluster.identifier}} failed at ${{cluster.trigger}} for file $${{satellites.get-files-from-s3.output.file-path}}  with error ${{satellites.get-files-from-s3.output.error}}, file has been moved to failure bucket with path $${{satellites.move-to-failure-bucket.output.file-uri}}
 ```
-
+Similarly this could be represented as a pythonic control using our SDK/APIs, checkout [documentation](https://docs.exosphere.host) for more details.
 
 ## Documentation
 
@@ -219,7 +221,7 @@ We welcome community contributions. For guidelines, refer to our [CONTRIBUTING.m
 
 ## Star History
 
-<a href="https://www.star-history.com/#exospherehost/exospherehost&Date">
+<a href="https://www.star-history.com/#exospherehost/exospherehost&Date" target="_blank">
  <picture>
    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=exospherehost/exospherehost&type=Date&theme=dark" />
    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=exospherehost/exospherehost&type=Date" />
