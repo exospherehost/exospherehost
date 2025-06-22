@@ -9,7 +9,7 @@ To realize this, we are pioneering an open-source infrastructure layer for backg
 
 To have an intution of the first version of the platform, we would highly recommend watching the video below, this explains using our cluster apis with YML input, however we are working on more modalities like pythonic control systems.
 
-[![Cluster API YT](assets\cluster-api-yt.png)](https://www.youtube.com/watch?v=tfVYXpjyGqQ)
+[![Cluster API YT](assets/cluster-api-yt.png)](https://www.youtube.com/watch?v=tfVYXpjyGqQ)
 
 ### Satellite
 
