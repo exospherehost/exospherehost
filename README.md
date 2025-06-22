@@ -56,7 +56,7 @@ Here is an example of using our cluster api to create a satellite cluster to get
 
 ![Example Workflow](assets/example-workflow.png)
 
-```yml
+```yaml
 # define the version of the exosphere apis
 version: 0.0.1b
 
@@ -190,14 +190,14 @@ cluster:
                     - DESTINATION_AWS_ACCESS_KEY: ${{ secrets.FAILURE_S3_AWS_ACCESS_KEY }}
                     - DESTINATION_AWS_SECRET_KEY: ${{ secrets.FAILURE_S3_AWS_SECRET_KEY }}
             - name: Send failure notification on PagerDuty
-              uses: satellite/exospherehost/send-failure-notification-on-pagerduty
-              identifier: send-failure-notification-on-pagerduty
+              uses: satellite/exospherehost/send-pagerduty-alert
+              identifier: send-pagerduty-alert
               config:
                 pagerduty-api-key: ${{ secrets.PAGERDUTY_API_KEY }}
                 pagerduty-service-id: ${{ secrets.PAGERDUTY_SERVICE_ID }}
               input:
-                details:
-                    message: Cluster ${{cluster.identifier}} failed at ${{cluster.trigger}} for file $${{satellites.get-files-from-s3.output.file-path}}  with error ${{satellites.get-files-from-s3.output.error}}, file has been moved to failure bucket with path $${{satellites.move-to-failure-bucket.output.file-uri}}
+                  message: |
+                    Cluster ${{cluster.identifier}} failed at ${{cluster.trigger}} for file $${{satellites.get-files-from-s3.output.file-path}}  with error ${{satellites.get-files-from-s3.output.error}}, file has been moved to failure bucket with path $${{satellites.move-to-failure-bucket.output.file-uri}}
 ```
 
 This could also be represented as a pythonic control using our SDK/APIs, checkout [documentation](https://docs.exosphere.host) for more details.
