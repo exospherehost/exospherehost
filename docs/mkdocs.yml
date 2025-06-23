@@ -112,4 +112,3 @@ nav:
     - exospherehost/send-alert: satellites/exospherehost/send-alert.md
     - exospherehost/send-email: satellites/exospherehost/send-email.md
   - Cluster: cluster.md
-  - Examples: examples.md
