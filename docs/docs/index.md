@@ -19,6 +19,8 @@ Satellites are the core building blocks for exosphere.They are lego blocks desig
 
 They are pre-implemented serverless functions highly optimized for workflows and high volume batch processing, optimized for cost, reliability, developer velocity and ease of use.
 
+Our inhouse optimization for workflowss and batch processing can lead to significant cost savings, for example you can expect a cost per token saving of about 50-75% on LLMs like DeepSeek R1 70B, Gemma 3 27B, etc.
+
 Each of these satellites must satisfy the following properties:
 
 1. Should be idempotent and stateless.
