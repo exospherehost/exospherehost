@@ -174,11 +174,13 @@ cluster:
         from: parse-pdf-with-docling
         satellites:
             - name: Move to failure bucket
-              uses: satellite/exospherehost/move-to-failure-bucket
+              uses: satellite/exospherehost/move-to-s3
               identifier: move-to-failure-bucket
               config:
+                origin-source: s3
                 origin-bucket: aikin-financial-reports-failure
                 origin-file-path: $${{satellites.get-files-from-s3.output.file-path}}
+                destination-source: s3
                 destination-bucket: aikin-financial-reports-failure
                 destination-file-path: failed/quaterly-financial-reports/$${{satellites.get-files-from-s3.output.file-name}}
                 secrets:

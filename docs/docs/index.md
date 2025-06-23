@@ -180,20 +180,23 @@ cluster:
   failure:
     # run from failured steps from this satellite
     from: parse-pdf-with-docling
+    
     satellites:
-        - name: Move to failure bucket
-          uses: satellite/exospherehost/move-to-failure-bucket
-          identifier: move-to-failure-bucket
-          config:
-            origin-bucket: aikin-financial-reports-failure
-            origin-file-path: $${{satellites.get-files-from-s3.output.file-path}}
-            destination-bucket: aikin-financial-reports-failure
-            destination-file-path: failed/quaterly-financial-reports/$${{satellites.get-files-from-s3.output.file-name}}
-            secrets:
-                - ORIGIN_AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
-                - ORIGIN_AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
-                - DESTINATION_AWS_ACCESS_KEY: ${{ secrets.FAILURE_S3_AWS_ACCESS_KEY }}
-                - DESTINATION_AWS_SECRET_KEY: ${{ secrets.FAILURE_S3_AWS_SECRET_KEY }}
+         - name: Move to failure bucket
+            uses: satellite/exospherehost/move-file
+            identifier: move-to-failure-bucket
+            config:
+              origin-source: s3
+              origin-bucket: aikin-financial-reports-failure
+              origin-file-path: $${{satellites.get-files-from-s3.output.file-path}}
+              destination-source: s3
+              destination-bucket: aikin-financial-reports-failure
+              destination-file-path: failed/quaterly-financial-reports/$${{satellites.get-files-from-s3.output.file-name}}
+              secrets:
+                  - ORIGIN_AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+                  - ORIGIN_AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+                  - DESTINATION_AWS_ACCESS_KEY: ${{ secrets.FAILURE_S3_AWS_ACCESS_KEY }}
+                  - DESTINATION_AWS_SECRET_KEY: ${{ secrets.FAILURE_S3_AWS_SECRET_KEY }}
         - name: Send failure notification on PagerDuty
           uses: satellite/exospherehost/send-pagerduty-alert
           identifier: send-pagerduty-alert

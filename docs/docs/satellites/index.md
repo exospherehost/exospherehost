@@ -91,7 +91,14 @@ Following are the list of satellites which are currently avilable to `private-be
 
 | Satellite Name | Description | Documentation |
 |----------------|-------------|---------------|
-| `exospherehost/deepseek-r1-distrill-llama-70b` | Inference for DeepSeek R1 Distrill Llama 70B | [Read more](./exospherehost/deepseek-r1-distrill-llama-70b.md) |
+| `exospherehost/deepseek-r1-distrill-llama-70b` | Batch inference for DeepSeek R1 Distrill Llama 70B (upto 75% cost savings) | [Read more](./exospherehost/deepseek-r1-distrill-llama-70b.md) |
+| `exospherehost/get-files` | Get files from cloud storages | [Read more](./exospherehost/get-files.md) |
+| `exospherehost/parse-with-docling` | Parse documents with Docling (PDFs, Word, Images, etc) | [Read more](./exospherehost/parse-with-docling.md) |
+| `exospherehost/call-webhook` | Call Webhook (POST, PUT, PATCH, GET, DELETE, etc) | [Read more](./exospherehost/call-webhook.md) |
+| `exospherehost/forward-logs` | Forward logs to NewRelic, LogZ, Dynatrace etc. | [Read more](./exospherehost/forward-logs.md) |
+| `exospherehost/move-file` | Move files within cloud storages (S3, GCS, etc) | [Read more](./exospherehost/move-file.md) |
+| `exospherehost/send-alert ` | Send alert to Slack, PagerDuty, etc. | [Read more](./exospherehost/send-alert.md) |
+| `exospherehost/send-email` | Send email (SMTP, SendGrid, SES, SendInBlue, etc) | [Read more](./exospherehost/send-email.md) |
 
 ## Types of Satellites
 We are working on following broad types of satellites (Currently `exosphere-satellites` are only available to the `private-beta` users, we are working on making other categories of satellites available to the community):
