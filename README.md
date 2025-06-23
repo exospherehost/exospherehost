@@ -220,7 +220,8 @@ We believe that humanity would not have been able to achieve the level of innova
 Please feel free to reach out to us at [nivedit@exosphere.host](mailto:nivedit@exosphere.host). Lets push the boundaries of possibilities for humanity together!
 
 ## Contributing
-We welcome community contributions. For guidelines, refer to our [CONTRIBUTING.md](/CONTRIBUTING.md).
+We welcome community contributions. For guidelines, refer to our [CONTRIBUTING.md](/CONTRIBUTING.md). Further we are thankful to all the contributors helping us to simplify infrastructure starting with the process of building and deploying AI workflows and agents.
+
 ![exosphere.host Contributors](https://contrib.rocks/image?repo=exospherehost/exospherehost)
 
 ## Star History
