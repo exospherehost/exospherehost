@@ -205,6 +205,16 @@ cluster:
 
 This could also be represented as a pythonic control using our SDK/APIs, checkout [documentation](https://docs.exosphere.host) for more details.
 
+## Open Source Commitment
+
+We believe that humanity would not have been able to achieve the level of innovation and progress we have today without the support of open source and community, we want to be a part of this movement and support the open source community. In following ways: 
+
+1. We will be open sourcing majority of our codebase for exosphere.host and making it available to the community. We welcome all sort of contributions and feedback from the community and will be happy to collaborate with you.
+2. For whatever the profits which we generate from exosphere.host, we will be donating a portion of it to open source projects and communities. If you have any questions, suggestions or ideas.
+3. We would be further collaborating with various open source student programs to provide with the support and encourage and mentor the next generation of open source contributors.
+
+Please feel free to reach out to us at [nivedit@exosphere.host](mailto:nivedit@exosphere.host). Lets push the boundaries of possibilities for humanity together!
+
 ## Contributing
 
 We welcome community contributions. For guidelines, refer to our [CONTRIBUTING.md](https://github.com/exospherehost/exospherehost/blob/main/CONTRIBUTING.md).
