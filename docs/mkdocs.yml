@@ -97,3 +97,10 @@ markdown_extensions:
 
 extra_css:
   - stylesheets/extra.css
+
+nav:
+  - Introduction: index.md
+  - Getting Started: getting-started.md
+  - Satellites: satellites.md
+  - Cluster: cluster.md
+  - Examples: examples.md
