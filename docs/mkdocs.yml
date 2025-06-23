@@ -101,6 +101,8 @@ extra_css:
 nav:
   - Introduction: index.md
   - Getting Started: getting-started.md
-  - Satellites: satellites.md
+  - Satellites:
+    - Overview: satellites/index.md
+    - exospherehost/deepseek-r1-distrill-llama-70b: satellites/exospherehost/deepseek-r1-distrill-llama-70b.md
   - Cluster: cluster.md
   - Examples: examples.md
