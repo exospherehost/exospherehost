@@ -16,32 +16,31 @@ theme:
   logo: assets/logo.svg
   favicon: assets/logo.svg
   features:
-    - announce.dismiss
     - content.action.edit
     - content.code.annotate
     - content.code.copy
-    - content.code.select
-    - content.footnote.tooltips
-    - content.tabs.link
-    - content.tooltips
-    - header.autohide
-    - navigation.expand
+    # - content.code.select
+    # - content.footnote.tooltips
+    # - content.tabs.link
+    # - content.tooltips
+    # - header.autohide
+    # - navigation.expand
     - navigation.footer
     - navigation.indexes
     - navigation.instant
     - navigation.instant.prefetch
-    - navigation.instant.progress
+    # - navigation.instant.progress
     - navigation.prune
-    - navigation.sections
-    - navigation.tabs
-    - navigation.tabs.sticky
-    - navigation.top
-    - navigation.tracking
+    # - navigation.sections
+    # - navigation.tabs
+    # - navigation.tabs.sticky
+    # - navigation.top
+    # - navigation.tracking
     - search.highlight
-    - search.share
+    # - search.share
     - search.suggest
     - toc.follow
-    - toc.integrate
+    # - toc.integrate
   icon:
     repo: fontawesome/brands/github
     edit: material/pencil
