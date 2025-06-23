@@ -1,6 +1,6 @@
-# Satellites
+# Satellite
 
-Satellites are the core building blocks for exosphere.They are lego blocks designed for a specific purpose: you can connect them together to create complex systems in a matter of minutes without worrying about the underlying infrastructure.
+Satellite is the core building blocks for exosphere. They are lego blocks designed for a specific purpose: you can connect them together to create complex systems in a matter of minutes without worrying about the underlying infrastructure.
 
 They are pre-implemented serverless functions highly optimized for workflows and high volume batch processing, optimized for cost, reliability, developer velocity and ease of use. Our inhouse optimization for workflowss and batch processing can lead to significant cost savings, for example you can expect a cost per token saving of about 50-75% on LLMs like DeepSeek R1 70B, Gemma 3 27B, etc.
 
@@ -31,14 +31,14 @@ To use with cluster you need pass satellite parameter to cluster `YML` file, API
 sla: "6h"
 cluster:
     satellites:
-    - name: DeepSeek R1 Distrill Llama 70B
-      uses: satellite/exospherhost/deepseek-r1-distrill-llama-70b
-      identifier: deepseek-r1-distrill-llama-70b
-      config:
-        max_tokens: 1000
-        temperature: 0.5
-      input:
-        prompt: Hello, how are you?
+      - name: DeepSeek R1 Distrill Llama 70B
+        uses: satellite/exospherhost/deepseek-r1-distrill-llama-70b
+        identifier: deepseek-r1-distrill-llama-70b
+        config:
+          max_tokens: 1000
+          temperature: 0.5
+        input:
+          prompt: Hello, how are you?
 ```
 
 Check cluster documentation for more details on how to use satellites in a cluster, further APIs and SDKs would be available soon.
@@ -100,3 +100,6 @@ this should return a JSON response with status and result of the execution, simi
 
 ### SDK based execution
 We are working on SDKs for different programming languages to make it easier to use satellite like Python, JavaScript, Go, etc. These would be avilable soon on our [github](https://github.com/exospherehost) further on various package managers like `pip`, `npm`, `go get`, etc.
+
+### Exosphere Satellites 
+Following are the list of satellites which are currently avilable to `private-beta` developers.
