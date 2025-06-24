@@ -7,7 +7,7 @@ To realize this, we are pioneering an open-source infrastructure layer for backg
 
 ## Core Concepts
 
-To have an intution of the first version of the platform, we would highly recommend watching the video below, this explains using our cluster apis with YML input, we are working on more modalities like pythonic control systems.
+To have an intuition of the first version of the platform, we would highly recommend watching the video below. This explains using our cluster APIs with YML input. We are working on more modalities like Pythonic control systems.
 
 <a href="https://www.youtube.com/watch?v=tfVYXpjyGqQ" target="_blank">
   <img src="assets/cluster-api-yt.png" alt="Cluster API YT">
@@ -19,7 +19,7 @@ Satellites are the core building blocks for exosphere.They are lego blocks desig
 
 They are pre-implemented serverless functions highly optimized for workflows and high volume batch processing, optimized for cost, reliability, developer velocity and ease of use.
 
-Our inhouse optimization for workflowss and batch processing can lead to significant cost savings, for example you can expect a cost per token saving of about 50-75% on LLMs like DeepSeek R1 70B, Gemma 3 27B, etc.
+Our inhouse optimization for workflows and batch processing can lead to significant cost savings, for example you can expect a cost per token saving of about 50-75% on LLMs like DeepSeek R1 70B, Gemma 3 27B, etc.
 
 Each of these satellites must satisfy the following properties:
 
@@ -35,13 +35,13 @@ Further work is being done to allow users to bring their own satellites and use 
 
 ### Cluster
 
-A Cluster is a collection of satellites connected together to form a complete workflow: a series of satellities working togehter to achieve a common goal.
+A Cluster is a collection of satellites connected together to form a complete workflow: a series of satellites working together to achieve a common goal.
 
 Each of these clusters must satisfy the following properties:
 
 1. Should be a collection of satellites that are connected together to form a system.
 2. Should have a unique identifier of the format `cluster/unique-project-name/cluster-name`, example: `cluster/aikin/structured-json`
-3. Should define a necessary parameter of `SLA` denoating the maximum time to complete the cluster, **higher the SLA, lower the cost** as systems have more time to optimize for the task (currently supported: `6h`, `12h`, `24h`)
+3. Should define a necessary parameter of `SLA` denoting the maximum time to complete the cluster, **higher the SLA, lower the cost** as systems have more time to optimize for the task (currently supported: `6h`, `12h`, `24h`)
 4. Should have a necessary `trigger` parameter to start the cluster, this can be a `cron` expression, or an `api-call` or other possible events.
 5. Each cluster can also define `logs` parameter to configure log forwarding to a specific destination like `NewRelic`, `Kusto`, `CloudWatch` or any other logging service.
 6. Each cluster can also define `failure` steps to handle the cluster in case of failure, this could again be a set of satellites to run in case of failure.
@@ -50,11 +50,11 @@ Developers can define their own clusters using our cluster api, which supports c
 
 ### Orbit
 
-Orbit is the core compute platfrom capable of managing the lifecycle of satellites and clusters optimally across multiple computes including GPUs, CPUs, and other hardware. Further allowing developers to write their own satellites and plug-in with our core exosphere platform.
+Orbit is the core compute platform capable of managing the lifecycle of satellites and clusters optimally across multiple computes including GPUs, CPUs, and other hardware. Further allowing developers to write their own satellites and plug-in with our core exosphere platform.
 
 ## Example
 
-Here is an example of using our cluster api to create a satellite cluster to get structured json from PDF files of quaterly financial reports. The workflow in the image could be represented as the `YML` file below.
+Here is an example of using our cluster api to create a satellite cluster to get structured json from PDF files of quarterly financial reports. The workflow in the image could be represented as the `YML` file below.
 
 ![Example Workflow](assets/example-workflow.png)
 ```yaml title="structured-json-deepseek.yml"
@@ -72,7 +72,7 @@ cluster:
   description: This cluster will take a list of PDF files from S3 and return a structured JSON output.
 
   # define the identifier of the cluster (project-name/cluster-name)
-  identifier: aikin/strucutred-pdfs
+  identifier: aikin/structured-pdfs
 
   # trigger for the cluster
   trigger: 
@@ -138,7 +138,7 @@ cluster:
             }
       input:
         prompt: |
-            Parse the following quarterly financial report and returnt a structured json output as defined in the output-schema, report text is provided below:
+            Parse the following quarterly financial report and return a structured json output as defined in the output-schema, report text is provided below:
             ${{satellites.parse-pdf-with-docling.output}}
 
     - name: Call Webhook to send the structured json to aikin api
@@ -191,7 +191,7 @@ cluster:
               origin-file-path: $${{satellites.get-files-from-s3.output.file-path}}
               destination-source: s3
               destination-bucket: aikin-financial-reports-failure
-              destination-file-path: failed/quaterly-financial-reports/$${{satellites.get-files-from-s3.output.file-name}}
+              destination-file-path: failed/quarterly-financial-reports/$${{satellites.get-files-from-s3.output.file-name}}
               secrets:
                   - ORIGIN_AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
                   - ORIGIN_AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}

@@ -50,4 +50,4 @@ config:
     application-id: ${{ secrets.NEW_RELIC_APPLICATION_ID }}
 ```
 
-Secrets can varry depending on the provider of your choice.
+Secrets can vary depending on the provider of your choice.

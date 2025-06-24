@@ -1,11 +1,12 @@
 # `exospherehost/send-email`
 Send emails using SMTP or any of the supported email providers, including:
+
 - SMTP
 - SES
 - Mailgun
 
 ```yaml
-# avilable in namespace `exospherehost/send-email`
+# available in namespace `exospherehost/send-email`
 uses: exospherehost/send-email
 
 # define the sla of the satellite (6h, 12h, 24h)

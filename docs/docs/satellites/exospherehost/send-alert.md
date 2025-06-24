@@ -1,5 +1,6 @@
 # `exospherehost/send-alert`
 Sends alerts to your favorite alerting service, currently supported services are:
+
 - PagerDuty
 - Slack
 - Discord

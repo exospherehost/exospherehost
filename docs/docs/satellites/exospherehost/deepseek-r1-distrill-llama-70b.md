@@ -1,20 +1,20 @@
 # `exospherehost/deepseek-r1-distrill-llama-70b`
-This satellite is desinged for running DeepSeek R1 Distrill LLama 70B on ExosphereHost optimized for batch, high data throughput, and low cost (expect 50-75% cheaper inferencing as compared to platforms like Groq, TogetherAI).
+This satellite is designed for running DeepSeek R1 Distrill LLama 70B on ExosphereHost optimized for batch, high data throughput, and low cost (expect 50-75% cheaper inferencing as compared to platforms like Groq, TogetherAI).
 
-Here are possible configurations avilable to you for this satellite:
+Here are possible configurations available to you for this satellite:
 
 ```yaml
-# avilable in namespace `exospherehost/deepseek-r1-distrill-llama-70b`
+# available in namespace `exospherehost/deepseek-r1-distrill-llama-70b`
 uses: exospherehost/deepseek-r1-distrill-llama-70b
 
 # define the sla of the satellite (6h, 12h, 24h)
 # higher the sla, higher the discount on the cost
 sla: 6h
 
-# optional: name for human readable identifier
-identifier: Say Hello World
+# optional: human readable name for the satellite
+name: Say Hello World
 
-# optional: Identifier for the satellite
+# optional: unique identifier for the satellite
 # think of this like a variable name
 identifier: say-hello
 
