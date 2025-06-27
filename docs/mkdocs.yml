@@ -85,6 +85,29 @@ plugins:
   - git-authors
   - git-revision-date-localized:
       type: date
+  - llmstxt:
+      markdown_description: |
+        exosphere.host is building an open-source infrastructure layer for background AI workflows/agents that is reliable, affordable, and effortless.
+
+        You just describe your workflows once, then let Exosphere run them in the background with up to 75% lower cost—built for jobs that must run reliably at scale.
+
+        Your AI workflows: Run at massive scale, Significantly optimize costs, Are self-healing, Integrate seamlessly with your favorite tools, Deliver an exceptional developer experience, Are build on completely open-source technologies
+      sections: 
+        Introduction:
+          - index.md
+          - getting-started.md
+        Satellites:
+          - satellites/index.md
+          - satellites/exospherehost/call-webhook.md
+          - satellites/exospherehost/deepseek-r1-distrill-llama-70b.md
+          - satellites/exospherehost/forward-logs.md
+          - satellites/exospherehost/get-files.md
+          - satellites/exospherehost/move-file.md
+          - satellites/exospherehost/parse-with-docling.md
+          - satellites/exospherehost/send-alert.md
+          - satellites/exospherehost/send-email.md
+        Cluster:
+          - cluster.md
 
 markdown_extensions:
   - pymdownx.highlight:
