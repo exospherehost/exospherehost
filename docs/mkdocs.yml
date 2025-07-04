@@ -108,6 +108,8 @@ plugins:
           - satellites/exospherehost/send-email.md
         Cluster:
           - cluster.md
+        Architecture:
+          - architecture.md
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -135,3 +137,4 @@ nav:
     - exospherehost/send-alert: satellites/exospherehost/send-alert.md
     - exospherehost/send-email: satellites/exospherehost/send-email.md
   - Cluster: cluster.md
+  - Architecture: architecture.md
