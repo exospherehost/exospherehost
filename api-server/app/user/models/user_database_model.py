@@ -1,4 +1,4 @@
-import bcrypt, uuid
+import bcrypt, os
 from datetime import datetime
 from beanie import Document, before_event, Replace, Save
 from pydantic import Field
