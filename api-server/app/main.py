@@ -17,6 +17,13 @@ from .middlewares.unhandled_exceptions_middleware import (
 )
 from .middlewares.request_id_middleware import RequestIdMiddleware
 
+# injecting databases
+from .user.models.user_database_model import User
+from .project.models.project_database_model import Project
+
+# injecting routers
+from .user.routes import router as user_router
+
 load_dotenv()
 
 
@@ -29,7 +36,7 @@ async def lifespan(app: FastAPI):
     # initializing beanie
     client = AsyncIOMotorClient(os.getenv("MONGO_URI"))
     db = client[os.getenv("MONGO_DATABASE_NAME")]
-    await init_beanie(db, document_models=[])
+    await init_beanie(db, document_models=[User, Project])
     logger.info("beanie dbs initialized")
 
     # main logic of the server
@@ -51,3 +58,6 @@ app.add_middleware(UnhandledExceptionsMiddleware)
 @app.get("/health-check")
 def health() -> dict:
     return {"message": "OK"}
+
+
+app.include_router(user_router)
