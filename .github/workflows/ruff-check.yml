@@ -6,6 +6,11 @@ on:
             - main
         paths: 
             - 'api-server/**'
+    pull_request:
+        branches:
+            - main
+        paths:
+            - 'api-server/**'
     workflow_dispatch:
 
 permissions:
