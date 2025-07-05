@@ -138,3 +138,5 @@ nav:
     - exospherehost/send-email: satellites/exospherehost/send-email.md
   - Cluster: cluster.md
   - Architecture: architecture.md
+  - API Server:
+    - Overview: api-server/index.md
