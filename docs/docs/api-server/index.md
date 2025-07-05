@@ -125,6 +125,11 @@ Model representing exosphere user.
         "required": true,
         "description": "Credential of the user, password, key, etc. (string)"
     },
+    "status": {
+        "type": String,
+        "required": true,
+        "description": "Status of the user, active, inactive, deleted, blocked (enum)"
+    },
     "created_at":{
         "type": DateTime,
         "required": true,
