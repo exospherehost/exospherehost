@@ -1,6 +1,6 @@
-import bcrypt
+import bcrypt, os
 from datetime import datetime
-from beanie import Document
+from beanie import Document, before_event, Replace, Save
 from pydantic import Field
 from .user_type_enum import UserTypeEnum
 from .verification_status_enum import VerificationStatusEnum
@@ -39,3 +39,7 @@ class User(Document):
     
     def verify_credential(self, credential: str) -> bool:
         return bcrypt.checkpw(credential.encode('utf-8'), self.credential.encode('utf-8'))
+
+    @before_event([Save, Replace])
+    def update_updated_at(self):
+        self.updated_at = datetime.now()

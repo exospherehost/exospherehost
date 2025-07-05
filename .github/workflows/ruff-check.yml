@@ -1,0 +1,27 @@
+name: Ruff check for python code
+
+on:
+    push: 
+        branches: 
+            - main
+        paths: 
+            - 'api-server/**'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    id-token: write
+    pages: write
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v5
+              with:
+                python-version: '3.12'
+            - name: Ruff Check
+              uses: astral-sh/setup-uv@v3
+              with:
+                src: './api-server'

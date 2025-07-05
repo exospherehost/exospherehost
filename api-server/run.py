@@ -1,4 +1,5 @@
-import uvicorn, multiprocessing
+import uvicorn
+import multiprocessing
 from dotenv import load_dotenv
 import argparse
 
