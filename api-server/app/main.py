@@ -25,8 +25,9 @@ from .project.models.project_database_model import Project
 
 # injecting routers
 from .user.routes import router as user_router
-from .auth.router import router as auth_router
-
+from .auth.routes import router as auth_router
+from .project.routes import router as project_router
+ 
 load_dotenv()
 
 
@@ -69,3 +70,4 @@ def health() -> dict:
 # injecting routers
 app.include_router(user_router)
 app.include_router(auth_router)
+app.include_router(project_router)

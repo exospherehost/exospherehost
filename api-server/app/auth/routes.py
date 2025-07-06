@@ -4,7 +4,7 @@ from .controllers.create_token import create_token
 from .models.token_request import TokenRequest
 from .models.token_response import TokenResponse
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/v0/auth", tags=["auth"])
 
 @router.post(
     "/token",
