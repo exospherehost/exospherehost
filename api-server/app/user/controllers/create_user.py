@@ -1,4 +1,3 @@
-from fastapi import HTTPException
 from pymongo.errors import DuplicateKeyError
 from starlette.responses import JSONResponse
 
