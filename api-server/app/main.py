@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
+from fastapi.security import OAuth2PasswordBearer
 
 # injecting singletons
 from .singletons.logs_manager import LogsManager
@@ -16,6 +17,7 @@ from .middlewares.unhandled_exceptions_middleware import (
     UnhandledExceptionsMiddleware,
 )
 from .middlewares.request_id_middleware import RequestIdMiddleware
+from .auth.middlewares.get_token_claims import GetTokenClaimsMiddleware
 
 # injecting databases
 from .user.models.user_database_model import User
@@ -23,6 +25,7 @@ from .project.models.project_database_model import Project
 
 # injecting routers
 from .user.routes import router as user_router
+from .auth.router import router as auth_router
 
 load_dotenv()
 
@@ -48,16 +51,21 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+
 # this middleware should be the first one
+app.add_middleware(GetTokenClaimsMiddleware)
+
 app.add_middleware(RequestIdMiddleware)
 
-# this middleware should be the last one
 app.add_middleware(UnhandledExceptionsMiddleware)
+
 
 
 @app.get("/health-check")
 def health() -> dict:
     return {"message": "OK"}
 
-
+# injecting routers
 app.include_router(user_router)
+app.include_router(auth_router)

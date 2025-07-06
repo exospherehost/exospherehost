@@ -25,6 +25,6 @@ class UnhandledExceptionsMiddleware(BaseHTTPMiddleware):
                 status_code=500,
                 content={
                     "success": False,
-                    "detail": "internal server error, please reach out to support team at support@exosphere.com",
+                    "detail": "internal server error, please reach out to support team at nivedit@exosphere.host",
                 },
             )

@@ -1,4 +1,5 @@
-from fastapi import HTTPException
+from pymongo.errors import DuplicateKeyError
+from starlette.responses import JSONResponse
 
 from ..models.create_user_request import CreateUserRequest
 from ..models.create_user_response import CreateUserResponse
@@ -19,9 +20,8 @@ async def create_user(request: CreateUserRequest, x_exosphere_request_id: str) -
             identifier=request.identifier,
             credential=request.credential
         )
-        await new_user.save()
+        await new_user.insert()
         logger.info("User created", x_exosphere_request_id=x_exosphere_request_id)
-
 
         return CreateUserResponse(
             id=str(new_user.id),
@@ -33,8 +33,11 @@ async def create_user(request: CreateUserRequest, x_exosphere_request_id: str) -
             created_at=new_user.created_at,
             updated_at=new_user.updated_at
         )
-
+    
+    except DuplicateKeyError as e:
+        logger.error("Error creating user", error=e, x_exosphere_request_id=x_exosphere_request_id)
+        return JSONResponse(status_code=400, content={"success": False, "detail": "User already exists"})
+    
     except Exception as e:
-        logger.error("Error creating user error", error=e, x_exosphere_request_id=x_exosphere_request_id)
-        
-        raise HTTPException(status_code=500, detail="Error creating user")
+        logger.error("Error creating user", error=e, x_exosphere_request_id=x_exosphere_request_id)
+        raise e
