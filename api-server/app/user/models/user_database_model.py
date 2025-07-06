@@ -1,6 +1,6 @@
 import bcrypt
 from datetime import datetime
-from beanie import Document, before_event, Replace, Save
+from beanie import Document, before_event, Replace, Save, Indexed
 from pydantic import Field
 from .user_type_enum import UserTypeEnum
 from .verification_status_enum import VerificationStatusEnum
@@ -13,7 +13,7 @@ class User(Document):
 
     type: UserTypeEnum = Field(..., description="Type of the user, human, api, etc. (enum)")
 
-    identifier: str = Field(..., description="Unique identifier for the user, could be an email, phone, username, etc.", unique=True)
+    identifier: Indexed(str, unique=True) = Field(..., description="Unique identifier for the user, could be an email, phone, username, etc.")
 
     verification_status: VerificationStatusEnum = Field(default=VerificationStatusEnum.NOT_VERIFIED, description="Verification status of the user, verified, not_verified, blocked, deleted, not_required (enum)")
 

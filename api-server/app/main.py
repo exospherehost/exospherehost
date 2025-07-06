@@ -23,6 +23,7 @@ from .project.models.project_database_model import Project
 
 # injecting routers
 from .user.routes import router as user_router
+from .auth.router import router as auth_router
 
 load_dotenv()
 
@@ -59,5 +60,6 @@ app.add_middleware(UnhandledExceptionsMiddleware)
 def health() -> dict:
     return {"message": "OK"}
 
-
+# injecting routers
 app.include_router(user_router)
+app.include_router(auth_router)

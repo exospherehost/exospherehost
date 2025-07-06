@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from pymongo.errors import DuplicateKeyError
 
 from ..models.create_user_request import CreateUserRequest
 from ..models.create_user_response import CreateUserResponse
@@ -33,8 +34,8 @@ async def create_user(request: CreateUserRequest, x_exosphere_request_id: str) -
             created_at=new_user.created_at,
             updated_at=new_user.updated_at
         )
-
+    
     except Exception as e:
-        logger.error("Error creating user error", error=e, x_exosphere_request_id=x_exosphere_request_id)
+        logger.error("Error creating user error", error=e.with_traceback(), x_exosphere_request_id=x_exosphere_request_id)
         
         raise HTTPException(status_code=500, detail="Error creating user")
