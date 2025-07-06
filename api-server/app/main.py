@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
+from fastapi.security import OAuth2PasswordBearer
 
 # injecting singletons
 from .singletons.logs_manager import LogsManager
@@ -50,6 +51,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 # this middleware should be the first one
 app.add_middleware(GetTokenClaimsMiddleware)
