@@ -16,6 +16,7 @@ from .middlewares.unhandled_exceptions_middleware import (
     UnhandledExceptionsMiddleware,
 )
 from .middlewares.request_id_middleware import RequestIdMiddleware
+from .auth.middlewares.get_token_claims import GetTokenClaimsMiddleware
 
 # injecting databases
 from .user.models.user_database_model import User
@@ -49,11 +50,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+
 # this middleware should be the first one
+app.add_middleware(GetTokenClaimsMiddleware)
+
 app.add_middleware(RequestIdMiddleware)
 
-# this middleware should be the last one
 app.add_middleware(UnhandledExceptionsMiddleware)
+
 
 
 @app.get("/health-check")

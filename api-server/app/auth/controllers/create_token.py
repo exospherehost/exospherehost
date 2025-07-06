@@ -5,6 +5,7 @@ from starlette.responses import JSONResponse
 
 from ..models.token_request import TokenRequest
 from ..models.token_response import TokenResponse
+from ..models.token_claims import TokenClaims
 
 from app.singletons.logs_manager import LogsManager
 
@@ -38,17 +39,17 @@ async def create_token(request: TokenRequest, x_exosphere_request_id: str) -> To
 
         logger.info("User is a super admin", x_exosphere_request_id=x_exosphere_request_id)
         
-        token_claims = {
-            "user_id": str(user.id),
-            "user_name": user.name,
-            "user_type": user.type,
-            "verification_status": user.verification_status,
-            "status": user.status,
-            "exp": datetime.now() + timedelta(seconds=JWT_EXPIRES_IN)
-        }
+        token_claims = TokenClaims(
+            user_id=str(user.id),
+            user_name=user.name,
+            user_type=user.type,
+            verification_status=user.verification_status,
+            status=user.status,
+            exp=int((datetime.now() + timedelta(seconds=JWT_EXPIRES_IN)).timestamp())
+        )
 
         return TokenResponse(
-            access_token=jwt.encode(token_claims, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+            access_token=jwt.encode(token_claims.model_dump(), JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
         )
     
     except Exception as e:
