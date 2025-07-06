@@ -24,7 +24,7 @@ async def create_token(request: TokenRequest, x_exosphere_request_id: str) -> To
     try:
         logger.info("Finding user", x_exosphere_request_id=x_exosphere_request_id)
 
-        user = await User.objects.get(identifier=request.identifier)
+        user = await User.find_one(User.identifier == request.identifier)
 
         if not user:
             logger.error("User not found", x_exosphere_request_id=x_exosphere_request_id)
@@ -39,7 +39,8 @@ async def create_token(request: TokenRequest, x_exosphere_request_id: str) -> To
         logger.info("User is a super admin", x_exosphere_request_id=x_exosphere_request_id)
         
         token_claims = {
-            "user_id": user.id,
+            "user_id": str(user.id),
+            "user_name": user.name,
             "user_type": user.type,
             "verification_status": user.verification_status,
             "status": user.status,
