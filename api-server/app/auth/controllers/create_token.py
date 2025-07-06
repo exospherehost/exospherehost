@@ -1,7 +1,7 @@
 import os
 import jwt
 from datetime import datetime, timedelta
-from fastapi import HTTPException
+from starlette.responses import JSONResponse
 
 from ..models.token_request import TokenRequest
 from ..models.token_response import TokenResponse
@@ -24,17 +24,15 @@ async def create_token(request: TokenRequest, x_exosphere_request_id: str) -> To
     try:
         logger.info("Finding user", x_exosphere_request_id=x_exosphere_request_id)
 
-        print(request.identifier)
-        print(request.credential)
         user = await User.objects.get(identifier=request.identifier)
-        print(user)
+
         if not user:
             logger.error("User not found", x_exosphere_request_id=x_exosphere_request_id)
-            raise HTTPException(status_code=404, detail="User not found")
+            return JSONResponse(status_code=404, content={"success": False, "detail": "User not found"})
 
         if not user.verify_credential(request.credential):
             logger.error("Invalid credential", x_exosphere_request_id=x_exosphere_request_id)
-            raise HTTPException(status_code=401, detail="Invalid credential")
+            return JSONResponse(status_code=401, content={"success": False, "detail": "Invalid credential"})
         
         logger.info("User found and credential verified", x_exosphere_request_id=x_exosphere_request_id)
 
@@ -53,7 +51,5 @@ async def create_token(request: TokenRequest, x_exosphere_request_id: str) -> To
         )
     
     except Exception as e:
-        print(e.message)
         logger.error("Error creating token", error=e, x_exosphere_request_id=x_exosphere_request_id)
-
-        raise HTTPException(status_code=500, detail=str(e))
+        raise e
