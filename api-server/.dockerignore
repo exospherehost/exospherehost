@@ -1,0 +1,26 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# C extensions
+*.egg
+*.egg-info
+.eggs
+
+# Virtual environments
+.venv/
+
+# Git, CI and editor config
+.git/
+.github/
+.vscode/
+
+# Logs and temp files
+*.log
+
+# Other
+.env
+Dockerfile 
