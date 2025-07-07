@@ -14,7 +14,6 @@ class CreateProjectResponse(BaseModel):
     name: str
     status: ProjectStatusEnum
     billing_account: BillingAccount
-    users: List[ProjectUser]
-    super_admin: Link[User]
+    super_admin: str
     created_at: datetime
     updated_at: datetime

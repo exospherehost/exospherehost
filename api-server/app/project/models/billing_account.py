@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class TaxInformationTypeEnum(str, Enum):
+    NOT_DEFINED = "NOT_DEFINED"
     GST = "GST"
     VAT = "VAT"
     EIN = "EIN"
@@ -15,7 +16,7 @@ class BillingAccount(BaseModel):
 
     billing_address: str = Field(default="", description="Billing address of the company")
 
-    tax_number_type: TaxInformationTypeEnum = Field(default="", description="Type of tax information")
+    tax_number_type: TaxInformationTypeEnum = Field(default=TaxInformationTypeEnum.NOT_DEFINED, description="Type of tax information")
 
     tax_number: str = Field(default="", description="Tax information of the company")
 

@@ -17,7 +17,6 @@ from .middlewares.unhandled_exceptions_middleware import (
     UnhandledExceptionsMiddleware,
 )
 from .middlewares.request_id_middleware import RequestIdMiddleware
-from .auth.middlewares.get_token_claims import GetTokenClaimsMiddleware
 
 # injecting databases
 from .user.models.user_database_model import User
@@ -55,8 +54,6 @@ app = FastAPI(lifespan=lifespan)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 # this middleware should be the first one
-app.add_middleware(GetTokenClaimsMiddleware)
-
 app.add_middleware(RequestIdMiddleware)
 
 app.add_middleware(UnhandledExceptionsMiddleware)

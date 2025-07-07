@@ -1,12 +1,9 @@
 from fastapi import APIRouter, status, Request
-from fastapi.security import OAuth2PasswordBearer
-from typing import Annotated
-from fastapi import Depends
 
 from .controllers.create_user import create_user
 from .models.create_user_request import CreateUserRequest
 from .models.create_user_response import CreateUserResponse
-
+ 
 router = APIRouter(prefix="/v0/user", tags=["user"])
 
 @router.post(
