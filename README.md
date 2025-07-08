@@ -13,11 +13,11 @@ To have an intution of the first version of the platform, we would highly recomm
 </a>
 
 ### Satellite
-Satellites are the core building blocks for exosphere.They are lego blocks designed for a specific purpose: you can connect them together to create complex systems in a matter of minutes without worrying about the underlying infrastructure.
+Satellites are the core building blocks for exosphere. They are lego blocks designed for a specific purpose: you can connect them together to create complex systems in a matter of minutes without worrying about the underlying infrastructure.
 
 They are pre-implemented serverless functions highly optimized for workflows and high volume batch processing, optimized for cost, reliability, developer velocity and ease of use.
 
-Our inhouse optimization for workflowss and batch processing can lead to significant cost savings, for example you can expect a cost per token saving of about 50-75% on LLMs like DeepSeek R1 70B, Gemma 3 27B, etc.
+Our in-house optimization for workflows and batch processing can lead to significant cost savings, for example you can expect a cost per token saving of about 50-75% on LLMs like DeepSeek R1 70B, Gemma 3 27B, etc.
 
 Each of these satellites must satisfy the following properties:
 
@@ -32,13 +32,13 @@ Each of these satellites must satisfy the following properties:
 Further work is being done to allow users to bring their own satellites and use our core infrastructure to manage their lifecycle.
 
 ### Cluster
-A Cluster is a collection of satellites connected together to form a complete workflow: a series of satellities working togehter to achieve a common goal.
+A Cluster is a collection of satellites connected together to form a complete workflow: a series of satellities working together to achieve a common goal.
 
 Each of these clusters must satisfy the following properties:
 
 1. Should be a collection of satellites that are connected together to form a system.
 2. Should have a unique identifier of the format `cluster/unique-project-name/cluster-name`, example: `cluster/aikin/structured-json`
-3. Should define a necessary parameter of `SLA` denoating the maximum time to complete the cluster, **higher the SLA, lower the cost** as systems have more time to optimize for the task (currently supported: `6h`, `12h`, `24h`)
+3. Should define a necessary parameter of `SLA` denoting the maximum time to complete the cluster, **higher the SLA, lower the cost** as systems have more time to optimize for the task (currently supported: `6h`, `12h`, `24h`)
 4. Should have a necessary `trigger` parameter to start the cluster, this can be a `cron` expression, or an `api-call` or other possible events.
 5. Each cluster can also define `logs` parameter to configure log forwarding to a specific destination like `NewRelic`, `Kusto`, `CloudWatch` or any other logging service.
 6. Each cluster can also define `failure` steps to handle the cluster in case of failure, this could again be a set of satellites to run in case of failure.
@@ -77,7 +77,7 @@ cluster:
     # define retries for each satellite, default is 5
     retries: 3
 
-    # define the secrets for the cluster, these are stored in a secure vault and only excessible by allowed satellites in this cluster
+    # define the secrets for the cluster, these are stored in a secure vault and only accessible by allowed satellites in this cluster
     # still be sure to have minimum required permissions for each secret to avoid any security issues
     secrets:
         - AWS_ACCESS_KEY: "your-aws-access-key"
@@ -132,9 +132,9 @@ cluster:
                 }
           input:
             prompt: |
-                Parse the following quarterly financial report and returnt a structured json output as defined in the output-schema, report text is provided below:
+                Parse the following quarterly financial report and return a structured json output as defined in the output-schema, report text is provided below:
                 ${{satellites.parse-pdf-with-docling.output}}
-        - name: Call Webhook to send the structured json to aikin api
+        - name: Call Webhook to send the structured json to Aikin API
           uses: satellite/exospherehost/call-webhook
           identifier: call-webhook
           config:
@@ -219,7 +219,7 @@ We believe that humanity would not have been able to achieve the level of innova
 
 1. We will be open sourcing majority of our codebase for exosphere.host and making it available to the community. We welcome all sort of contributions and feedback from the community and will be happy to collaborate with you.
 2. For whatever the profits which we generate from exosphere.host, we will be donating a portion of it to open source projects and communities. If you have any questions, suggestions or ideas.
-3. We would be further collaborating with various open source student programs to provide with the support and encourage and mentor the next generation of open source contributors.
+3. We would further be collaborating with various open source student programs to provide support, encourage and mentor the next generation of open source contributors.
 
 Please feel free to reach out to us at [nivedit@exosphere.host](mailto:nivedit@exosphere.host). Lets push the boundaries of possibilities for humanity together!
 
