@@ -43,6 +43,7 @@ jobs:
             type=ref,event=tag
             type=sha,format={{sha}},enable={{is_default_branch}}
 
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
