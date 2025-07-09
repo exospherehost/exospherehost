@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: exosphere-api-server
-          image: ghcr.io/niveditjain/exosphere-api-server:latest
+          image: ghcr.io/exospherehost/exosphere-api-server:latest
           ports:
             - containerPort: 8000
           envFrom:
