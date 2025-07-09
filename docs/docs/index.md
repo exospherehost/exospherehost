@@ -178,7 +178,7 @@ cluster:
 
   # define steps to handle failure for this cluster
   failure:
-    # run from failured steps from this satellite
+    # run from failed steps from this satellite
     from: parse-pdf-with-docling
     
     satellites:

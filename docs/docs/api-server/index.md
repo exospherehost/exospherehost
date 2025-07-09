@@ -1,8 +1,8 @@
 # API Server
-API Server is esentially the public interface of the Exosphere platform for the users to interact with. API Server is created in fastapi and has following core apps, each independent of each other. 
+API Server is essentially the public interface of the Exosphere platform for the users to interact with. API Server is created in fastapi and has following core apps, each independent of each other. 
 
 ## Project 
-Project is a logical grouping and seperation of the resources within exosphere ecosystem, thus each project has its unique namespace and billing details attached to it. 
+Project is a logical grouping and separation of the resources within exosphere ecosystem, thus each project has its unique namespace and billing details attached to it. 
 
 Note: Currently all users within a project have same access to all resources within the project. Billing information is set once and cannot be changed, these could be changed only by the exosphere team on email request as of now.
 

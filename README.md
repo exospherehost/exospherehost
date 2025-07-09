@@ -46,7 +46,7 @@ Each of these clusters must satisfy the following properties:
 Developers can define their own clusters using our cluster api, which supports cluster creation, deletion, status, logs and other operations. Currently we are supporting cluster creation through `YML` files or our APIs and SDKs.
 
 ### Orbit
-Orbit is the core compute platfrom capable of managing the lifecycle of satellites and clusters optimally across multiple computes including GPUs, CPUs, and other hardware. Further allowing developers to write their own satellites and plug-in with our core exosphere platform.
+Orbit is the core compute platform capable of managing the lifecycle of satellites and clusters optimally across multiple computes including GPUs, CPUs, and other hardware. Further allowing developers to write their own satellites and plug-in with our core exosphere platform.
 
 ## Example
 Here is an example of using our cluster api to create a satellite cluster to get structured json from PDF files of quaterly financial reports. The workflow in the image could be represented as the `YML` file below.
@@ -170,7 +170,7 @@ cluster:
 
     # define steps to handle failure for this cluster
     failure:
-        # run from failured steps from this satellite
+        # run from failed steps from this satellite
         from: parse-pdf-with-docling
         satellites:
             - name: Move to failure bucket
@@ -205,7 +205,7 @@ This could also be represented as a pythonic control using our SDK/APIs, checkou
 For more information, please refer to our [documentation](https://docs.exosphere.host).
 
 ### Steps to build the Documentation locally
-1. Install UV: Follow the offical instructions [here](https://docs.astral.sh/uv/#installation).
+1. Install UV: Follow the official instructions [here](https://docs.astral.sh/uv/#installation).
 2. Clone this repository, use command `git clone https://github.com/exospherehost/exospherehost.git`
 3. Install dependencies by navigating to `docs` folder and executing `uv sync`
 4. Use the command `uv run mkdocs serve` while `docs` folder being your working path.

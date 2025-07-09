@@ -2,7 +2,7 @@
 This satellite is designed to parse documents with Docling, a powerful document parsing library to get structured data from documents. 
 
 ```yaml
-# avilable in namespace `exospherehost/parse-with-docling`
+# available in namespace `exospherehost/parse-with-docling`
 uses: exospherehost/parse-with-docling
 
 # define the sla of the satellite (6h, 12h, 24h)
