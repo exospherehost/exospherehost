@@ -21,12 +21,14 @@ from .middlewares.request_id_middleware import RequestIdMiddleware
 # injecting databases
 from .user.models.user_database_model import User
 from .project.models.project_database_model import Project
+from .auth.models.session_database_model import Session
+from .auth.models.token_database_model import Token
 
 # injecting routers
 from .user.routes import router as user_router
 from .auth.routes import router as auth_router
 from .project.routes import router as project_router
- 
+
 load_dotenv()
 
 
@@ -39,7 +41,7 @@ async def lifespan(app: FastAPI):
     # initializing beanie
     client = AsyncIOMotorClient(os.getenv("MONGO_URI"))
     db = client[os.getenv("MONGO_DATABASE_NAME")]
-    await init_beanie(db, document_models=[User, Project])
+    await init_beanie(db, document_models=[User, Project, Session, Token])
     logger.info("beanie dbs initialized")
 
     # main logic of the server
