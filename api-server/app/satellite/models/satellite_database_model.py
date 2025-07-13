@@ -20,11 +20,16 @@ class Satellite(Document):
     access_type: AccessTypeEnum = Field(..., description="Access type of the satellite")
 
     configs: dict[str, Any] = Field(..., description="Configurations of the satellite, a valid jsonschema object for the configs")
+    
     inputs: dict[str, Any] = Field(..., description="Input data fothe satellite, a valid jsonschema object for the inputs")
+    
     metrics: dict[str, Any] = Field(..., description="Metrics of the satellite, a valid jsonschema object for the metrics")
+   
     outputs: dict[str, Any] = Field(..., description="Outputs of the satellite, a valid jsonschema object for the outputs")
 
     project: Link[Project] = Field(..., description="Project of the satellite")
+
+    project_name: str = Field(..., description="Name of the project of the satellite")
 
     created_at: datetime = Field(default_factory=datetime.now, description="Date and time when the satellite was created")
 
@@ -51,6 +56,19 @@ class Satellite(Document):
             reference.Reference.parse(v)
         except Exception as e:
             raise ValueError(f"Invalid image URI: {e.message}")
+        return v
+    
+    @field_validator("name")
+    def validate_name(cls, v: str) -> str:
+
+        not_allowed_chars = ["/", ".", " "]
+
+        if not v:
+            raise ValueError("Name cannot be empty")
+        if len(v) > 100:
+            raise ValueError("Name cannot be longer than 100 characters")
+        if any(char in not_allowed_chars for char in v):
+            raise ValueError("Name cannot contain the following characters: /, ., or whitespace")
         return v
 
     @before_event([Save, Replace])
