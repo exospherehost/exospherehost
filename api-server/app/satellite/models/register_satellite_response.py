@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from .access_types import AccessTypeEnum
 from typing import Any
+from datetime import datetime
+
 
 class RegisterSatelliteResponse(BaseModel):
     id: str
@@ -13,3 +15,8 @@ class RegisterSatelliteResponse(BaseModel):
     metrics: dict[str, Any]
     outputs: dict[str, Any]
     project: str
+    project_name: str
+    created_at: datetime
+    updated_at: datetime
+    image_uri: str
+    timeout: int
