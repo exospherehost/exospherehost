@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "bcrypt>=4.3.0",
     "beanie>=1.30.0",
+    "docker-image-py>=0.1.13",
     "fastapi>=0.115.14",
     "jsonschema>=4.24.0",
     "pyjwt>=2.10.1",
