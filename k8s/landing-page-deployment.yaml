@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exosphere-landing-page
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: exosphere-landing-page
+  template:
+    metadata:
+      labels:
+        app: exosphere-landing-page
+    spec:
+      containers:
+        - name: exosphere-landing-page
+          image: ghcr.io/exospherehost/exosphere-landing-page:latest
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 60
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 60

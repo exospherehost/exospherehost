@@ -140,3 +140,4 @@ nav:
   - Architecture: architecture.md
   - API Server:
     - Overview: api-server/index.md
+    - Swagger: api-server/swagger.md

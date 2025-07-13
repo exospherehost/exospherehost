@@ -2,7 +2,7 @@
 Very similar to `exospherehost/get-files` but instead of getting files, it moves files from one location to another, all support for get-files is also supported for move-file.
 
 ```yaml
-# avilable in namespace `exospherehost/move-file`
+# available in namespace `exospherehost/move-file`
 uses: exospherehost/move-file
 
 # define the sla of the satellite (6h, 12h, 24h)

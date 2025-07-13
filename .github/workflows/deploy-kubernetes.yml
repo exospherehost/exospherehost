@@ -1,0 +1,28 @@
+name: Deploy Kubernetes Cluster
+
+on:
+  workflow_dispatch:
+
+jobs:  
+  deploy-api-server:
+    runs-on: ubuntu-latest
+    environment:
+      name: deploy-api-server
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run kubectl commands
+        run: |
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig.yaml
+          export KUBECONFIG=$PWD/kubeconfig.yaml
+          kubectl get nodes
+          kubectl delete secret exosphere-api-server-secrets --ignore-not-found
+          kubectl create secret generic exosphere-api-server-secrets --from-literal=MONGO_URI=${{ secrets.MONGO_URI }} --from-literal=MONGO_DATABASE_NAME=${{ secrets.MONGO_DATABASE_NAME }} --from-literal=JWT_SECRET_KEY=${{ secrets.JWT_SECRET }}
+
+          cd k8s
+          ls -la
+
+          kubectl apply -f ./api-server-deployment.yaml
+          kubectl apply -f ./api-server-service.yaml
+          kubectl apply -f ./api-server-ingress.yaml
+
+          helm upgrade --install traefik traefik/traefik --namespace traefik --create-namespace -f traefik-values.yaml

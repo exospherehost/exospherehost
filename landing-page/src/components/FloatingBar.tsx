@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaGithub, FaLinkedin, FaWhatsapp, FaCalendarAlt, FaBlog } from 'react-icons/fa';
+import { FaGithub, FaLinkedin, FaCalendarAlt, FaBlog, FaBook } from 'react-icons/fa';
 import Image from 'next/image';
 import { darkerGrotesque } from "@/lib/fonts";
 
@@ -62,42 +62,43 @@ const FloatingBar = () => {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50"
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-80"
         >
-          <div className="bg-[#031035]/40 backdrop-blur-sm px-8 py-4 rounded-full border border-[#7FD6FF]/20 shadow-[0_0_15px_rgba(127,214,255,0.1)] flex gap-8 items-center">
+          <div className="bg-[#031035]/40 backdrop-blur-sm px-8 py-4 rounded-xl border border-[#7FD6FF]/20 shadow-[0_0_15px_rgba(127,214,255,0.1)] flex gap-8 items-center">
             {/* Exosphere Logo */}
             <Tooltip text="Home">
-              <a href="/" className="text-[#7FD6FF] hover:text-white transition-colors">
+              <a href="/" className="text-[#7FD6FF] hover:text-white transition-colors flex items-center justify-center min-w-[24px] min-h-[24px]">
                 <Image 
                   src="/exospheresmall.png" 
                   alt="Exosphere" 
                   width={24} 
                   height={24}
-                  className="hover:opacity-80 transition-opacity"
+                  className="hover:opacity-80 transition-opacity w-6 h-6 sm:w-6 sm:h-6"
+                  style={{ minWidth: '24px', minHeight: '24px' }}
                 />
               </a>
             </Tooltip>
 
             {/* Book a Call */}
             <Tooltip text="Book a Call">
-              <a href="https://forms.gle/rxz1oPxLk34jfr2g7" target="_blank" rel="noopener noreferrer" className="text-[#7FD6FF] hover:text-white transition-colors">
+              <a href="https://calendly.com/nikita-exosphere/exosphere-intro" target="_blank" rel="noopener noreferrer" className="text-[#7FD6FF] hover:text-white transition-colors">
                 <FaCalendarAlt size={20} />
               </a>
             </Tooltip>
 
             {/* GitHub */}
             <Tooltip text="GitHub">
-              <a href="https://github.com/exosphere-host" target="_blank" rel="noopener noreferrer" className="text-[#7FD6FF] hover:text-white transition-colors">
+              <a href="https://github.com/exospherehost/exospherehost" target="_blank" rel="noopener noreferrer" className="text-[#7FD6FF] hover:text-white transition-colors">
                 <FaGithub size={20} />
               </a>
             </Tooltip>
 
             {/* WhatsApp */}
-            {/* <Tooltip text="WhatsApp">
-              <a href="https://wa.me/your-number" target="_blank" rel="noopener noreferrer" className="text-[#7FD6FF] hover:text-white transition-colors">
-                <FaWhatsapp size={20} />
+            <Tooltip text="Docs">
+              <a href="https://docs.exosphere.host/" target="_blank" rel="noopener noreferrer" className="text-[#7FD6FF] hover:text-white transition-colors">
+                <FaBook size={20} />
               </a>
-            </Tooltip> */}
+            </Tooltip>
 
             {/* LinkedIn */}
             <Tooltip text="LinkedIn">

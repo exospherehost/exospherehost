@@ -6,7 +6,7 @@ Sends alerts to your favorite alerting service, currently supported services are
 - Discord
 
 ```yaml
-# avilable in namespace `exospherehost/send-alert`
+# available in namespace `exospherehost/send-alert`
 uses: exospherehost/send-alert
 
 # define the sla of the satellite (6h, 12h, 24h)

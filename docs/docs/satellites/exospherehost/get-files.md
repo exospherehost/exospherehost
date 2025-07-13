@@ -11,7 +11,7 @@ Simply gets files from various cloud storage services to exospherehost for furth
 - FTP
 
 ```yaml
-# avilable in namespace `exospherehost/get-files`
+# available in namespace `exospherehost/get-files`
 uses: exospherehost/get-files
 
 # define the sla of the satellite (6h, 12h, 24h)

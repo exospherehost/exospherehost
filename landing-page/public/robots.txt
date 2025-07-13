@@ -1,0 +1,11 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://exosphere.host/sitemap.xml
+
+# Disallow admin or private routes if they exist
+Disallow: /api/
+Disallow: /_next/
+Disallow: /static/ 

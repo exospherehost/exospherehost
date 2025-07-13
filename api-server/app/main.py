@@ -49,7 +49,20 @@ async def lifespan(app: FastAPI):
     logger.info("server shutting down")
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    title="Exosphere API Server",
+    description="Exosphere API Server",
+    version="0.1.0",
+    contact={
+        "name": "Nivedit Jain (Founder exosphere.host)",
+        "email": "nivedit@exosphere.host",
+    },
+    license_info={
+        "name": "Elastic License 2.0 (ELv2)",
+        "url": "https://github.com/exospherehost/exosphere-api-server/blob/main/LICENSE",
+    },
+)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
@@ -59,8 +72,7 @@ app.add_middleware(RequestIdMiddleware)
 app.add_middleware(UnhandledExceptionsMiddleware)
 
 
-
-@app.get("/health-check")
+@app.get("/health")
 def health() -> dict:
     return {"message": "OK"}
 

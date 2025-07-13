@@ -1,0 +1,17 @@
+# k8s/api-ingressroute.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: exosphere-landing-page
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`exosphere.host`)
+      kind: Rule
+      services:
+        - name: exosphere-landing-page
+          namespace: default
+          port: 80
+  tls:
+    certResolver: letsencrypt

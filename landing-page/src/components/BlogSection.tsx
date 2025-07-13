@@ -126,9 +126,9 @@ export default function BlogSection() {
           </motion.div>
         ))}
       </div>
-      
+    
       <div className="mt-8">
-        <Link href="/blog" className={`${darkerGrotesque.className} inline-flex h-14 items-center justify-center rounded-full bg-slate-950 px-6 py-2 text-base font-medium text-white backdrop-blur-3xl border border-transparent hover:border-blue-600/30 transition-colors`}>
+        <Link href="/blog" className={`${darkerGrotesque.className} inline-flex h-14 items-center justify-center rounded-xl bg-slate-950 px-6 py-2 text-base font-medium text-white backdrop-blur-3xl border border-transparent hover:border-blue-600/30 transition-colors`}>
           View All Articles
         </Link>
       </div>

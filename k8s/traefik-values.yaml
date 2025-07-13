@@ -1,0 +1,26 @@
+# traefik-values.yaml
+deployment:
+  podAnnotations:
+    prometheus.io/scrape: "true"
+
+ports:
+  web:
+    port: 80
+    exposedPort: 80
+  websecure:
+    port: 443
+    exposedPort: 443
+    tls:
+      enabled: true
+
+ingressRoute:
+  dashboard:
+    enabled: false        # turn on later if you want the UI
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: "nivedit@exosphere.host"
+      storage: /data/acme.json
+      httpChallenge:
+        entryPoint: web   # solve the challenge on :80

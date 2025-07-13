@@ -9,7 +9,7 @@ Simply forward logs to your favorite logging service, currently supported servic
 - CloudWatch
 
 ```yaml
-# avilable in namespace `exospherehost/forward-logs`
+# available in namespace `exospherehost/forward-logs`
 uses: exospherehost/forward-logs
 
 # define the sla of the satellite (6h, 12h, 24h)
