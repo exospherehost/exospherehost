@@ -1,6 +1,6 @@
 import jsonschema
 
-from beanie import Document, Indexed, before_event, Replace, Save, Link
+from beanie import Document, before_event, Replace, Save, Link
 from datetime import datetime
 from pydantic import Field, field_validator
 from .access_types import AccessTypeEnum
