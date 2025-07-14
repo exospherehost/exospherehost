@@ -2,16 +2,18 @@ import jsonschema
 
 from beanie import Document, Indexed, before_event, Replace, Save, Link
 from datetime import datetime
-from pydantic import Field, Any, field_validator
+from pydantic import Field, field_validator
 from .access_types import AccessTypeEnum
 from docker_image import reference
+from typing import Optional, Any
+from pymongo import IndexModel, ASCENDING
 
 from app.project.models.project_database_model import Project
 
 
 class Satellite(Document):
 
-    name: Indexed(str, unique=True) = Field(..., description="Name of the satellite")
+    name: str = Field(..., description="Name of the satellite")
 
     friendly_name: str = Field(..., description="Friendly name of the satellite")
 
@@ -35,9 +37,9 @@ class Satellite(Document):
 
     updated_at: datetime = Field(default_factory=datetime.now, description="Date and time when the satellite was last updated")
 
-    image_uri: str = Field(..., description="OCI/Docker image URI for the satellite")
+    image_uri: Optional[str] = Field(None, description="OCI/Docker image URI for the satellite, if not provided autoscalling and dynamic scaling would not be available")
 
-    timeout: int = Field(..., description="Timeout of the satellite in seconds")
+    timeout: Optional[int] = Field(None, description="Timeout of the satellite in seconds")
 
     @field_validator("configs", "inputs", "metrics", "outputs")
     def validate_jsonschema(cls, v: dict[str, Any]) -> dict[str, Any]:
@@ -52,6 +54,8 @@ class Satellite(Document):
     
     @field_validator("image_uri")
     def validate_image_uri(cls, v: str) -> str:
+        if not v:
+            return v
         try:
             reference.Reference.parse(v)
         except Exception as e:
@@ -70,6 +74,12 @@ class Satellite(Document):
         if any(char in not_allowed_chars for char in v):
             raise ValueError("Name cannot contain the following characters: /, ., or whitespace")
         return v
+
+    class Settings:
+        name = "Satellites"
+        indexes = [
+            IndexModel([("name", ASCENDING), ("project", ASCENDING)], unique=True)
+        ]
 
     @before_event([Save, Replace])
     def update_updated_at(self):

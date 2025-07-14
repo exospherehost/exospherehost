@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from .access_types import AccessTypeEnum
-from typing import Any
+from typing import Any, Optional
 from datetime import datetime
 
 
@@ -18,5 +18,5 @@ class RegisterSatelliteResponse(BaseModel):
     project_name: str
     created_at: datetime
     updated_at: datetime
-    image_uri: str
-    timeout: int
+    image_uri: Optional[str] = None
+    timeout: Optional[int] = None

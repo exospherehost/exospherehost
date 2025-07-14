@@ -1,6 +1,7 @@
 import jwt
 import os
 import time
+from typing import Optional
 
 from app.singletons.logs_manager import LogsManager
 
@@ -14,7 +15,7 @@ if not JWT_SECRET_KEY:
 JWT_ALGORITHM = "HS256"
 
 
-async def get_token_claims(token: str, x_exosphere_request_id: str):
+async def get_token_claims(token: str, x_exosphere_request_id: str) -> Optional[TokenClaims]:
     try:
         claims = TokenClaims(**jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM]))
         logger.info("Token claims decoded", x_exosphere_request_id=x_exosphere_request_id, user_id=claims.user_id)
