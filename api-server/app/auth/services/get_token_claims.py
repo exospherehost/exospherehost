@@ -4,7 +4,7 @@ import time
 
 from app.singletons.logs_manager import LogsManager
 
-from .models.token_claims import TokenClaims
+from ..models.token_claims import TokenClaims
 
 logger = LogsManager().get_logger()
 

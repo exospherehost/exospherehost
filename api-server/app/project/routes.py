@@ -7,7 +7,7 @@ from .controllers.create_project import create_project
 from .models.create_project_request import CreateProjectRequest
 from .models.create_project_response import CreateProjectResponse
 
-from app.auth.get_token_claims import get_token_claims
+from app.auth.services.get_token_claims import get_token_claims
 
 router = APIRouter(prefix="/v0/project", tags=["project"])
 
