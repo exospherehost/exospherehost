@@ -26,3 +26,9 @@ jobs:
           kubectl apply -f ./api-server-ingress.yaml
 
           helm upgrade --install traefik traefik/traefik --namespace traefik --create-namespace -f traefik-values.yaml
+
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+
+          kubectl create namespace redis 
+          kubectl -n redis create secret generic exosphere-redis-auth --from-literal=redis-password=${{ secrets.REDIS_PASSWORD }}
+          helm upgrade --install redis bitnami/redis --namespace redis --create-namespace -f redis-values.yaml

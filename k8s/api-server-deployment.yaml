@@ -20,6 +20,16 @@ spec:
           envFrom:
             - secretRef:
                 name: exosphere-api-server-secrets
+          env:
+            - name: REDIS_HOST
+              value: "redis-master.redis.svc.cluster.local"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: exosphere-redis-auth
+                  key: redis-password
           resources:
             requests:
               memory: "256Mi"

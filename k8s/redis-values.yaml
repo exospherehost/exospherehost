@@ -1,0 +1,18 @@
+architecture: standalone
+replica: 
+  replicaCount: 1
+
+auth: 
+  enabled: true
+  existingSecret: exosphere-redis-auth
+
+master:
+  persistence:
+    size: 4Gi
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 4096Mi
+
+metrics:
+  enabled: true
