@@ -21,3 +21,6 @@ dependencies = [
 dev = [
     "ruff>=0.12.2",
 ]
+
+[tool.setuptools]
+packages = ["app", "logs"]
