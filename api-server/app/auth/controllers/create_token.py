@@ -55,9 +55,9 @@ async def create_token(request: TokenRequest, x_exosphere_request_id: str) -> To
             if project.super_admin.ref.id == user.id:
                 previlage = "super_admin"
 
-            for user in project.users:
-                if user.user.ref.id == user.id:
-                    previlage = user.permission.value
+            for project_user in project.users:
+                if project_user.user.ref.id == user.id:
+                    previlage = project_user.permission.value
                     break
 
             if not previlage:
