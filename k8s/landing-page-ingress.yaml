@@ -2,7 +2,7 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: exosphere-web-client
+  name: exosphere-landing-page
 spec:
   entryPoints:
     - websecure
@@ -10,7 +10,7 @@ spec:
     - match: Host(`exosphere.host`)
       kind: Rule
       services:
-        - name: exosphere-web-client
+        - name: exosphere-landing-page
           namespace: default
           port: 80
   tls:
