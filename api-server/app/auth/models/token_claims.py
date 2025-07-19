@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from .token_type_enum import TokenType
 
 class TokenClaims(BaseModel):
     user_id: str
@@ -11,3 +12,4 @@ class TokenClaims(BaseModel):
     previlage: Optional[str] = None
     satellites: Optional[list[str]] = None
     exp: int
+    token_type : TokenType
