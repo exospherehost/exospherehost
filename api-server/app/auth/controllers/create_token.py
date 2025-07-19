@@ -7,6 +7,7 @@ from bson import ObjectId
 from ..models.token_request import TokenRequest
 from ..models.token_response import TokenResponse
 from ..models.token_claims import TokenClaims
+from ..models.token_type_enum import TokenType
 
 from app.singletons.logs_manager import LogsManager
 
@@ -21,6 +22,7 @@ if not JWT_SECRET_KEY:
     raise ValueError("JWT_SECRET_KEY environment variable is not set or is empty.")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRES_IN = 3600 # 1 hour
+REFRESH_EXPIRES_IN = 3600*24 # 1 day
 
 
 async def create_token(request: TokenRequest, x_exosphere_request_id: str) -> TokenResponse:
@@ -74,12 +76,27 @@ async def create_token(request: TokenRequest, x_exosphere_request_id: str) -> To
             project=request.project,
             previlage=previlage,
             satellites=request.satellites,
-            exp=int((datetime.now() + timedelta(seconds=JWT_EXPIRES_IN)).timestamp())
+            exp=int((datetime.now() + timedelta(seconds=JWT_EXPIRES_IN)).timestamp()),
+            token_type=TokenType.access.value
+        )
+
+        refresh_claims = TokenClaims(
+            user_id=str(user.id),
+            user_name=user.name,
+            user_type=user.type,
+            verification_status=user.verification_status,
+            status=user.status,
+            project=request.project,
+            previlage=previlage,
+            satellites=request.satellites,
+            exp=int((datetime.now() + timedelta(seconds=REFRESH_EXPIRES_IN)).timestamp()),
+            token_type=TokenType.refresh.value
         )
 
 
         return TokenResponse(
-            access_token=jwt.encode(token_claims.model_dump(), JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+            access_token=jwt.encode(token_claims.model_dump(), JWT_SECRET_KEY, algorithm=JWT_ALGORITHM),
+            refresh_token=jwt.encode(refresh_claims.model_dump(), JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
         )
     
     except Exception as e:
