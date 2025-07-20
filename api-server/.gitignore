@@ -28,10 +28,13 @@ ENV/
 .venv/
 
 # IDE
-.idea/
 .vscode/
 *.swp
 *.swo
+.idea/
+*.iws
+*.iml
+*.ipr
 
 
 # Local development
