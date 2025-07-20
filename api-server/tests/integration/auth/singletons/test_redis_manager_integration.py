@@ -9,20 +9,22 @@ Prerequisites:
 - A running Redis instance (e.g., via Docker: `docker run -d -p 6379:6379 redis`)
 - `pytest` and `redis` packages installed.
 """
-import pytest
-import os
-import uuid
-import time
+
 import sys
-from collections.abc import Generator
+import os
 
 # Get the absolute path to the api-server directory
-api_server_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
-sys.path.insert(0, api_server_dir)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..')))
 
 from app.singletons.redis_manager import RedisManager
-from app.singletons.RedisOperation import RedisOperation
 from app.singletons.SingletonDecorator import singleton
+
+import pytest
+import uuid
+import time
+from collections.abc import Generator
+
+
 
 # Mark all tests in this file as integration tests, allowing them to be run
 # separately from unit tests (e.g., `pytest -m integration`).
