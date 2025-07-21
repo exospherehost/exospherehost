@@ -32,3 +32,16 @@ jobs:
           kubectl create namespace redis 
           kubectl -n redis create secret generic exosphere-redis-auth --from-literal=redis-password=${{ secrets.REDIS_PASSWORD }}
           helm upgrade --install redis bitnami/redis --namespace redis --create-namespace -f redis-values.yaml
+
+          helm repo add rook-release https://charts.rook.io/release
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo update
+
+          helm upgrade --install rook-ceph rook-release/rook-ceph --namespace rook-ceph --create-namespace --version 1.17.6 --set enableDiscoveryDaemon=true --set crds.enabled=true
+
+          helm upgrade --install rook-ceph-cluster rook-release/rook-ceph-cluster --namespace rook-ceph --version 1.17.6 -f rook-ceph-cluster-values.yaml
+
+          kubectl -n rook-ceph apply -f https://raw.githubusercontent.com/rook/rook/v1.17.6/deploy/examples/toolbox.yaml
+
+          

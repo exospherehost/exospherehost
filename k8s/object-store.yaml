@@ -1,0 +1,20 @@
+apiVersion: ceph.rook.io/v1
+kind: CephObjectStore
+metadata:
+  name: logs-store
+  namespace: rook-ceph
+spec:
+  metadataPool:
+    replicated:
+      size: 3
+  dataPool:
+    erasureCoded:
+      dataChunks: 2
+      codingChunks: 1
+  gateway:
+    port: 80
+    instances: 1
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
