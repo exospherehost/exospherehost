@@ -3,12 +3,16 @@ deployment:
   podAnnotations:
     prometheus.io/scrape: "true"
 
+additionalArguments:
+  - "--entrypoints.web.address=:8081"
+  - "--entrypoints.websecure.address=:8443"
+
 ports:
   web:
-    port: 80
+    port: 8081
     exposedPort: 80
   websecure:
-    port: 443
+    port: 8443
     exposedPort: 443
     tls:
       enabled: true

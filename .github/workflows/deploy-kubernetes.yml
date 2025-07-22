@@ -15,20 +15,35 @@ jobs:
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig.yaml
           export KUBECONFIG=$PWD/kubeconfig.yaml
           kubectl get nodes
+
+          cd k8s
+
+          kubectl create namespace exosphere
+
+          kubectl create namespace redis 
+
+          kubectl -n redis create secret generic exosphere-redis-auth --from-literal=redis-password=${{ secrets.REDIS_PASSWORD }}
+
+          kubectl create secret generic exosphere-redis-auth --from-literal=redis-password=${{ secrets.REDIS_PASSWORD }}
+
+          helm upgrade --install redis bitnami/redis --namespace redis --create-namespace -f redis-values.yaml
+          
           kubectl delete secret exosphere-api-server-secrets --ignore-not-found
           kubectl create secret generic exosphere-api-server-secrets --from-literal=MONGO_URI=${{ secrets.MONGO_URI }} --from-literal=MONGO_DATABASE_NAME=${{ secrets.MONGO_DATABASE_NAME }} --from-literal=JWT_SECRET_KEY=${{ secrets.JWT_SECRET }}
 
-          cd k8s
-          ls -la
-
           kubectl apply -f ./api-server-deployment.yaml
           kubectl apply -f ./api-server-service.yaml
-          kubectl apply -f ./api-server-ingress.yaml
+
+          kubectl apply -f ./landing-page-deployment.yaml
+          kubectl apply -f ./landing-page-service.yaml
 
           helm upgrade --install traefik traefik/traefik --namespace traefik --create-namespace -f traefik-values.yaml
 
-          helm repo add bitnami https://charts.bitnami.com/bitnami
+          echo "set A record to: "
+          kubectl -n traefik get svc traefik -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
 
-          kubectl create namespace redis 
-          kubectl -n redis create secret generic exosphere-redis-auth --from-literal=redis-password=${{ secrets.REDIS_PASSWORD }}
-          helm upgrade --install redis bitnami/redis --namespace redis --create-namespace -f redis-values.yaml
+          echo "waiting 2 minutes for the A record to be updated"
+          sleep 1200
+
+          kubectl apply -f ./api-server-ingress.yaml
+          kubectl apply -f ./landing-page-ingress.yaml
