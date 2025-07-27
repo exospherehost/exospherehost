@@ -52,3 +52,11 @@ jobs:
 
           kubectl apply -f ./api-server-ingress.yaml
           kubectl apply -f ./landing-page-ingress.yaml
+
+          helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+
+          helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard
+
+          kubectl create serviceaccount ${{ secrets.KUBERNETES_DASHBOARD_SERVICE_ACCOUNT_NAME }} -n kubernetes-dashboard
+
+          kubectl create clusterrolebinding ${{ secrets.KUBERNETES_DASHBOARD_SERVICE_ACCOUNT_NAME }} --clusterrole=cluster-admin --serviceaccount=kubernetes-dashboard:${{ secrets.KUBERNETES_DASHBOARD_SERVICE_ACCOUNT_NAME }}
