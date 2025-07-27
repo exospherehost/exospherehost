@@ -1,0 +1,18 @@
+[project]
+name = "exospherehost"
+description = "Official Python SDK for ExosphereHost"
+authors = [{name = "ExosphereHost", email = "nivedit@exosphere.host"}]
+readme = "README.md"
+requires-python = ">=3.12"
+dynamic = ["version"]
+dependencies = [
+    "requests>=2.32.4",
+]
+
+[tool.setuptools.dynamic]
+version = {file = "exospherehost.__version__"}
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.5",
+]
