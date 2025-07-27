@@ -31,6 +31,12 @@ async def lifespan(app: FastAPI):
     await init_beanie(db, document_models=[])
     logger.info("beanie dbs initialized")
 
+    # initialize secret
+    secret = os.getenv("STATE_MANAGER_SECRET")
+    if not secret:
+        raise ValueError("STATE_MANAGER_SECRET is not set")
+    logger.info("secret initialized")
+
     # main logic of the server
     yield
 
