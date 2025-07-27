@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: exosphere-state-manager
+spec:
+  type: ClusterIP
+  selector:
+    app: exosphere-state-manager
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP

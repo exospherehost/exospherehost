@@ -7,7 +7,7 @@ jobs:
   deploy-api-server:
     runs-on: ubuntu-latest
     environment:
-      name: deploy-api-server
+      name: deploy-kubernetes
     steps:
       - uses: actions/checkout@v4
       - name: Run kubectl commands
@@ -29,13 +29,18 @@ jobs:
           helm upgrade --install redis bitnami/redis --namespace redis --create-namespace -f redis-values.yaml
           
           kubectl delete secret exosphere-api-server-secrets --ignore-not-found
-          kubectl create secret generic exosphere-api-server-secrets --from-literal=MONGO_URI=${{ secrets.MONGO_URI }} --from-literal=MONGO_DATABASE_NAME=${{ secrets.MONGO_DATABASE_NAME }} --from-literal=JWT_SECRET_KEY=${{ secrets.JWT_SECRET }}
+          kubectl create secret generic exosphere-api-server-secrets --from-literal=MONGO_URI=${{ secrets.API_SERVER_MONGO_URI }} --from-literal=MONGO_DATABASE_NAME=${{ secrets.API_SERVER_MONGO_DATABASE_NAME }} --from-literal=JWT_SECRET_KEY=${{ secrets.JWT_SECRET }}
+
+          kubectl create secret generic exosphere-api-server-secrets --from-literal=MONGO_URI=${{ secrets.STATE_MANAGER_MONGO_URI }} --from-literal=MONGO_DATABASE_NAME=${{ secrets.STATE_MANAGER_MONGO_DATABASE_NAME }}
 
           kubectl apply -f ./api-server-deployment.yaml
           kubectl apply -f ./api-server-service.yaml
 
           kubectl apply -f ./landing-page-deployment.yaml
           kubectl apply -f ./landing-page-service.yaml
+
+          kubectl apply -f ./state-manager-deployment.yaml
+          kubectl apply -f ./state-manager-service.yaml
 
           helm upgrade --install traefik traefik/traefik --namespace traefik --create-namespace -f traefik-values.yaml
 
