@@ -9,7 +9,6 @@ parser.add_argument("--workers", type=int, default=multiprocessing.cpu_count())
 args = parser.parse_args()
 
 load_dotenv()
-
 def serve():
     mode = args.mode
     if mode == "development":

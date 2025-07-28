@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "bcrypt>=4.3.0",
-    "beanie>=1.30.0",
+    "beanie>=2.0.0",
     "docker-image-py>=0.1.13",
     "email-validator>=2.2.0",
     "fastapi>=0.115.14",
