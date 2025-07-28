@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: exosphere-web-client
+  name: exosphere-landing-page
 spec:
   type: ClusterIP
   selector:
-    app: exosphere-web-client
+    app: exosphere-landing-page
   ports:
     - port: 80
       targetPort: 3000

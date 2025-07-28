@@ -7,7 +7,7 @@ jobs:
   deploy-api-server:
     runs-on: ubuntu-latest
     environment:
-      name: deploy-api-server
+      name: deploy-kubernetes
     steps:
       - uses: actions/checkout@v4
       - name: Run kubectl commands
@@ -15,20 +15,48 @@ jobs:
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig.yaml
           export KUBECONFIG=$PWD/kubeconfig.yaml
           kubectl get nodes
-          kubectl delete secret exosphere-api-server-secrets --ignore-not-found
-          kubectl create secret generic exosphere-api-server-secrets --from-literal=MONGO_URI=${{ secrets.MONGO_URI }} --from-literal=MONGO_DATABASE_NAME=${{ secrets.MONGO_DATABASE_NAME }} --from-literal=JWT_SECRET_KEY=${{ secrets.JWT_SECRET }}
 
           cd k8s
-          ls -la
 
+          kubectl create namespace exosphere
+
+          kubectl create namespace redis 
+
+          kubectl -n redis create secret generic exosphere-redis-auth --from-literal=redis-password=${{ secrets.REDIS_PASSWORD }}
+
+          kubectl create secret generic exosphere-redis-auth --from-literal=redis-password=${{ secrets.REDIS_PASSWORD }}
+
+          helm upgrade --install redis bitnami/redis --namespace redis --create-namespace -f redis-values.yaml
+          
+          kubectl delete secret exosphere-api-server-secrets --ignore-not-found
+          kubectl create secret generic exosphere-api-server-secrets --from-literal=MONGO_URI=${{ secrets.API_SERVER_MONGO_URI }} --from-literal=MONGO_DATABASE_NAME=${{ secrets.API_SERVER_MONGO_DATABASE_NAME }} --from-literal=JWT_SECRET_KEY=${{ secrets.JWT_SECRET }}
+
+          kubectl create secret generic exosphere-state-manager-secrets --from-literal=MONGO_URI=${{ secrets.STATE_MANAGER_MONGO_URI }} --from-literal=MONGO_DATABASE_NAME=${{ secrets.STATE_MANAGER_MONGO_DATABASE_NAME }} --from-literal=STATE_MANAGER_SECRET=${{ secrets.STATE_MANAGER_SECRET }}
+          
           kubectl apply -f ./api-server-deployment.yaml
           kubectl apply -f ./api-server-service.yaml
-          kubectl apply -f ./api-server-ingress.yaml
+
+          kubectl apply -f ./landing-page-deployment.yaml
+          kubectl apply -f ./landing-page-service.yaml
+
+          kubectl apply -f ./state-manager-deployment.yaml
+          kubectl apply -f ./state-manager-service.yaml
 
           helm upgrade --install traefik traefik/traefik --namespace traefik --create-namespace -f traefik-values.yaml
 
-          helm repo add bitnami https://charts.bitnami.com/bitnami
+          echo "set A record to: "
+          kubectl -n traefik get svc traefik -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
 
-          kubectl create namespace redis 
-          kubectl -n redis create secret generic exosphere-redis-auth --from-literal=redis-password=${{ secrets.REDIS_PASSWORD }}
-          helm upgrade --install redis bitnami/redis --namespace redis --create-namespace -f redis-values.yaml
+          echo "waiting 2 minutes for the A record to be updated"
+          sleep 1200
+
+          kubectl apply -f ./api-server-ingress.yaml
+          kubectl apply -f ./landing-page-ingress.yaml
+
+          helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+
+          helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard
+
+          kubectl create serviceaccount ${{ secrets.KUBERNETES_DASHBOARD_SERVICE_ACCOUNT_NAME }} -n kubernetes-dashboard
+
+          kubectl create clusterrolebinding ${{ secrets.KUBERNETES_DASHBOARD_SERVICE_ACCOUNT_NAME }} --clusterrole=cluster-admin --serviceaccount=kubernetes-dashboard:${{ secrets.KUBERNETES_DASHBOARD_SERVICE_ACCOUNT_NAME }}

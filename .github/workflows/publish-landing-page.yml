@@ -1,17 +1,17 @@
-name: Publish Web Client image to GHCR and Deploy to K8s
+name: Publish Landing Page image to GHCR and Deploy to K8s
 
 on:
   push:
     branches: [main]
     paths:
-      - 'web-client/**'
+      - 'landing-page/**'
   release:
     types: [published]
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/exosphere-web-client
+  IMAGE_NAME: ${{ github.repository_owner }}/exosphere-landing-page
   SHA_TAG: ${{ github.sha }}
 
 jobs:
@@ -51,7 +51,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ./web-client
+          context: ./landing-page
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -68,16 +68,16 @@ jobs:
 
           echo "selected image: ${{ fromJson(needs.publish-image.outputs.json).tags[1] }}"
 
-          kubectl set image deployment/exosphere-web-client exosphere-web-client=${{ fromJson(needs.publish-image.outputs.json).tags[1] }}
+          kubectl set image deployment/exosphere-landing-page exosphere-landing-page=${{ fromJson(needs.publish-image.outputs.json).tags[1] }}
 
-          kubectl rollout status deployment/exosphere-web-client
+          kubectl rollout status deployment/exosphere-landing-page
 
-          status=$(kubectl rollout status deployment/exosphere-web-client)
+          status=$(kubectl rollout status deployment/exosphere-landing-page)
 
           echo "$status"
 
           if [[ "$status" != *"successfully rolled out"* ]]; then
-            kubectl rollout undo deployment/exosphere-web-client
+            kubectl rollout undo deployment/exosphere-landing-page
             echo "❌ Deployment failed. Rolled back." >&2
             exit 1
-          fi 
+          fi

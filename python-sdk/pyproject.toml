@@ -1,0 +1,33 @@
+[project]
+name = "exospherehost"
+description = "Official Python SDK for ExosphereHost"
+authors = [{name = "ExosphereHost", email = "nivedit@exosphere.host"}]
+readme = "README.md"
+requires-python = ">=3.12"
+dynamic = ["version"]
+dependencies = [
+    "requests>=2.32.4",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+[project.urls]
+Homepage = "https://exosphere.host"
+Documentation = "https://docs.exosphere.host"
+Repository = "https://github.com/exospherehost/exospherehost/tree/main/python-sdk"
+
+[tool.setuptools.dynamic]
+version = {attr = "exospherehost.__version__"}
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.5",
+]

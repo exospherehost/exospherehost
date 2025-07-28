@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: exosphere-api-server
+  name: exosphere-state-manager
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: exosphere-api-server
+      app: exosphere-state-manager
   template:
     metadata:
       labels:
-        app: exosphere-api-server
+        app: exosphere-state-manager
     spec:
       containers:
-        - name: exosphere-api-server
-          image: ghcr.io/exospherehost/exosphere-api-server:latest
+        - name: exosphere-state-manager
+          image: ghcr.io/exospherehost/exosphere-state-manager:latest
           ports:
             - containerPort: 8000
           envFrom:
             - secretRef:
-                name: exosphere-api-server-secrets
+                name: exosphere-state-manager-secrets
           env:
             - name: REDIS_HOST
               value: "redis-master.redis.svc.cluster.local"

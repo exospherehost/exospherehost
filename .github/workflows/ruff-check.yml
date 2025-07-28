@@ -6,11 +6,13 @@ on:
             - main
         paths: 
             - 'api-server/**'
+            - 'state-manager/**'
     pull_request:
         branches:
             - main
         paths:
             - 'api-server/**'
+            - 'state-manager/**'
     workflow_dispatch:
 
 permissions:
@@ -30,3 +32,7 @@ jobs:
               uses: astral-sh/ruff-action@v3
               with:
                 src: './api-server'
+            - name: Ruff Check
+              uses: astral-sh/ruff-action@v3
+              with:
+                src: './state-manager'

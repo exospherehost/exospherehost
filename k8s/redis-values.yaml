@@ -13,6 +13,10 @@ master:
     limits:
       cpu: 1000m
       memory: 4096Mi
+  configuration: |
+    maxmemory 3gb
+    maxmemory-policy volatile-ttl
+    maxmemory-samples 10
 
 metrics:
   enabled: true

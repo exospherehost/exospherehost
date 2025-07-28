@@ -1,24 +1,18 @@
 [project]
-name = "api-server"
+name = "state-manager"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "bcrypt>=4.3.0",
-    "beanie>=1.30.0",
-    "docker-image-py>=0.1.13",
-    "email-validator>=2.2.0",
-    "fastapi>=0.115.14",
-    "jsonschema>=4.24.0",
-    "pyjwt>=2.10.1",
+    "beanie>=2.0.0",
+    "fastapi>=0.116.1",
     "python-dotenv>=1.1.1",
     "structlog>=25.4.0",
     "uvicorn>=0.35.0",
-    "redis[hiredis]>=6.0.0"
 ]
 
 [dependency-groups]
 dev = [
-    "ruff>=0.12.2",
+    "ruff>=0.12.5",
 ]

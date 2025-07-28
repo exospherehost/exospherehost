@@ -1,0 +1,34 @@
+name: Build & publish to PyPI
+
+on:
+  push: 
+    branches:
+      - main
+    paths:
+      - "python-sdk/**"
+      - ".github/workflows/publish-python-sdk.yml"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python-sdk
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        name: Install uv
+
+      - run: uv python install
+     
+      - run: uv sync --locked --dev
+
+      - run: uv build
+
+      - run: uv publish
