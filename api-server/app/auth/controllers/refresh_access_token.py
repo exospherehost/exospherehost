@@ -47,6 +47,8 @@ async def refresh_access_token(
                 content={"detail": "Invalid token type"}
             )
         
+
+        
         # Get user and check if blacklisted
         user = await User.get(ObjectId(payload["user_id"]))
         
@@ -57,14 +59,14 @@ async def refresh_access_token(
             )
             
         # Check if user is blacklisted
-        if user.status in [UserStatusEnum.BLOCKED]:
+        if user.status != UserStatusEnum.ACTIVE:
             logger.warning(
-                f"Blacklisted user attempted refresh: {user.id}",
+                f"Inactive or blocked user attempted token refresh: {user.id}",
                 x_exosphere_request_id=x_exosphere_request_id
             )
             return JSONResponse(
                 status_code=403,
-                content={"detail": "User is blacklisted"}
+                content={"detail": "User account is inactive or blocked"}
             )
         previlage = None
         project_id = payload.get("project")
