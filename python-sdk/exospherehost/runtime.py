@@ -13,14 +13,16 @@ class Runtime:
         self._batch_size = batch_size
         self._connected = False
         self._state_queue = Queue(maxsize=2*batch_size)
+        self._nodes: List[BaseNode] = []
 
-    async def connect(self, nodes: List[T]):
-        pass
+    async def connect(self, nodes: List[BaseNode]):
+        self._validate_nodes(nodes)
+        self._nodes = nodes
 
     async def _enqueue(self, batch_size: int):
         pass
 
-    def _validate_nodes(self, nodes: List[T]):
+    def _validate_nodes(self, nodes: List[BaseNode]):
 
         invalid_nodes = []
 
@@ -33,4 +35,5 @@ class Runtime:
 
         return nodes
 
-
+    async def start(self):
+        pass
