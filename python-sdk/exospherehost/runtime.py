@@ -1,5 +1,6 @@
 from asyncio import Queue
 from typing import List, TypeVar
+from .node import BaseNode
 
 T = TypeVar('T')
 
@@ -19,5 +20,17 @@ class Runtime:
     async def _enqueue(self, batch_size: int):
         pass
 
-    def _validate_nodes(self):
-        pass
+    def _validate_nodes(self, nodes: List[T]):
+
+        invalid_nodes = []
+
+        for node in nodes:
+            if not isinstance(node, BaseNode):
+                invalid_nodes.append(f"{node.__class__.__name__}")
+
+        if invalid_nodes:
+            raise ValueError(f"Following nodes do not inherit from exospherehost.node.BaseNode: {invalid_nodes}")
+
+        return nodes
+
+
