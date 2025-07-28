@@ -40,10 +40,11 @@ async def lifespan(app: FastAPI):
 
     # initializing beanie
     client = AsyncMongoClient(os.getenv("MONGO_URI"))
+    
     # Get the database name from environment variables.
     # If not set, use "default" to avoid errors when accessing client[db_name]
     # os.getenv can return None, which is not valid for dictionary-style access
-    db_name = os.getenv("MONGO_DATABASE_NAME", "default")
+    db_name = os.getenv("MONGO_DATABASE_NAME", "exosphere-api-server")
     db = client[db_name]
     await init_beanie(db, document_models=[User, Project, Satellite])
     logger.info("beanie dbs initialized")
