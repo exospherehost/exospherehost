@@ -18,7 +18,7 @@ def serve():
         print(f"Running with {workers} workers")
         uvicorn.run("app.main:app", workers=workers, host="0.0.0.0", port=8000)
     else:
-        raise ValueError(f"Invalid mode provided: {mode}")
+        raise ValueError(f"Invalid mode: {mode}")
 
 if __name__ == "__main__":
     serve()
