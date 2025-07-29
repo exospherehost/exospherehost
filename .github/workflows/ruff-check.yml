@@ -45,10 +45,14 @@ jobs:
 
           echo "files=$FILES" >> $GITHUB_OUTPUT
 
-      # 4. Run Ruff on changed files, if any
+      
+
+
+      # 4. Install and Run Ruff on changed files, if any
       - name: Run Ruff on changed files
         if: steps.changed-files.outputs.files != ''
         run: |
+          pip install ruff
           echo "Linting the following Python files:"
           echo "${{ steps.changed-files.outputs.files }}"
           ruff check ${{ steps.changed-files.outputs.files }}
