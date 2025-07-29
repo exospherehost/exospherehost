@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Any
 from .state_status_enum import StateStatusEnum
-from typing import Any
 from datetime import datetime
 
 

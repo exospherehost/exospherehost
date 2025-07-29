@@ -1,7 +1,6 @@
 from .base import BaseDatabaseModel
 from ..state_status_enum import StateStatusEnum
 from pydantic import Field
-from pymongo import IndexModel, ASCENDING
 from typing import Any
 
 
