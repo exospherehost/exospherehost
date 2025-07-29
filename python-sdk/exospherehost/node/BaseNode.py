@@ -11,9 +11,6 @@ class BaseNode(ABC):
     async def execute(self):
         pass
 
-    async def next(self):
-        return None  
-
     def get_unique_name(self) -> str:
         if self.unique_name is not None:
             return self.unique_name

@@ -20,3 +20,4 @@ class Foo1(BaseNode):
 
 obj = Foo1()
 print(obj.get_unique_name())
+print(isinstance(obj, BaseNode))
