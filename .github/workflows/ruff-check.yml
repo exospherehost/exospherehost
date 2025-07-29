@@ -43,7 +43,7 @@ jobs:
           FILES=$(git diff --name-only --diff-filter=ACMRT $BASE_SHA $HEAD_SHA \
                   | grep -E '^(api-server|state-manager)/.*\.py$' || true)
 
-          echo "files=$FILES" >> $GITHUB_OUTPUT
+          echo "files=$FILES" >> "$GITHUB_OUTPUT"
 
       
 
