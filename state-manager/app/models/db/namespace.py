@@ -5,4 +5,4 @@ from beanie import Indexed
 
 class Namespace(BaseDatabaseModel):
 
-    name: Indexed(str, unique=True) = Field(..., description="Name of the namespace")
+    name: Indexed(str, unique=True) = Field(..., description="Name of the namespace") # type: ignore

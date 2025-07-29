@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dynamic = ["version"]
 dependencies = [
-    "requests>=2.32.4",
+    "aiohttp>=3.12.15",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
