@@ -12,7 +12,7 @@ API_KEY_NAME = "x-api-key"
 
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 
-async def get_api_key(api_key_header: str = Depends(api_key_header)):
+async def check_api_key(api_key_header: str = Depends(api_key_header)):
     if api_key_header == API_KEY:
         return api_key_header
     else:

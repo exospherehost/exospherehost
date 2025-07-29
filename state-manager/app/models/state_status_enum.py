@@ -1,0 +1,14 @@
+from enum import Enum
+
+
+class StateStatusEnum(str, Enum):
+
+    CREATED = 'CREATED'
+    QUEUED = 'QUEUED'
+    EXECUTED = 'EXECUTED'
+    NEXT_CREATED = 'NEXT_CREATED'
+    RETRY_CREATED = 'RETRY_CREATED'
+    TIMEDOUT = 'TIMEDOUT'
+    ERRORED = 'ERRORED'
+    CANCELLED = 'CANCELLED'
+    SUCCESS = 'SUCCESS'

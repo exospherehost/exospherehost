@@ -16,6 +16,13 @@ from .middlewares.unhandled_exceptions_middleware import (
     UnhandledExceptionsMiddleware,
 )
 from .middlewares.request_id_middleware import RequestIdMiddleware
+
+# injecting models
+from .models.db.state import State
+from .models.db.namespace import Namespace
+
+# injecting routes
+from .routes import router
  
 load_dotenv()
 
@@ -27,8 +34,8 @@ async def lifespan(app: FastAPI):
 
     # initializing beanie
     client = AsyncMongoClient(os.getenv("MONGO_URI"))
-    db = client[os.getenv("MONGO_DATABASE_NAME")]
-    await init_beanie(db, document_models=[])
+    db = client[os.getenv("MONGO_DATABASE_NAME", "exosphere-state-manager")]
+    await init_beanie(db, document_models=[State, Namespace])
     logger.info("beanie dbs initialized")
 
     # initialize secret
@@ -67,3 +74,5 @@ app.add_middleware(UnhandledExceptionsMiddleware)
 @app.get("/health")
 def health() -> dict:
     return {"message": "OK"}
+
+app.include_router(router)
