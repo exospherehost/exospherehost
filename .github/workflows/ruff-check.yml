@@ -1,38 +1,46 @@
-name: Ruff check for python code
+name: Ruff check on changed files only
 
 on:
-    push: 
-        branches: 
-            - main
-        paths: 
-            - 'api-server/**'
-            - 'state-manager/**'
-    pull_request:
-        branches:
-            - main
-        paths:
-            - 'api-server/**'
-            - 'state-manager/**'
-    workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'api-server/**'
+      - 'state-manager/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'api-server/**'
+      - 'state-manager/**'
+  workflow_dispatch:
 
 permissions:
-    contents: read
-    id-token: write
-    pages: write
+  contents: read
 
 jobs:
-    check:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-python@v5
-              with:
-                python-version: '3.12'
-            - name: Ruff Check
-              uses: astral-sh/ruff-action@v3
-              with:
-                src: './api-server'
-            - name: Ruff Check
-              uses: astral-sh/ruff-action@v3
-              with:
-                src: './state-manager'
+  ruff-changed-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Get changed Python files in api-server and state-manager
+        id: changed-files
+        run: |
+          CHANGED=$(git diff --name-only origin/main...HEAD | grep -E '^api-server/|^state-manager/' | grep '\.py$' || true)
+          echo "files=$CHANGED" >> $GITHUB_OUTPUT
+
+      - name: Run Ruff on changed files
+        if: steps.changed-files.outputs.files != ''
+        run: |
+          echo "Linting the following files:"
+          echo "${{ steps.changed-files.outputs.files }}"
+          ruff check ${{ steps.changed-files.outputs.files }}
+
+      - name: Skip Ruff if no files changed
+        if: steps.changed-files.outputs.files == ''
+        run: echo "No Python files changed in target folders. Skipping Ruff."
