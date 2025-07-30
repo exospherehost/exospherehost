@@ -27,7 +27,9 @@ jobs:
         with:
           python-version: '3.12'
 
+
       # 3. Determine changed Python files
+
       - name: Get changed Python files
         id: changed-files
         run: |
@@ -41,7 +43,8 @@ jobs:
 
           # List all changed .py files in target directories
           FILES=$(git diff --name-only --diff-filter=ACMRT $BASE_SHA $HEAD_SHA \
-                  | grep -E '\.py$' || true)
+
+                  | grep -E '^(api-server|state-manager)/.*\.py$' || true)
 
           echo "files=$FILES" >> "$GITHUB_OUTPUT"
 
