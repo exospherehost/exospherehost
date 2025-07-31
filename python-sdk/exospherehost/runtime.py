@@ -7,7 +7,7 @@ from aiohttp import ClientSession
 
 class Runtime:
 
-    def __init__(self, namespace: str, state_manager_uri: str, key: str, batch_size: int = 16, workers=4, state_manage_version: str = "v0", poll_interval: int = 10):
+    def __init__(self, namespace: str, state_manager_uri: str, key: str, batch_size: int = 16, workers=4, state_manage_version: str = "v0", poll_interval: int = 1):
         self._namespace = namespace
         self._key = key
         self._batch_size = batch_size
