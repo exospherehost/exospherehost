@@ -128,4 +128,8 @@ class Runtime:
         await asyncio.gather(poller, *worker_tasks)
 
     def start(self):
-        asyncio.run(self._start())
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(self._start())
+        except RuntimeError:
+            asyncio.run(self._start())
