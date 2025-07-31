@@ -130,6 +130,6 @@ class Runtime:
     def start(self):
         try:
             loop = asyncio.get_running_loop()
-            loop.create_task(self._start())
+            return loop.create_task(self._start())
         except RuntimeError:
             asyncio.run(self._start())
