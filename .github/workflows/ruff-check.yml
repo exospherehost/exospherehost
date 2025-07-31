@@ -13,52 +13,66 @@ permissions:
 jobs:
   ruff-changed-files:
     runs-on: ubuntu-latest
-
+    
     steps:
       # 1. Checkout entire history for accurate diffs
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
+      
       # 2. Set up Python for Ruff
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
+      
       # 3. Determine changed Python files
       - name: Get changed Python files
         id: changed-files
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             BASE_SHA=${{ github.event.pull_request.base.sha }}
-            HEAD_SHA=${{ github.sha }}
+            HEAD_SHA=${{ github.event.pull_request.head.sha }}
           else
             BASE_SHA=${{ github.event.before }}
-            HEAD_SHA=${{ github.event.after }}
+            HEAD_SHA=${{ github.sha }}
           fi
-
-          # List all changed .py files in target directories
+          
+          echo "BASE_SHA: $BASE_SHA"
+          echo "HEAD_SHA: $HEAD_SHA"
+          
+          # List all changed .py files
           FILES=$(git diff --name-only --diff-filter=ACMRT $BASE_SHA $HEAD_SHA \
                   | grep -E '\.py$' || true)
-
-          echo "files=$FILES" >> "$GITHUB_OUTPUT"
-
+          
+          # Handle multi-line output properly for GitHub Actions
+          if [ -n "$FILES" ]; then
+            {
+              echo 'files<<EOF'
+              echo "$FILES"
+              echo 'EOF'
+            } >> "$GITHUB_OUTPUT"
+            echo "has_files=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "files=" >> "$GITHUB_OUTPUT"
+            echo "has_files=false" >> "$GITHUB_OUTPUT"
+          fi
       
-
-
       # 4. Install and Run Ruff on changed files, if any
       - name: Run Ruff on changed files
-        if: steps.changed-files.outputs.files != ''
+        if: steps.changed-files.outputs.has_files == 'true'
         run: |
           pip install ruff
           echo "Linting the following Python files:"
           echo "${{ steps.changed-files.outputs.files }}"
-          ruff check ${{ steps.changed-files.outputs.files }}
-
+          
+          # Convert multiline string to space-separated for ruff
+          FILES_ARGS=$(echo "${{ steps.changed-files.outputs.files }}" | tr '\n' ' ')
+          ruff check $FILES_ARGS
+      
       # 5. Skip Ruff when no relevant files changed
       - name: Skip Ruff if no files changed
-        if: steps.changed-files.outputs.files == ''
+        if: steps.changed-files.outputs.has_files == 'false'
         run: |
-          echo "No Python files changed in api-server/ or state-manager/. Skipping Ruff."
+          echo "No Python files changed. Skipping Ruff."
