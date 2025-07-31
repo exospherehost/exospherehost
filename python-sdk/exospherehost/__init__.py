@@ -1,6 +1,7 @@
-from ._version import VERSION
+from ._version import version as __version__
+from .runtime import Runtime
+from .node.BaseNode import BaseNode
 
-__version__ = VERSION
+VERSION = __version__
 
-def test():
-    print(f"ExosphereHost PySDK v{VERSION}")
+__all__ = ["Runtime", "BaseNode", "VERSION"]
