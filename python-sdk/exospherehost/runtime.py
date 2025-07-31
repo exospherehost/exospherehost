@@ -1,9 +1,11 @@
 import asyncio
 from asyncio import Queue, sleep
 from typing import Any, List
-from .node import BaseNode
+from .node.BaseNode import BaseNode
 from aiohttp import ClientSession
+from logging import getLogger
 
+logger = getLogger(__name__)
 
 class Runtime:
 
@@ -51,16 +53,20 @@ class Runtime:
                 res = await response.json()
 
                 if response.status != 200:
-                    raise Exception(f"Failed to enqueue states: {res}")
+                    logger.error(f"Failed to enqueue states: {res}")
                 
                 return res
 
     async def _enqueue(self):
         while True:
-            if self._state_queue.qsize() < self._batch_size: 
-                data = await self._enqueue_call()
-                for state in data["states"]:
-                    await self._state_queue.put(state)
+            try:
+                if self._state_queue.qsize() < self._batch_size: 
+                    data = await self._enqueue_call()
+                    for state in data["states"]:
+                        await self._state_queue.put(state)
+            except Exception as e:
+                logger.error(f"Error enqueuing states: {e}")
+                
             await sleep(self._poll_interval)
 
     async def _notify_executed(self, state_id: str, outputs: dict[str, Any]):
@@ -70,7 +76,10 @@ class Runtime:
             headers = {"x-api-key": self._key}
 
             async with session.post(endpoint, json=body, headers=headers) as response:
-                return await response.json()
+                res = await response.json()
+
+                if response.status != 200:
+                    logger.error(f"Failed to notify executed state {state_id}: {res}")
       
     async def _notify_errored(self, state_id: str, error: str):
         async with ClientSession() as session:
@@ -79,7 +88,10 @@ class Runtime:
             headers = {"x-api-key": self._key}
 
             async with session.post(endpoint, json=body, headers=headers) as response:
-                return await response.json()
+                res =  await response.json()
+
+                if response.status != 200:
+                    logger.error(f"Failed to notify errored state {state_id}: {res}")
 
     def _validate_nodes(self, nodes: List[BaseNode]):
         invalid_nodes = []
