@@ -20,6 +20,7 @@ from .middlewares.request_id_middleware import RequestIdMiddleware
 # injecting models
 from .models.db.state import State
 from .models.db.namespace import Namespace
+from .models.db.graph_template_model import GraphTemplate
 
 # injecting routes
 from .routes import router
@@ -35,7 +36,7 @@ async def lifespan(app: FastAPI):
     # initializing beanie
     client = AsyncMongoClient(os.getenv("MONGO_URI"))
     db = client[os.getenv("MONGO_DATABASE_NAME", "exosphere-state-manager")]
-    await init_beanie(db, document_models=[State, Namespace])
+    await init_beanie(db, document_models=[State, Namespace, GraphTemplate])
     logger.info("beanie dbs initialized")
 
     # initialize secret
