@@ -54,5 +54,5 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
         )
     
     except Exception as e:
-        logger.error(f"Error upserting graph template", error=e, x_exosphere_request_id=x_exosphere_request_id)
+        logger.error("Error upserting graph template", error=e, x_exosphere_request_id=x_exosphere_request_id)
         raise e
