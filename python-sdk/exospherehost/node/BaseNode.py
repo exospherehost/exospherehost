@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Any
+from typing import Optional, Any, List
 
 
 class BaseNode(ABC):
@@ -8,7 +8,7 @@ class BaseNode(ABC):
         self.unique_name: Optional[str] = unique_name
 
     @abstractmethod
-    async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
+    async def execute(self, inputs: dict[str, Any]) -> dict[str, Any] | List[dict[str, Any]]:
         pass
 
     def get_unique_name(self) -> str:

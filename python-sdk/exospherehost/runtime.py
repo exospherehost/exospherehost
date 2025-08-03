@@ -69,7 +69,7 @@ class Runtime:
                 
             await sleep(self._poll_interval)
 
-    async def _notify_executed(self, state_id: str, outputs: dict[str, Any]):
+    async def _notify_executed(self, state_id: str, outputs: List[dict[str, Any]]):
         async with ClientSession() as session:
             endpoint = self._get_executed_endpoint(state_id)
             body = {"outputs": outputs}
@@ -112,7 +112,12 @@ class Runtime:
             try:
                 node = self._node_mapping[state["node_name"]]
                 outputs = await node.execute(state["inputs"]) # type: ignore
+
+                if isinstance(outputs, dict):
+                    outputs = [outputs]
+
                 await self._notify_executed(state["state_id"], outputs)
+                
             except Exception as e:
                 await self._notify_errored(state["state_id"], str(e))
 
