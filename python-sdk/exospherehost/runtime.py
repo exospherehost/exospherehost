@@ -113,6 +113,9 @@ class Runtime:
                 node = self._node_mapping[state["node_name"]]
                 outputs = await node.execute(state["inputs"]) # type: ignore
 
+                if outputs is None:
+                    outputs = []
+
                 if isinstance(outputs, dict):
                     outputs = [outputs]
 
