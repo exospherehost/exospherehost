@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class GraphTemplateValidationStatus(Enum):
+class GraphTemplateValidationStatus(str, Enum):
     VALID = "VALID"
     INVALID = "INVALID"
     PENDING = "PENDING"
