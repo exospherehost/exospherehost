@@ -1,7 +1,7 @@
 import asyncio
 import os
 from asyncio import Queue, sleep
-from typing import Any, List
+from typing import List
 from .node.BaseNode import BaseNode
 from aiohttp import ClientSession
 from logging import getLogger

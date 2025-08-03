@@ -11,6 +11,6 @@ Components:
 """
 
 from .BaseNode import BaseNode
-from .status import *
+from .status import Status
 
-__all__ = ["BaseNode"]
+__all__ = ["BaseNode", "Status"]
