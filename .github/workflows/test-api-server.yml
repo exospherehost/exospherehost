@@ -3,8 +3,12 @@ name: Python API Server Tests
 on:
   push:
     branches: [main]
+    paths:
+      - 'api-server/**'
   pull_request:
     branches: [main]
+    paths:
+      - 'api-server/**'
 
 jobs:
   test:
