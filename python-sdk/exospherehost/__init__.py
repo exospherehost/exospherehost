@@ -12,21 +12,25 @@ workflows using a node-based architecture. The main components are:
 
 Example usage:
     from exospherehost import Runtime, BaseNode
-    
-    # Create a custom node
-    class MyNode(BaseNode):
+    from pydantic import BaseModel
+
+    class SampleNode(BaseNode):
         class Inputs(BaseModel):
-            data: str
-            
+            name: str
+
         class Outputs(BaseModel):
-            result: str
-            
+            message: str
+
         async def execute(self, inputs: Inputs) -> Outputs:
-            return Outputs(result=f"Processed: {inputs.data}")
-    
-    # Create and start runtime
-    runtime = Runtime(namespace="my-namespace", name="my-runtime")
-    runtime.connect([MyNode()])
+            print(inputs)
+            return self.Outputs(message="success")
+
+    runtime = Runtime(
+        namespace="SampleNamespace", 
+        name="SampleNode"
+    )
+
+    runtime.connect([SampleNode()])
     runtime.start()
 """
 

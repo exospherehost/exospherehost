@@ -1,6 +1,5 @@
 from exospherehost import Runtime, BaseNode
 from pydantic import BaseModel
-import os
 
 class SampleNode(BaseNode):
     class Inputs(BaseModel):

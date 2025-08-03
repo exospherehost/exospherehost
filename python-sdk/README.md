@@ -6,15 +6,24 @@ You can simply connect to exosphere state manager and start creating your nodes,
 
 ```python
 from exospherehost import Runtime, BaseNode
-from typing import Any
-import os
+from pydantic import BaseModel
 
 class SampleNode(BaseNode):
-    async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
-        print(inputs)
-        return {"message": "success"}
+    class Inputs(BaseModel):
+        name: str
 
-runtime = Runtime("SampleNamespace", os.getenv("EXOSPHERE_STATE_MANAGER_URI", "http://localhost:8000"), os.getenv("EXOSPHERE_API_KEY", ""))
+    class Outputs(BaseModel):
+        message: str
+
+    async def execute(self, inputs: Inputs) -> Outputs:
+        print(inputs)
+        return self.Outputs(message="success")
+
+# EXOSPHERE_STATE_MANAGER_URI and EXOSPHERE_API_KEY are required to be set in the environment variables for authentication with exospherehost
+runtime = Runtime(
+    namespace="SampleNamespace", 
+    name="SampleNode"
+)
 
 runtime.connect([SampleNode()])
 runtime.start()
