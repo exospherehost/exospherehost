@@ -32,7 +32,7 @@ class Runtime:
         _node_mapping (dict): Mapping of node names to node instances
     """
 
-    def __init__(self, namespace: str, name: str, state_manager_uri: str | None = None, key: str | None = None, batch_size: int = 16, workers=4, state_manage_version: str = "v0", poll_interval: int = 1):
+    def __init__(self, namespace: str, name: str, state_manager_uri: str | None = None, key: str | None = None, batch_size: int = 16, workers: int = 4, state_manage_version: str = "v0", poll_interval: int = 1):
         """
         Initialize the Runtime instance.
         
@@ -135,7 +135,7 @@ class Runtime:
             body = {"nodes": self._node_names, "batch_size": self._batch_size}
             headers = {"x-api-key": self._key}
 
-            async with session.post(endpoint, json=body, headers=headers) as response:
+            async with session.post(endpoint, json=body, headers=headers) as response: # type: ignore
                 res = await response.json()
 
                 if response.status != 200:
@@ -161,20 +161,20 @@ class Runtime:
                 
             await sleep(self._poll_interval)
 
-    async def _notify_executed(self, state_id: str, outputs: List[dict[str, Any]]):
+    async def _notify_executed(self, state_id: str, outputs: List[BaseNode.Outputs]):
         """
         Notify the state manager that a state has been executed successfully.
         
         Args:
             state_id (str): The ID of the executed state
-            outputs (List[dict[str, Any]]): The outputs from the node execution
+            outputs (List[BaseNode.Outputs]): The outputs from the node execution
         """
         async with ClientSession() as session:
             endpoint = self._get_executed_endpoint(state_id)
-            body = {"outputs": outputs}
+            body = {"outputs": [output.model_dump() for output in outputs]}
             headers = {"x-api-key": self._key}
 
-            async with session.post(endpoint, json=body, headers=headers) as response:
+            async with session.post(endpoint, json=body, headers=headers) as response: # type: ignore
                 res = await response.json()
 
                 if response.status != 200:
@@ -193,7 +193,7 @@ class Runtime:
             body = {"error": error}
             headers = {"x-api-key": self._key}
 
-            async with session.post(endpoint, json=body, headers=headers) as response:
+            async with session.post(endpoint, json=body, headers=headers) as response: # type: ignore
                 res =  await response.json()
 
                 if response.status != 200:
@@ -240,7 +240,7 @@ class Runtime:
                 if outputs is None:
                     outputs = []
 
-                if isinstance(outputs, dict):
+                if isinstance(outputs, BaseNode.Outputs):
                     outputs = [outputs]
 
                 await self._notify_executed(state["state_id"], outputs)
