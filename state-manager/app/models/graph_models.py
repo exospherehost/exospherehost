@@ -6,14 +6,10 @@ from .graph_template_validation_status import GraphTemplateValidationStatus
 
 
 class UpsertGraphTemplateRequest(BaseModel):
-    name: str = Field(..., description="The name of the graph template")
-    namespace: str = Field(..., description="The namespace where the graph template will be stored")
     nodes: List[NodeTemplate] = Field(..., description="List of node templates that define the graph structure")
 
 
 class UpsertGraphTemplateResponse(BaseModel):
-    name: str = Field(..., description="The name of the graph template")
-    namespace: str = Field(..., description="The namespace where the graph template is stored")
     nodes: List[NodeTemplate] = Field(..., description="List of node templates that define the graph structure")
     created_at: datetime = Field(..., description="Timestamp when the graph template was created")
     updated_at: datetime = Field(..., description="Timestamp when the graph template was last updated")

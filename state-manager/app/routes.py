@@ -107,7 +107,7 @@ async def errored_state_route(namespace_name: str, state_id: str, body: ErroredR
 @router.put(
     "/graph-templates/{graph_name}",
     response_model=UpsertGraphTemplateResponse,
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_201_CREATED,
     response_description="Graph template upserted successfully"
 )   
 async def upsert_graph_template(namespace_name: str, graph_name: str, body: UpsertGraphTemplateRequest, request: Request, api_key: str = Depends(check_api_key)):
