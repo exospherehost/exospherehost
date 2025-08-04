@@ -106,7 +106,7 @@ class Runtime:
     
     def _get_register_endpoint(self):
         """Get the endpoint URL for registering nodes with runtime"""
-        return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/nodes/register"
+        return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/nodes/"
     
     async def _register_nodes(self):
         """Register nodes with the runtime"""
@@ -126,7 +126,7 @@ class Runtime:
             }
             headers = {"x-api-key": self._key}
             
-            async with session.post(endpoint, json=body, headers=headers) as response: # type: ignore
+            async with session.put(endpoint, json=body, headers=headers) as response: # type: ignore
                 res = await response.json()
 
                 if response.status != 200:
