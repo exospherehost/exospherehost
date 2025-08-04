@@ -56,7 +56,6 @@ class Runtime:
         self._namespace = namespace
         self._key = key
         self._batch_size = batch_size
-        self._connected = False
         self._state_queue = Queue(maxsize=2*batch_size)
         self._workers = workers
         self._nodes = []
@@ -104,8 +103,38 @@ class Runtime:
     def _get_errored_endpoint(self, state_id: str):
         """Get the endpoint URL for notifying errored states."""
         return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/states/{state_id}/errored"
+    
+    def _get_register_endpoint(self):
+        """Get the endpoint URL for registering nodes with runtime"""
+        return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/nodes/register"
+    
+    async def _register_nodes(self):
+        """Register nodes with the runtime"""
+        async with ClientSession() as session:
+            endpoint = self._get_register_endpoint()
+            body = {
+                "runtime_name": self._name,
+                "runtime_namespace": self._namespace,
+                "nodes": [
+                    {
+                        "name": node.get_unique_name(),
+                        "namespace": self._namespace,
+                        "inputs_schema": node.Inputs.model_json_schema(),
+                        "outputs_schema": node.Outputs.model_json_schema(),
+                    } for node in self._nodes
+                ]
+            }
+            
+            async with session.post(endpoint, json=body, headers=headers) as response: # type: ignore
+                res = await response.json()
 
-    def connect(self, nodes: List[BaseNode]):
+                if response.status != 200:
+                    logger.error(f"Failed to register nodes: {res}")
+                
+                return res
+                
+
+    async def _register(self, nodes: List[BaseNode]):
         """
         Connect nodes to the runtime.
         
@@ -121,7 +150,9 @@ class Runtime:
         self._nodes = self._validate_nodes(nodes)
         self._node_names = [node.get_unique_name() for node in nodes]
         self._node_mapping = {node.get_unique_name(): node for node in self._nodes}
-        self._connected = True
+
+        await self._register_nodes()
+
 
     async def _enqueue_call(self):
         """
@@ -250,7 +281,7 @@ class Runtime:
 
             self._state_queue.task_done() # type: ignore
 
-    async def _start(self):
+    async def _start(self, nodes: List[BaseNode]):
         """
         Start the runtime execution.
         
@@ -260,15 +291,14 @@ class Runtime:
         Raises:
             RuntimeError: If the runtime is not connected (no nodes registered)
         """
-        if not self._connected:
-            raise RuntimeError("Runtime not connected, you need to call Runtime.connect() before calling Runtime.start()")
+        await self._register(nodes)
         
         poller = asyncio.create_task(self._enqueue())
         worker_tasks = [asyncio.create_task(self._worker()) for _ in range(self._workers)]
 
         await asyncio.gather(poller, *worker_tasks)
 
-    def start(self):
+    def start(self, nodes: List[BaseNode]):
         """
         Start the runtime execution.
         
@@ -281,6 +311,6 @@ class Runtime:
         """
         try:
             loop = asyncio.get_running_loop()
-            return loop.create_task(self._start())
+            return loop.create_task(self._start(nodes))
         except RuntimeError:
-            asyncio.run(self._start())
+            asyncio.run(self._start(nodes))
