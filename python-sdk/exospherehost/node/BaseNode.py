@@ -6,48 +6,51 @@ from pydantic import BaseModel
 class BaseNode(ABC):
     """
     Abstract base class for all nodes in the exospherehost system.
-    
-    BaseNode provides the foundation for creating executable nodes that can be
-    connected to a Runtime for distributed processing. Each node must implement
-    the execute method and can optionally define Inputs and Outputs models.
-    
+
+    This class defines the interface and structure for executable nodes that can be
+    managed by an Exosphere Runtime. Subclasses should define their own `Inputs` and
+    `Outputs` models (as subclasses of pydantic.BaseModel) to specify the input and
+    output schemas for the node, and must implement the `execute` method containing
+    the node's main logic.
+
     Attributes:
-        unique_name (Optional[str]): A unique identifier for this node instance.
-            If None, the class name will be used as the unique name.
-        state (dict[str, Any]): A dictionary for storing node state between executions.
+        inputs (Optional[BaseNode.Inputs]): The validated input data for the node execution.
     """
 
     def __init__(self):
         """
         Initialize a BaseNode instance.
-        
-        Args:
-            unique_name (Optional[str], optional): A unique identifier for this node.
-                If None, the class name will be used as the unique name. Defaults to None.
+
+        Sets the `inputs` attribute to None. The `inputs` attribute will be populated
+        with validated input data before execution.
         """
         self.inputs: Optional[BaseNode.Inputs] = None
 
     class Inputs(BaseModel):
         """
-        Pydantic model for defining the input schema of a node.
-        
-        Subclasses should override this class to define the expected input structure.
-        This ensures type safety and validation of inputs before execution.
+        Input schema for the node.
+
+        Subclasses should override this class to define the expected input fields.
         """
         pass
 
     class Outputs(BaseModel):
         """
-        Pydantic model for defining the output schema of a node.
-        
-        Subclasses should override this class to define the expected output structure.
-        This ensures type safety and validation of outputs after execution.
+        Output schema for the node.
+
+        Subclasses should override this class to define the expected output fields.
         """
         pass
 
     async def _execute(self, inputs: Inputs) -> Outputs | List[Outputs]:
         """
-        Execute the node's main logic.
+        Internal method to execute the node with validated inputs.
+
+        Args:
+            inputs (Inputs): The validated input data for this execution.
+
+        Returns:
+            Outputs | List[Outputs]: The output(s) produced by the node.
         """
         self.inputs = inputs
         return await self.execute()
@@ -55,23 +58,16 @@ class BaseNode(ABC):
     @abstractmethod
     async def execute(self) -> Outputs | List[Outputs]:
         """
-        Execute the node's main logic.
-        
-        This is the core method that must be implemented by all concrete node classes.
-        It receives inputs, processes them according to the node's logic, and returns
-        outputs. The method can return either a single Outputs instance or a list
-        of Outputs instances for batch processing.
-        
-        Args:
-            inputs (Inputs): The input data for this execution, validated against
-                the Inputs model defined by the node.
-                
+        Main logic for the node.
+
+        This method must be implemented by all subclasses. It should use `self.inputs`
+        (populated with validated input data) to perform the node's computation and
+        return either a single Outputs instance or a list of Outputs instances.
+
         Returns:
-            Outputs | List[Outputs]: The output data from this execution. Can be
-                a single Outputs instance or a list of Outputs instances.
-                
+            Outputs | List[Outputs]: The output(s) produced by the node.
+
         Raises:
-            Exception: Any exception that occurs during execution will be caught
-                by the Runtime and reported as an error state.
+            Exception: Any exception raised here will be caught and reported as an error state by the Runtime.
         """
         raise NotImplementedError("execute method must be implemented by all concrete node classes")
