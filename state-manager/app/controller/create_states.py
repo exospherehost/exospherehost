@@ -20,7 +20,8 @@ async def create_states(namespace_name: str, body: CreateRequestModel, x_exosphe
                     namespace_name=namespace_name,
                     status=StateStatusEnum.CREATED,
                     inputs=state.inputs,
-                    outputs={}
+                    outputs={},
+                    error=None
                 )
             )
 
