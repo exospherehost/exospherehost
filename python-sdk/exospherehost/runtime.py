@@ -124,6 +124,7 @@ class Runtime:
                     } for node in self._nodes
                 ]
             }
+            headers = {"x-api-key": self._key}
             
             async with session.post(endpoint, json=body, headers=headers) as response: # type: ignore
                 res = await response.json()
