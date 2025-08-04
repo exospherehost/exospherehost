@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional, List
+from typing import Optional, List
 from pydantic import BaseModel  
 
 
@@ -17,7 +17,7 @@ class BaseNode(ABC):
         state (dict[str, Any]): A dictionary for storing node state between executions.
     """
 
-    def __init__(self, unique_name: Optional[str] = None):
+    def __init__(self):
         """
         Initialize a BaseNode instance.
         
@@ -25,8 +25,7 @@ class BaseNode(ABC):
             unique_name (Optional[str], optional): A unique identifier for this node.
                 If None, the class name will be used as the unique name. Defaults to None.
         """
-        self.unique_name: Optional[str] = unique_name
-        self.state: dict[str, Any] = {}
+        self.inputs: Optional[BaseNode.Inputs] = None
 
     class Inputs(BaseModel):
         """

@@ -54,16 +54,18 @@ class Runtime:
         self._batch_size = batch_size
         self._state_queue = Queue(maxsize=2*batch_size)
         self._workers = workers
-        self._nodes = []
-        self._node_names = []
+        self._nodes = nodes
+        self._node_names = [node.__class__.__name__ for node in nodes]
         self._state_manager_uri = state_manager_uri
         self._state_manager_version = state_manage_version
         self._poll_interval = poll_interval
-        self._node_mapping = {}
+        self._node_mapping = {
+            node.__class__.__name__: node for node in nodes
+        }
 
         self._set_config_from_env()
         self._validate_runtime()
-        self._validate_nodes(nodes)
+        self._validate_nodes()
 
     def _set_config_from_env(self):
         """
@@ -115,7 +117,7 @@ class Runtime:
         """
         return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/nodes/"
     
-    async def _register_nodes(self):
+    async def _register(self):
         """
         Register node schemas and runtime metadata with the state manager.
 
@@ -145,22 +147,6 @@ class Runtime:
                     raise RuntimeError(f"Failed to register nodes: {res}")
                 
                 return res
-
-    async def _register(self, nodes: List[type[BaseNode]]):
-        """
-        Validate and register nodes with the runtime and state manager.
-
-        Args:
-            nodes (List[type[BaseNode]]): List of BaseNode subclasses to register.
-
-        Raises:
-            ValidationError: If any node is invalid.
-        """
-        self._nodes = self._validate_nodes(nodes)
-        self._node_names = [node.__class__.__name__ for node in nodes]
-        self._node_mapping = {node.__class__.__name__: node for node in self._nodes}
-
-        await self._register_nodes()
 
     async def _enqueue_call(self):
         """
@@ -237,7 +223,7 @@ class Runtime:
                 if response.status != 200:
                     logger.error(f"Failed to notify errored state {state_id}: {res}")
 
-    def _validate_nodes(self, nodes: List[type[BaseNode]]):
+    def _validate_nodes(self):
         """
         Validate that all provided nodes are valid BaseNode subclasses.
 
@@ -252,7 +238,7 @@ class Runtime:
         """
         errors = []
 
-        for node in nodes:
+        for node in self._nodes:
             if not issubclass(node, BaseNode):
                 errors.append(f"{node.__class__.__name__} does not inherit from exospherehost.BaseNode")
             if not hasattr(node, "Inputs"):
@@ -265,7 +251,7 @@ class Runtime:
                 errors.append(f"{node.__class__.__name__} does not have an Outputs class that inherits from pydantic.BaseModel")
         
         # Find nodes with the same __class__.__name__
-        class_names = [node.__class__.__name__ for node in nodes]
+        class_names = [node.__class__.__name__ for node in self._nodes]
         duplicate_class_names = [name for name in set(class_names) if class_names.count(name) > 1]
         if duplicate_class_names:
             errors.append(f"Duplicate node class names found: {duplicate_class_names}")
@@ -273,8 +259,6 @@ class Runtime:
         if len(errors) > 0:
             raise ValidationError("Following errors while validating nodes: " + "\n".join(errors))
         
-        return nodes
-
     async def _worker(self):
         """
         Worker task that processes states from the queue.
