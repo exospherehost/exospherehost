@@ -89,7 +89,7 @@ export default function Exosphere() {
       </motion.div> */}
 
        {/* Benchmarking Section */}
-       <motion.div 
+       {/* <motion.div 
         ref={benchmarkRef}
         initial={{ opacity: 0, y: 50 }}
         animate={benchmarkInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
@@ -97,7 +97,7 @@ export default function Exosphere() {
         className="relative py-16 px-4 max-w-6xl mx-auto"
       >
         <BenchmarkingSection />
-      </motion.div>
+      </motion.div> */}
 
       {/* Blog Section */}
       <motion.div 
