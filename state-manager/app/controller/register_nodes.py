@@ -33,6 +33,7 @@ async def register_nodes(namespace_name: str, body: RegisterNodesRequestModel, x
                         RegisteredNode.outputs_schema: node_data.outputs_schema # type: ignore
                 }))
                 logger.info(f"Updated existing node {node_data.name} in namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+                
             else:
                 # Create new node
                 new_node = RegisteredNode(
@@ -43,7 +44,7 @@ async def register_nodes(namespace_name: str, body: RegisterNodesRequestModel, x
                     inputs_schema=node_data.inputs_schema,
                     outputs_schema=node_data.outputs_schema
                 )
-                inserted_node = await new_node.insert()
+                await new_node.insert()
                 logger.info(f"Created new node {node_data.name} in namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
             
             registered_nodes.append(
