@@ -10,10 +10,10 @@ The official Python SDK for [ExosphereHost](https://exosphere.host) - an open-so
 
 ExosphereHost provides a robust, affordable, and effortless infrastructure for building scalable AI workflows and agents. The Python SDK allows you to:
 
-- Create distributed workflows using a simple node-based architecture
-- Build stateful applications that can scale across multiple compute resources
-- Execute complex AI workflows with automatic state management
-- Integrate with the ExosphereHost platform for optimized performance
+- Create distributed workflows using a simple node-based architecture.
+- Build stateful applications that can scale across multiple compute resources.
+- Execute complex AI workflows with automatic state management.
+- Integrate with the ExosphereHost platform for optimized performance.
 
 ## Installation
 
@@ -80,7 +80,9 @@ export EXOSPHERE_API_KEY="your-api-key"
 The SDK is built around two core concepts:
 
 ### Runtime
+
 The `Runtime` class manages the execution environment and coordinates with the ExosphereHost state manager. It handles:
+
 - Node lifecycle management
 - State coordination
 - Error handling and recovery
@@ -154,4 +156,4 @@ For support and questions:
 
 ## License
 
-This SDK is licensed under the MIT License and the main project is licensend under Elastic License 2.0.
+This Python SDK is licensed under the MIT License. The main ExosphereHost project is licensed under the Elastic License 2.0.
