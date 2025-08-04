@@ -36,7 +36,7 @@ const features = [
   {
     Icon: Waypoints,
     name: "Create Multi Step AI Workflows",
-    description: "Connect tools, models, and APIs to automate complex async jobs.",
+    description: "Chain tools, models, and APIs into a single DAG. Exosphere automatically batches and streams inputs to every step so GPUs stay saturated.",
     href: "#",
     cta: "Learn more",
     className: "col-span-3 lg:col-span-3",
@@ -46,8 +46,8 @@ const features = [
   },
   {
     Icon: FileStack,
-    name: "Work with your own files",
-    description: "Upload, process, and analyze files directly in your workflows.From PDFs to CSVs, bring your own data.",
+    name: "Plug in your data store and get started",
+    description: "Drag-and-drop 10 K PDFs, 200 M-row CSVs, or entire S3 buckets. Exosphere chunks and feeds them to your agents without memory bottlenecks.",
     href: "#",
     cta: "Learn more",
     className: "col-span-3 lg:col-span-1",
@@ -81,8 +81,8 @@ const features = [
   },
   {
     Icon: CloudCog,
-    name: "Define SLAs for your jobs",
-    description: "Set job deadlines. Exosphere manages batching, retries, and cost optimization.",
+    name: "Set Deadlines, We Schedule",
+    description: "Pick a deadline. Our scheduler will batch and schedule your jobs to hit it.",
     href: "#",
     cta: "Learn more",
     className: "col-span-3 lg:col-span-2",
