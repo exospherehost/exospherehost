@@ -21,6 +21,10 @@ from .controller.errored_state import errored_state
 from .models.graph_models import UpsertGraphTemplateRequest, UpsertGraphTemplateResponse
 from .controller.upsert_graph_template import upsert_graph_template as upsert_graph_template_controller
 
+from .models.register_nodes_request import RegisterNodesRequestModel
+from .models.register_nodes_response import RegisterNodesResponseModel
+from .controller.register_nodes import register_nodes
+
 
 
 logger = LogsManager().get_logger()
@@ -125,3 +129,22 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
 
     return await upsert_graph_template_controller(namespace_name, graph_name, body, x_exosphere_request_id)
+
+
+@router.put(
+    "/nodes/",
+    response_model=RegisterNodesResponseModel,
+    status_code=status.HTTP_200_OK,
+    response_description="Nodes registered successfully",
+    tags=["nodes"]
+)
+async def register_nodes_route(namespace_name: str, body: RegisterNodesRequestModel, request: Request, api_key: str = Depends(check_api_key)):
+    x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
+
+    if api_key:
+        logger.info(f"API key is valid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+    else:
+        logger.error(f"API key is invalid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+
+    return await register_nodes(namespace_name, body, x_exosphere_request_id)
