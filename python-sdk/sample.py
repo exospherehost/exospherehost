@@ -8,14 +8,12 @@ class SampleNode(BaseNode):
     class Outputs(BaseModel):
         message: str
 
-    async def execute(self, inputs: Inputs) -> Outputs:
-        print(inputs)
+    async def execute(self) -> Outputs:
+        print(self.inputs)
         return self.Outputs(message="success")
 
-runtime = Runtime(
+Runtime(
     namespace="SampleNamespace", 
-    name="SampleNode"
-)
-
-runtime.connect([SampleNode()])
-runtime.start()
+    name="SampleRuntime",
+    nodes=[SampleNode]
+).start()

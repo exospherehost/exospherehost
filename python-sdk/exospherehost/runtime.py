@@ -2,6 +2,8 @@ import asyncio
 import os
 from asyncio import Queue, sleep
 from typing import List
+
+from pydantic import BaseModel, ValidationError
 from .node.BaseNode import BaseNode
 from aiohttp import ClientSession
 from logging import getLogger
@@ -10,48 +12,42 @@ logger = getLogger(__name__)
 
 class Runtime:
     """
-    A runtime environment for executing nodes connected to exospherehost.
-    
-    The Runtime class manages the execution of BaseNode instances in a distributed
-    environment. It handles state management, worker coordination, and communication
-    with the state manager service.
-    
-    Attributes:
-        _name (str): The name of this runtime instance
-        _namespace (str): The namespace this runtime operates in
-        _key (str): API key for authentication with the state manager
-        _batch_size (int): Number of states to process in each batch
-        _connected (bool): Whether the runtime is connected to nodes
-        _state_queue (Queue): Queue for managing state processing
-        _workers (int): Number of worker tasks to spawn
-        _nodes (List[BaseNode]): List of connected node instances
-        _node_names (List[str]): List of node unique names
-        _state_manager_uri (str): URI of the state manager service
-        _state_manager_version (str): Version of the state manager API
-        _poll_interval (int): Interval between polling operations in seconds
-        _node_mapping (dict): Mapping of node names to node instances
+    Runtime for distributed execution of Exosphere nodes.
+
+    The `Runtime` class manages the lifecycle and execution of a set of `BaseNode` subclasses
+    in a distributed environment. It handles node registration, state polling, execution,
+    and communication with a remote state manager service.
+
+    Key Features:
+        - Registers node schemas and runtime metadata with the state manager.
+        - Polls for new states to process and enqueues them for execution.
+        - Spawns worker tasks to execute node logic asynchronously.
+        - Notifies the state manager of successful or failed executions.
+        - Handles configuration via constructor arguments or environment variables.
+
+    Args:
+        namespace (str): Namespace for this runtime instance.
+        name (str): Name of this runtime instance.
+        nodes (List[type[BaseNode]]): List of node classes to register and execute.
+        state_manager_uri (str | None, optional): URI of the state manager service.
+            If not provided, will use the EXOSPHERE_STATE_MANAGER_URI environment variable.
+        key (str | None, optional): API key for authentication.
+            If not provided, will use the EXOSPHERE_API_KEY environment variable.
+        batch_size (int, optional): Number of states to fetch per poll. Defaults to 16.
+        workers (int, optional): Number of concurrent worker tasks. Defaults to 4.
+        state_manage_version (str, optional): State manager API version. Defaults to "v0".
+        poll_interval (int, optional): Seconds between polling for new states. Defaults to 1.
+
+    Raises:
+        ValueError: If configuration is invalid (e.g., missing URI or key, batch_size/workers < 1).
+        ValidationError: If node classes are invalid or duplicate.
+
+    Usage:
+        runtime = Runtime(namespace="myspace", name="myruntime", nodes=[MyNode])
+        runtime.start()
     """
 
-    def __init__(self, namespace: str, name: str, state_manager_uri: str | None = None, key: str | None = None, batch_size: int = 16, workers: int = 4, state_manage_version: str = "v0", poll_interval: int = 1):
-        """
-        Initialize the Runtime instance.
-        
-        Args:
-            namespace (str): The namespace this runtime operates in
-            name (str): The name of this runtime instance
-            state_manager_uri (str | None, optional): URI of the state manager service. 
-                If None, will be read from EXOSPHERE_STATE_MANAGER_URI environment variable.
-            key (str | None, optional): API key for authentication. 
-                If None, will be read from EXOSPHERE_API_KEY environment variable.
-            batch_size (int, optional): Number of states to process in each batch. Defaults to 16.
-            workers (int, optional): Number of worker tasks to spawn. Defaults to 4.
-            state_manage_version (str, optional): Version of the state manager API. Defaults to "v0".
-            poll_interval (int, optional): Interval between polling operations in seconds. Defaults to 1.
-            
-        Raises:
-            ValueError: If batch_size or workers is less than 1, or if required
-                configuration (state_manager_uri, key) is not provided.
-        """
+    def __init__(self, namespace: str, name: str, nodes: List[type[BaseNode]], state_manager_uri: str | None = None, key: str | None = None, batch_size: int = 16, workers: int = 4, state_manage_version: str = "v0", poll_interval: int = 1):
         self._name = name
         self._namespace = namespace
         self._key = key
@@ -67,9 +63,12 @@ class Runtime:
 
         self._set_config_from_env()
         self._validate_runtime()
+        self._validate_nodes(nodes)
 
     def _set_config_from_env(self):
-        """Set configuration from environment variables if not provided."""
+        """
+        Set configuration from environment variables if not provided.
+        """
         if self._state_manager_uri is None:
             self._state_manager_uri = os.environ.get("EXOSPHERE_STATE_MANAGER_URI")
         if self._key is None:
@@ -78,7 +77,7 @@ class Runtime:
     def _validate_runtime(self):
         """
         Validate runtime configuration.
-        
+
         Raises:
             ValueError: If batch_size or workers is less than 1, or if required
                 configuration (state_manager_uri, key) is not provided.
@@ -93,23 +92,36 @@ class Runtime:
             raise ValueError("API key is not set")
 
     def _get_enque_endpoint(self):
-        """Get the endpoint URL for enqueueing states."""
+        """
+        Construct the endpoint URL for enqueueing states.
+        """
         return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/states/enqueue"
     
     def _get_executed_endpoint(self, state_id: str):
-        """Get the endpoint URL for notifying executed states."""
+        """
+        Construct the endpoint URL for notifying executed states.
+        """
         return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/states/{state_id}/executed"
     
     def _get_errored_endpoint(self, state_id: str):
-        """Get the endpoint URL for notifying errored states."""
+        """
+        Construct the endpoint URL for notifying errored states.
+        """
         return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/states/{state_id}/errored"
     
     def _get_register_endpoint(self):
-        """Get the endpoint URL for registering nodes with runtime"""
+        """
+        Construct the endpoint URL for registering nodes with the runtime.
+        """
         return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/nodes/"
     
     async def _register_nodes(self):
-        """Register nodes with the runtime"""
+        """
+        Register node schemas and runtime metadata with the state manager.
+
+        Raises:
+            RuntimeError: If registration fails.
+        """
         async with ClientSession() as session:
             endpoint = self._get_register_endpoint()
             body = {
@@ -117,7 +129,7 @@ class Runtime:
                 "runtime_namespace": self._namespace,
                 "nodes": [
                     {
-                        "name": node.get_unique_name(),
+                        "name": node.__class__.__name__,
                         "namespace": self._namespace,
                         "inputs_schema": node.Inputs.model_json_schema(),
                         "outputs_schema": node.Outputs.model_json_schema(),
@@ -133,34 +145,29 @@ class Runtime:
                     raise RuntimeError(f"Failed to register nodes: {res}")
                 
                 return res
-                
 
-    async def _register(self, nodes: List[BaseNode]):
+    async def _register(self, nodes: List[type[BaseNode]]):
         """
-        Connect nodes to the runtime.
-        
-        This method validates and registers the provided nodes with the runtime.
-        The nodes will be available for execution when the runtime starts.
-        
+        Validate and register nodes with the runtime and state manager.
+
         Args:
-            nodes (List[BaseNode]): List of BaseNode instances to connect
-            
+            nodes (List[type[BaseNode]]): List of BaseNode subclasses to register.
+
         Raises:
-            ValueError: If any node does not inherit from BaseNode
+            ValidationError: If any node is invalid.
         """
         self._nodes = self._validate_nodes(nodes)
-        self._node_names = [node.get_unique_name() for node in nodes]
-        self._node_mapping = {node.get_unique_name(): node for node in self._nodes}
+        self._node_names = [node.__class__.__name__ for node in nodes]
+        self._node_mapping = {node.__class__.__name__: node for node in self._nodes}
 
         await self._register_nodes()
 
-
     async def _enqueue_call(self):
         """
-        Make an API call to enqueue states from the state manager.
-        
+        Request a batch of states to process from the state manager.
+
         Returns:
-            dict: Response from the state manager containing states to process
+            dict: Response from the state manager containing states to process.
         """
         async with ClientSession() as session:
             endpoint = self._get_enque_endpoint()
@@ -177,16 +184,15 @@ class Runtime:
 
     async def _enqueue(self):
         """
-        Continuously enqueue states from the state manager.
-        
-        This method runs in a loop, polling the state manager for new states
-        to process and adding them to the internal queue.
+        Poll the state manager for new states and enqueue them for processing.
+
+        This runs continuously, polling at the configured interval.
         """
         while True:
             try:
                 if self._state_queue.qsize() < self._batch_size: 
                     data = await self._enqueue_call()
-                    for state in data["states"]:
+                    for state in data.get("states", []):
                         await self._state_queue.put(state)
             except Exception as e:
                 logger.error(f"Error enqueuing states: {e}")
@@ -195,11 +201,11 @@ class Runtime:
 
     async def _notify_executed(self, state_id: str, outputs: List[BaseNode.Outputs]):
         """
-        Notify the state manager that a state has been executed successfully.
-        
+        Notify the state manager that a state was executed successfully.
+
         Args:
-            state_id (str): The ID of the executed state
-            outputs (List[BaseNode.Outputs]): The outputs from the node execution
+            state_id (str): The ID of the executed state.
+            outputs (List[BaseNode.Outputs]): Outputs from the node execution.
         """
         async with ClientSession() as session:
             endpoint = self._get_executed_endpoint(state_id)
@@ -214,11 +220,11 @@ class Runtime:
       
     async def _notify_errored(self, state_id: str, error: str):
         """
-        Notify the state manager that a state has encountered an error.
-        
+        Notify the state manager that a state execution failed.
+
         Args:
-            state_id (str): The ID of the errored state
-            error (str): The error message
+            state_id (str): The ID of the errored state.
+            error (str): The error message.
         """
         async with ClientSession() as session:
             endpoint = self._get_errored_endpoint(state_id)
@@ -231,43 +237,57 @@ class Runtime:
                 if response.status != 200:
                     logger.error(f"Failed to notify errored state {state_id}: {res}")
 
-    def _validate_nodes(self, nodes: List[BaseNode]):
+    def _validate_nodes(self, nodes: List[type[BaseNode]]):
         """
-        Validate that all nodes inherit from BaseNode.
-        
+        Validate that all provided nodes are valid BaseNode subclasses.
+
         Args:
-            nodes (List[BaseNode]): List of nodes to validate
-            
+            nodes (List[type[BaseNode]]): List of node classes to validate.
+
         Returns:
-            List[BaseNode]: The validated list of nodes
-            
+            List[type[BaseNode]]: The validated list of node classes.
+
         Raises:
-            ValueError: If any node does not inherit from BaseNode
+            ValidationError: If any node is invalid or duplicate class names are found.
         """
-        invalid_nodes = []
+        errors = []
 
         for node in nodes:
-            if not isinstance(node, BaseNode):
-                invalid_nodes.append(f"{node.__class__.__name__}")
+            if not issubclass(node, BaseNode):
+                errors.append(f"{node.__class__.__name__} does not inherit from exospherehost.BaseNode")
+            if not hasattr(node, "Inputs"):
+                errors.append(f"{node.__class__.__name__} does not have an Inputs class")
+            if not hasattr(node, "Outputs"):
+                errors.append(f"{node.__class__.__name__} does not have an Outputs class")
+            if not issubclass(node.Inputs, BaseModel):
+                errors.append(f"{node.__class__.__name__} does not have an Inputs class that inherits from pydantic.BaseModel")
+            if not issubclass(node.Outputs, BaseModel):
+                errors.append(f"{node.__class__.__name__} does not have an Outputs class that inherits from pydantic.BaseModel")
+        
+        # Find nodes with the same __class__.__name__
+        class_names = [node.__class__.__name__ for node in nodes]
+        duplicate_class_names = [name for name in set(class_names) if class_names.count(name) > 1]
+        if duplicate_class_names:
+            errors.append(f"Duplicate node class names found: {duplicate_class_names}")
 
-        if invalid_nodes:
-            raise ValueError(f"Following nodes do not inherit from exospherehost.node.BaseNode: {invalid_nodes}")
+        if len(errors) > 0:
+            raise ValidationError("Following errors while validating nodes: " + "\n".join(errors))
         
         return nodes
 
     async def _worker(self):
         """
         Worker task that processes states from the queue.
-        
-        This method runs in a loop, taking states from the queue and executing
-        the corresponding node. It handles both successful execution and errors.
+
+        Continuously fetches states from the queue, executes the corresponding node,
+        and notifies the state manager of the result.
         """
         while True:
             state = await self._state_queue.get()
 
             try:
                 node = self._node_mapping[state["node_name"]]
-                outputs = await node.execute(state["inputs"]) # type: ignore
+                outputs = await node()._execute(node.Inputs(**state["inputs"]))
 
                 if outputs is None:
                     outputs = []
@@ -282,36 +302,34 @@ class Runtime:
 
             self._state_queue.task_done() # type: ignore
 
-    async def _start(self, nodes: List[BaseNode]):
+    async def _start(self):
         """
-        Start the runtime execution.
-        
-        This method starts the enqueue polling task and spawns worker tasks
-        to process states from the queue.
-        
+        Start the runtime event loop.
+
+        Registers nodes, starts the polling and worker tasks, and runs until stopped.
+
         Raises:
-            RuntimeError: If the runtime is not connected (no nodes registered)
+            RuntimeError: If the runtime is not connected (no nodes registered).
         """
-        await self._register(nodes)
+        await self._register(self._nodes)
         
         poller = asyncio.create_task(self._enqueue())
         worker_tasks = [asyncio.create_task(self._worker()) for _ in range(self._workers)]
 
         await asyncio.gather(poller, *worker_tasks)
 
-    def start(self, nodes: List[BaseNode]):
+    def start(self):
         """
-        Start the runtime execution.
-        
-        This method starts the runtime in the current event loop or creates
-        a new one if none exists. It returns a task that can be awaited
-        or runs the runtime until completion.
-        
+        Start the runtime in the current or a new asyncio event loop.
+
+        If called from within an existing event loop, returns a task for the runtime.
+        Otherwise, runs the runtime until completion.
+
         Returns:
-            asyncio.Task: The runtime task if running in an existing event loop
+            asyncio.Task | None: The runtime task if running in an existing event loop, else None.
         """
         try:
             loop = asyncio.get_running_loop()
-            return loop.create_task(self._start(nodes))
+            return loop.create_task(self._start())
         except RuntimeError:
-            asyncio.run(self._start(nodes))
+            asyncio.run(self._start())

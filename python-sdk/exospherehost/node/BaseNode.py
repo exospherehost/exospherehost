@@ -46,8 +46,15 @@ class BaseNode(ABC):
         """
         pass
 
+    async def _execute(self, inputs: Inputs) -> Outputs | List[Outputs]:
+        """
+        Execute the node's main logic.
+        """
+        self.inputs = inputs
+        return await self.execute()
+
     @abstractmethod
-    async def execute(self, inputs: Inputs) -> Outputs | List[Outputs]:
+    async def execute(self) -> Outputs | List[Outputs]:
         """
         Execute the node's main logic.
         
@@ -68,18 +75,4 @@ class BaseNode(ABC):
             Exception: Any exception that occurs during execution will be caught
                 by the Runtime and reported as an error state.
         """
-        pass
-
-    def get_unique_name(self) -> str:
-        """
-        Get the unique name for this node instance.
-        
-        Returns the unique_name if it was provided during initialization,
-        otherwise returns the class name.
-        
-        Returns:
-            str: The unique identifier for this node instance
-        """
-        if self.unique_name is not None:
-            return self.unique_name
-        return self.__class__.__name__
+        raise NotImplementedError("execute method must be implemented by all concrete node classes")
