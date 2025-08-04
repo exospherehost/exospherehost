@@ -55,12 +55,12 @@ class Runtime:
         self._state_queue = Queue(maxsize=2*batch_size)
         self._workers = workers
         self._nodes = nodes
-        self._node_names = [node.__class__.__name__ for node in nodes]
+        self._node_names = [node.__name__ for node in nodes]
         self._state_manager_uri = state_manager_uri
         self._state_manager_version = state_manage_version
         self._poll_interval = poll_interval
         self._node_mapping = {
-            node.__class__.__name__: node for node in nodes
+            node.__name__: node for node in nodes
         }
 
         self._set_config_from_env()
@@ -131,7 +131,7 @@ class Runtime:
                 "runtime_namespace": self._namespace,
                 "nodes": [
                     {
-                        "name": node.__class__.__name__,
+                        "name": node.__name__,
                         "namespace": self._namespace,
                         "inputs_schema": node.Inputs.model_json_schema(),
                         "outputs_schema": node.Outputs.model_json_schema(),
@@ -240,18 +240,18 @@ class Runtime:
 
         for node in self._nodes:
             if not issubclass(node, BaseNode):
-                errors.append(f"{node.__class__.__name__} does not inherit from exospherehost.BaseNode")
+                errors.append(f"{node.__name__} does not inherit from exospherehost.BaseNode")
             if not hasattr(node, "Inputs"):
-                errors.append(f"{node.__class__.__name__} does not have an Inputs class")
+                errors.append(f"{node.__name__} does not have an Inputs class")
             if not hasattr(node, "Outputs"):
-                errors.append(f"{node.__class__.__name__} does not have an Outputs class")
+                errors.append(f"{node.__name__} does not have an Outputs class")
             if not issubclass(node.Inputs, BaseModel):
-                errors.append(f"{node.__class__.__name__} does not have an Inputs class that inherits from pydantic.BaseModel")
+                errors.append(f"{node.__name__} does not have an Inputs class that inherits from pydantic.BaseModel")
             if not issubclass(node.Outputs, BaseModel):
-                errors.append(f"{node.__class__.__name__} does not have an Outputs class that inherits from pydantic.BaseModel")
+                errors.append(f"{node.__name__} does not have an Outputs class that inherits from pydantic.BaseModel")
         
         # Find nodes with the same __class__.__name__
-        class_names = [node.__class__.__name__ for node in self._nodes]
+        class_names = [node.__name__ for node in self._nodes]
         duplicate_class_names = [name for name in set(class_names) if class_names.count(name) > 1]
         if duplicate_class_names:
             errors.append(f"Duplicate node class names found: {duplicate_class_names}")
@@ -295,7 +295,7 @@ class Runtime:
         Raises:
             RuntimeError: If the runtime is not connected (no nodes registered).
         """
-        await self._register(self._nodes)
+        await self._register()
         
         poller = asyncio.create_task(self._enqueue())
         worker_tasks = [asyncio.create_task(self._worker()) for _ in range(self._workers)]
