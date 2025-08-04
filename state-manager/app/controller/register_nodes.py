@@ -20,7 +20,7 @@ async def register_nodes(namespace_name: str, body: RegisterNodesRequestModel, x
             # Check if node already exists
             existing_node = await RegisteredNode.find_one(
                 RegisteredNode.name == node_data.name,
-                RegisteredNode.namespace == node_data.namespace
+                RegisteredNode.namespace == namespace_name
             )
             
             if existing_node:
@@ -28,7 +28,7 @@ async def register_nodes(namespace_name: str, body: RegisterNodesRequestModel, x
                 await existing_node.update(
                     Set({
                         RegisteredNode.runtime_name: body.runtime_name,
-                        RegisteredNode.runtime_namespace: body.runtime_namespace,
+                        RegisteredNode.runtime_namespace: namespace_name,
                         RegisteredNode.inputs_schema: node_data.inputs_schema, # type: ignore
                         RegisteredNode.outputs_schema: node_data.outputs_schema # type: ignore
                 }))
@@ -38,9 +38,9 @@ async def register_nodes(namespace_name: str, body: RegisterNodesRequestModel, x
                 # Create new node
                 new_node = RegisteredNode(
                     name=node_data.name,
-                    namespace=node_data.namespace,
+                    namespace=namespace_name,
                     runtime_name=body.runtime_name,
-                    runtime_namespace=body.runtime_namespace,
+                    runtime_namespace=namespace_name,
                     inputs_schema=node_data.inputs_schema,
                     outputs_schema=node_data.outputs_schema
                 )
@@ -50,14 +50,14 @@ async def register_nodes(namespace_name: str, body: RegisterNodesRequestModel, x
             registered_nodes.append(
                 RegisteredNodeModel(
                     name=node_data.name,
-                    namespace=node_data.namespace
+                    inputs_schema=node_data.inputs_schema,
+                    outputs_schema=node_data.outputs_schema
                 )
             )
 
         response = RegisterNodesResponseModel(
             runtime_name=body.runtime_name,
-            runtime_namespace=body.runtime_namespace,
-            registered_nodes=registered_nodes,
+            registered_nodes=registered_nodes
         )
         
         logger.info(f"Successfully registered {len(registered_nodes)} nodes for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
