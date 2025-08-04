@@ -130,7 +130,7 @@ class Runtime:
                 res = await response.json()
 
                 if response.status != 200:
-                    logger.error(f"Failed to register nodes: {res}")
+                    raise RuntimeError(f"Failed to register nodes: {res}")
                 
                 return res
                 
