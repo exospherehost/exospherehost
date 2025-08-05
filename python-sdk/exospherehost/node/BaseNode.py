@@ -42,6 +42,12 @@ class BaseNode(ABC):
         """
         pass
 
+    class Secrets(BaseModel):
+        """
+        Secrets schema for the node.
+        """
+        pass
+
     async def _execute(self, inputs: Inputs) -> Outputs | List[Outputs]:
         """
         Internal method to execute the node with validated inputs.

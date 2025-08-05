@@ -135,6 +135,9 @@ class Runtime:
                         "namespace": self._namespace,
                         "inputs_schema": node.Inputs.model_json_schema(),
                         "outputs_schema": node.Outputs.model_json_schema(),
+                        "secrets": [
+                            secret_name for secret_name in node.Secrets.model_fields.keys()
+                        ]
                     } for node in self._nodes
                 ]
             }
@@ -246,9 +249,17 @@ class Runtime:
             if not hasattr(node, "Outputs"):
                 errors.append(f"{node.__name__} does not have an Outputs class")
             if not issubclass(node.Inputs, BaseModel):
-                errors.append(f"{node.__name__} does not have an Inputs class that inherits from pydantic.BaseModel")
+                errors.append(f"{node.__name__} does not have an Inputs class that inherits from pydantic.BaseModel")                                          
             if not issubclass(node.Outputs, BaseModel):
                 errors.append(f"{node.__name__} does not have an Outputs class that inherits from pydantic.BaseModel")
+            if not hasattr(node, "Secrets"):
+                errors.append(f"{node.__name__} does not have an Secrets class")
+            if not issubclass(node.Secrets, BaseModel):
+                errors.append(f"{node.__name__} does not have an Secrets class that inherits from pydantic.BaseModel")
+            
+            for field_name, field_info in node.Secrets.model_fields.items():
+                if field_info.annotation != str:
+                    errors.append(f"{node.__name__}.Secrets field '{field_name}' must be of type str, got {field_info.annotation}")
         
         # Find nodes with the same __class__.__name__
         class_names = [node.__name__ for node in self._nodes]
