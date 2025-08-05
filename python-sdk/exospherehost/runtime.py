@@ -245,6 +245,7 @@ class Runtime:
 
                 if response.status != 200:
                     logger.error(f"Failed to get secrets for state {state_id}: {res}")
+                    return {}
                 
                 return res
 
@@ -280,7 +281,7 @@ class Runtime:
                 errors.append(f"{node.__name__} does not have an Secrets class that inherits from pydantic.BaseModel")
             
             for field_name, field_info in node.Secrets.model_fields.items():
-                if field_info.annotation != str:
+                if field_info.annotation is not str:
                     errors.append(f"{node.__name__}.Secrets field '{field_name}' must be of type str, got {field_info.annotation}")
         
         # Find nodes with the same __class__.__name__

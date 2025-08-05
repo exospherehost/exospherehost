@@ -8,7 +8,7 @@ from ..graph_template_validation_status import GraphTemplateValidationStatus
 from ..node_template_model import NodeTemplate
 from pymongo import IndexModel
 from typing import Dict
-from app.utils.encrypter import encrypter
+from app.utils.encrypter import get_encrypter
 
 class GraphTemplate(BaseDatabaseModel):
     name: str = Field(..., description="Name of the graph")
@@ -53,11 +53,6 @@ class GraphTemplate(BaseDatabaseModel):
         if not re.match(url_safe_base64_pattern, secret_value):
             raise ValueError("Value must be URL-safe base64 encoded")
         
-        # Check if the string length is valid for base64 encoding
-        # Base64 encoding increases size by ~33%, and we need at least 12 bytes nonce
-        if len(secret_value) % 4 != 0:
-            raise ValueError("Value length is not valid for base64 encoding")
-        
         # Try to decode as base64 to ensure it's valid
         try:
             decoded = base64.urlsafe_b64decode(secret_value)
@@ -68,15 +63,17 @@ class GraphTemplate(BaseDatabaseModel):
         
 
     def set_secrets(self, secrets: Dict[str, str]) -> "GraphTemplate":
-        self.secrets = {secret_name: encrypter.encrypt(secret_value) for secret_name, secret_value in secrets.items()}
+        self.secrets = {secret_name: get_encrypter().encrypt(secret_value) for secret_name, secret_value in secrets.items()}
         return self
     
     def get_secrets(self) -> Dict[str, str]:
         if not self.secrets:
             return {}
-        return {secret_name: encrypter.decrypt(secret_value) for secret_name, secret_value in self.secrets.items()}
+        return {secret_name: get_encrypter().decrypt(secret_value) for secret_name, secret_value in self.secrets.items()}
     
-    def get_secret(self, secret_name: str) -> str:
+    def get_secret(self, secret_name: str) -> str | None:
         if not self.secrets:
-            return ""
-        return encrypter.decrypt(self.secrets[secret_name])
+            return None
+        if secret_name not in self.secrets:
+            return None
+        return get_encrypter().decrypt(self.secrets[secret_name])

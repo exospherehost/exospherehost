@@ -31,4 +31,19 @@ class Encrypter:
         ciphertext = encrypted_secret_bytes[12:]
         return self._aesgcm.decrypt(nonce, ciphertext, None).decode()
 
-encrypter = Encrypter()
+_encrypter_instance = None
+
+def get_encrypter() -> Encrypter:
+    """
+    Get the Encrypter instance, creating it on first call.
+    
+    Returns:
+        Encrypter: The singleton Encrypter instance.
+        
+    Raises:
+        ValueError: If SECRETS_ENCRYPTION_KEY is not set or invalid.
+    """
+    global _encrypter_instance
+    if _encrypter_instance is None:
+        _encrypter_instance = Encrypter()
+    return _encrypter_instance

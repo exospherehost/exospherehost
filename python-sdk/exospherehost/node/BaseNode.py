@@ -50,10 +50,11 @@ class BaseNode(ABC):
 
     async def _execute(self, inputs: Inputs, secrets: Secrets) -> Outputs | List[Outputs]:
         """
-        Internal method to execute the node with validated inputs.
+        Internal method to execute the node with validated inputs and secrets.
 
         Args:
             inputs (Inputs): The validated input data for this execution.
+            secrets (Secrets): The validated secrets data for this execution.
 
         Returns:
             Outputs | List[Outputs]: The output(s) produced by the node.
