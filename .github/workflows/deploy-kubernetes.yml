@@ -31,7 +31,7 @@ jobs:
           kubectl delete secret exosphere-api-server-secrets --ignore-not-found
           kubectl create secret generic exosphere-api-server-secrets --from-literal=MONGO_URI=${{ secrets.API_SERVER_MONGO_URI }} --from-literal=MONGO_DATABASE_NAME=${{ secrets.API_SERVER_MONGO_DATABASE_NAME }} --from-literal=JWT_SECRET_KEY=${{ secrets.JWT_SECRET }}
 
-          kubectl create secret generic exosphere-state-manager-secrets --from-literal=MONGO_URI=${{ secrets.STATE_MANAGER_MONGO_URI }} --from-literal=MONGO_DATABASE_NAME=${{ secrets.STATE_MANAGER_MONGO_DATABASE_NAME }} --from-literal=STATE_MANAGER_SECRET=${{ secrets.STATE_MANAGER_SECRET }}
+          kubectl create secret generic exosphere-state-manager-secrets --from-literal=MONGO_URI=${{ secrets.STATE_MANAGER_MONGO_URI }} --from-literal=MONGO_DATABASE_NAME=${{ secrets.STATE_MANAGER_MONGO_DATABASE_NAME }} --from-literal=STATE_MANAGER_SECRET=${{ secrets.STATE_MANAGER_SECRET }} --from-literal=SECRETS_ENCRYPTION_KEY=${{ secrets.SECRETS_ENCRYPTION_KEY }}
           
           kubectl apply -f ./api-server-deployment.yaml
           kubectl apply -f ./api-server-service.yaml
