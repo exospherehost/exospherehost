@@ -1,7 +1,7 @@
 import asyncio
 import os
 from asyncio import Queue, sleep
-from typing import List
+from typing import List, Dict
 
 from pydantic import BaseModel, ValidationError
 from .node.BaseNode import BaseNode
@@ -117,6 +117,12 @@ class Runtime:
         """
         return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/nodes/"
     
+    def _get_secrets_endpoint(self, state_id: str):
+        """
+        Construct the endpoint URL for getting secrets.
+        """
+        return f"{self._state_manager_uri}/{str(self._state_manager_version)}/state/{state_id}/secrets"
+
     async def _register(self):
         """
         Register node schemas and runtime metadata with the state manager.
@@ -226,6 +232,22 @@ class Runtime:
                 if response.status != 200:
                     logger.error(f"Failed to notify errored state {state_id}: {res}")
 
+    async def _get_secrets(self, state_id: str) -> Dict[str, str]:
+        """
+        Get secrets for a state.
+        """
+        async with ClientSession() as session:
+            endpoint = self._get_secrets_endpoint(state_id)
+            headers = {"x-api-key": self._key}
+
+            async with session.get(endpoint, headers=headers) as response: # type: ignore
+                res = await response.json()
+
+                if response.status != 200:
+                    logger.error(f"Failed to get secrets for state {state_id}: {res}")
+                
+                return res
+
     def _validate_nodes(self):
         """
         Validate that all provided nodes are valid BaseNode subclasses.
@@ -282,7 +304,8 @@ class Runtime:
 
             try:
                 node = self._node_mapping[state["node_name"]]
-                outputs = await node()._execute(node.Inputs(**state["inputs"]))
+                secrets = await self._get_secrets(state["state_id"])
+                outputs = await node()._execute(node.Inputs(**state["inputs"]), node.Secrets(**secrets))
 
                 if outputs is None:
                     outputs = []

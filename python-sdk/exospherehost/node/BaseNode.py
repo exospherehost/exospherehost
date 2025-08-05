@@ -48,7 +48,7 @@ class BaseNode(ABC):
         """
         pass
 
-    async def _execute(self, inputs: Inputs) -> Outputs | List[Outputs]:
+    async def _execute(self, inputs: Inputs, secrets: Secrets) -> Outputs | List[Outputs]:
         """
         Internal method to execute the node with validated inputs.
 
@@ -59,6 +59,7 @@ class BaseNode(ABC):
             Outputs | List[Outputs]: The output(s) produced by the node.
         """
         self.inputs = inputs
+        self.secrets = secrets
         return await self.execute()
 
     @abstractmethod
