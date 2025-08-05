@@ -121,7 +121,7 @@ class Runtime:
         """
         Construct the endpoint URL for getting secrets.
         """
-        return f"{self._state_manager_uri}/{str(self._state_manager_version)}/state/{state_id}/secrets"
+        return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/state/{state_id}/secrets"
 
     async def _register(self):
         """
