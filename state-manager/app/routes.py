@@ -25,6 +25,10 @@ from .models.register_nodes_request import RegisterNodesRequestModel
 from .models.register_nodes_response import RegisterNodesResponseModel
 from .controller.register_nodes import register_nodes
 
+from .models.secrets_response import SecretsResponseModel
+from .controller.get_secrets import get_secrets
+from .models.db.state import State
+
 
 
 logger = LogsManager().get_logger()
@@ -148,3 +152,23 @@ async def register_nodes_route(namespace_name: str, body: RegisterNodesRequestMo
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
 
     return await register_nodes(namespace_name, body, x_exosphere_request_id)
+
+
+@router.get(
+    "/state/{state_id}/secrets",
+    response_model=SecretsResponseModel,
+    status_code=status.HTTP_200_OK,
+    response_description="Secrets retrieved successfully",
+    tags=["state"]
+)
+async def get_secrets_route(namespace_name: str, state_id: str, request: Request, api_key: str = Depends(check_api_key)):
+    x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
+
+    if api_key:
+        logger.info(f"API key is valid", x_exosphere_request_id=x_exosphere_request_id)
+    else:
+        logger.error(f"API key is invalid", x_exosphere_request_id=x_exosphere_request_id)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+
+    
+    return await get_secrets(namespace_name, state_id, x_exosphere_request_id)

@@ -130,6 +130,55 @@ class RobustNode(BaseNode):
 ```
 Error handling is automatically handled by the runtime and the state manager.
 
+### Working with Secrets
+
+Secrets allow you to securely manage sensitive configuration data like API keys, database credentials, and authentication tokens. Here's how to use secrets in your nodes:
+
+```python
+from exospherehost import Runtime, BaseNode
+from pydantic import BaseModel
+
+class APINode(BaseNode):
+    class Inputs(BaseModel):
+        user_id: str
+        query: str
+
+    class Outputs(BaseModel):
+        response: dict
+        status: str
+
+    class Secrets(BaseModel):
+        api_key: str
+        api_endpoint: str
+        database_url: str
+
+    async def execute(self) -> Outputs:
+        # Access secrets via self.secrets
+        headers = {"Authorization": f"Bearer {self.secrets.api_key}"}
+        
+        # Use secrets for API calls
+        import httpx
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.secrets.api_endpoint}/process",
+                headers=headers,
+                json={"user_id": self.inputs.user_id, "query": self.inputs.query}
+            )
+        
+        return self.Outputs(
+            response=response.json(),
+            status="success"
+        )
+```
+
+**Key points about secrets:**
+
+- **Security**: Secrets are stored securely by the ExosphereHost Runtime and are never exposed in logs or error messages
+- **Validation**: The `Secrets` class uses Pydantic for automatic validation of secret values
+- **Access**: Secrets are available via `self.secrets` during node execution
+- **Types**: Common secret types include API keys, database credentials, encryption keys, and authentication tokens
+- **Injection**: Secrets are injected by the Runtime at execution time, so you don't need to handle them manually
+
 ## Integration with ExosphereHost Platform
 
 The Python SDK integrates seamlessly with the ExosphereHost platform, providing:

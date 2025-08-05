@@ -18,6 +18,7 @@ async def create_states(namespace_name: str, body: CreateRequestModel, x_exosphe
                 State(
                     node_name=state.node_name,
                     namespace_name=namespace_name,
+                    graph_name=state.graph_name,
                     status=StateStatusEnum.CREATED,
                     inputs=state.inputs,
                     outputs={},
@@ -35,7 +36,7 @@ async def create_states(namespace_name: str, body: CreateRequestModel, x_exosphe
         
         return CreateResponseModel(
             status=StateStatusEnum.CREATED,
-            states=[ResponseStateModel(state_id=str(state.id), node_name=state.node_name, inputs=state.inputs, created_at=state.created_at) for state in newStates]
+            states=[ResponseStateModel(state_id=str(state.id), node_name=state.node_name, graph_name=state.graph_name, inputs=state.inputs, created_at=state.created_at) for state in newStates]
         )
 
     except Exception as e:

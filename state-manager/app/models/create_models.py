@@ -6,12 +6,14 @@ from datetime import datetime
 
 class RequestStateModel(BaseModel):
     node_name: str = Field(..., description="Name of the node of the state")
+    graph_name: str = Field(..., description="Name of the graph template for this state")
     inputs: dict[str, Any] = Field(..., description="Inputs of the state")
 
 
 class ResponseStateModel(BaseModel):
     state_id: str = Field(..., description="ID of the state")
     node_name: str = Field(..., description="Name of the node of the state")
+    graph_name: str = Field(..., description="Name of the graph template for this state")
     inputs: dict[str, Any] = Field(..., description="Inputs of the state")
     created_at: datetime = Field(..., description="Date and time when the state was created")
 
