@@ -3,13 +3,19 @@ import pytest
 import jwt
 from starlette.responses import JSONResponse
 
-from app.auth.controllers.refresh_access_token import refresh_access_token, JWT_SECRET_KEY, JWT_ALGORITHM, JWT_EXPIRES_IN
-from app.auth.controllers.refresh_access_token import RefreshTokenRequest
-from app.auth.controllers.refresh_access_token import TokenResponse
-from app.auth.controllers.refresh_access_token import TokenType
+from app.auth.controllers.refresh_access_token import (
+    refresh_access_token,
+    JWT_SECRET_KEY,
+    JWT_ALGORITHM,
+    JWT_EXPIRES_IN
+)
+from app.auth.models.refresh_token_request import RefreshTokenRequest
+from app.auth.models.token_response import TokenResponse
+from app.auth.models.token_type_enum import TokenType
 
 @pytest.mark.asyncio
 async def test_refresh_access_token_success(monkeypatch):
+    # Set fake secret key for testing
     os.environ["JWT_SECRET_KEY"] = "test_secret"
 
     class DummyUser:
@@ -19,11 +25,15 @@ async def test_refresh_access_token_success(monkeypatch):
         verification_status = "verified"
         status = "active"
 
-    async def mock_user_get(_): return DummyUser()
-    async def mock_project_get(_): return None
+    async def mock_user_get(_):
+        return DummyUser()
 
-    monkeypatch.setattr("api_server.refresh_access_token.User.get", mock_user_get)
-    monkeypatch.setattr("api_server.refresh_access_token.Project.get", mock_project_get)
+    async def mock_project_get(_):
+        return None  # no project for this test
+
+    # Patch User.get and Project.get
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.User.get", mock_user_get)
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.Project.get", mock_project_get)
 
     import datetime
     payload = {
@@ -42,6 +52,7 @@ async def test_refresh_access_token_success(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_refresh_access_token_invalid_token(monkeypatch):
+    # Create token with wrong type
     bad_token = jwt.encode({"token_type": "wrong"}, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
     req = RefreshTokenRequest(refresh_token=bad_token)
     res = await refresh_access_token(req, "req-id")
