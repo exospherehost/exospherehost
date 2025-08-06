@@ -1,5 +1,5 @@
 from pydantic import Field, BaseModel
-from typing import Any, Optional, List
+from typing import Any, Optional, List, Set
 
 
 class NodeTemplate(BaseModel):
@@ -8,4 +8,4 @@ class NodeTemplate(BaseModel):
     identifier: str = Field(..., description="Identifier of the node")
     inputs: dict[str, Any] = Field(..., description="Inputs of the node")
     store: dict[str, Any] = Field(..., description="Upsert data to store object for the node")
-    next_nodes: Optional[List[str]] = Field(None, description="Next nodes to execute")
+    next_nodes: Optional[Set[str]] = Field(None, description="Next nodes to execute")
