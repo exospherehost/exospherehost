@@ -9,6 +9,7 @@ from pymongo import IndexModel
 from typing import Dict
 from app.utils.encrypter import get_encrypter
 
+
 class GraphTemplate(BaseDatabaseModel):
     name: str = Field(..., description="Name of the graph")
     namespace: str = Field(..., description="Namespace of the graph")
@@ -25,6 +26,18 @@ class GraphTemplate(BaseDatabaseModel):
                 name="unique_name_namespace"
             )
         ]
+
+    @property
+    def node_identifier_map(self) -> Dict[str, NodeTemplate]:
+        """Create a dictionary mapping node identifiers to nodes for O(1) lookup."""
+        return {node.identifier: node for node in self.nodes}
+
+    def get_node_by_identifier(self, identifier: str) -> NodeTemplate | None:
+        """Get a node by its identifier using O(1) dictionary lookup."""
+        node_map = self.node_identifier_map
+        if identifier not in node_map:
+            return None
+        return node_map[identifier]
 
     @field_validator('secrets')
     @classmethod

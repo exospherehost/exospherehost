@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 class RequestStateModel(BaseModel):
-    identifier: str = Field(..., description="Name of the node of the state")
+    identifier: str = Field(..., description="Unique identifier of the node template within the graph template")
     inputs: dict[str, Any] = Field(..., description="Inputs of the state")
 
 

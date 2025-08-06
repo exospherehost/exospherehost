@@ -6,6 +6,7 @@ from datetime import datetime
 class StateModel(BaseModel):
     state_id: str = Field(..., description="ID of the state")
     node_name: str = Field(..., description="Name of the node of the state")
+    identifier: str = Field(..., description="Identifier of the node for which state is created")
     inputs: dict[str, Any] = Field(..., description="Inputs of the state")
     created_at: datetime = Field(..., description="Date and time when the state was created")
 

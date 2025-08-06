@@ -14,10 +14,10 @@ logger = LogsManager().get_logger()
 
 
 def get_node_template(graph_template: GraphTemplate, identifier: str) -> NodeTemplate:
-    for node in graph_template.nodes:
-        if node.identifier == identifier:
-            return node
-    raise HTTPException(status_code=404, detail="Node template not found")
+    node = graph_template.get_node_by_identifier(identifier)
+    if not node:
+        raise HTTPException(status_code=404, detail="Node template not found")
+    return node
 
 
 async def create_states(namespace_name: str, graph_name: str, body: CreateRequestModel, x_exosphere_request_id: str) -> CreateResponseModel:

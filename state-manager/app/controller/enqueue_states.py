@@ -40,6 +40,7 @@ async def enqueue_states(namespace_name: str, body: EnqueueRequestModel, x_exosp
                 StateModel(
                     state_id=str(state.id),
                     node_name=state.node_name,
+                    identifier=state.identifier,
                     inputs=state.inputs,
                     created_at=state.created_at
                 )
