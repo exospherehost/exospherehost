@@ -11,6 +11,9 @@ from app.auth.controllers.refresh_access_token import (
 from app.auth.models.refresh_token_request import RefreshTokenRequest
 from app.auth.models.token_response import TokenResponse
 from app.auth.models.token_type_enum import TokenType
+from app.user.models.user_status_enum import UserStatusEnum
+from app.user.models.verification_status_enum import VerificationStatusEnum
+
 
 @pytest.mark.asyncio
 async def test_refresh_access_token_success(monkeypatch):
@@ -20,8 +23,8 @@ async def test_refresh_access_token_success(monkeypatch):
         id = "507f1f77bcf86cd799439011"
         name = "John"
         type = "admin"
-        verification_status = "verified"
-        status = "active"  # must be active to pass
+        verification_status = VerificationStatusEnum.VERIFIED.value
+        status = UserStatusEnum.ACTIVE.value
 
     class MockUser:
         @staticmethod
@@ -50,6 +53,7 @@ async def test_refresh_access_token_success(monkeypatch):
     decoded = jwt.decode(res.access_token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
     assert decoded["user_id"] == "507f1f77bcf86cd799439011"
     assert decoded["token_type"] == "access"
+
 
 @pytest.mark.asyncio
 async def test_refresh_access_token_invalid_token(monkeypatch):
