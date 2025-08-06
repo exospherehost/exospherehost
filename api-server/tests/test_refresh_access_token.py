@@ -21,17 +21,20 @@ async def test_refresh_access_token_success(monkeypatch):
         name = "John"
         type = "admin"
         verification_status = "verified"
-        status = "active"
+        status = "active"  # must be active to pass
 
-    async def mock_user_get(_id):
-        return DummyUser()
+    class MockUser:
+        @staticmethod
+        async def get(_id):
+            return DummyUser()
 
-    async def mock_project_get(_id):
-        return None
+    class MockProject:
+        @staticmethod
+        async def get(_id):
+            return None
 
-    # Patch controller dependencies
-    monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", type("User", (), {"get": staticmethod(mock_user_get)}))
-    monkeypatch.setattr("app.auth.controllers.refresh_access_token.Project", type("Project", (), {"get": staticmethod(mock_project_get)}))
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.Project", MockProject)
 
     import datetime
     payload = {
@@ -44,9 +47,9 @@ async def test_refresh_access_token_success(monkeypatch):
     res = await refresh_access_token(req, "req-id")
 
     assert isinstance(res, TokenResponse)
-    decoded_access = jwt.decode(res.access_token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-    assert decoded_access["user_id"] == "507f1f77bcf86cd799439011"
-    assert decoded_access["token_type"] == "access"
+    decoded = jwt.decode(res.access_token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+    assert decoded["user_id"] == "507f1f77bcf86cd799439011"
+    assert decoded["token_type"] == "access"
 
 @pytest.mark.asyncio
 async def test_refresh_access_token_invalid_token(monkeypatch):
