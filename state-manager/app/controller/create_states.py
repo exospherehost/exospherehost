@@ -56,7 +56,7 @@ async def create_states(namespace_name: str, graph_name: str, body: CreateReques
         
         return CreateResponseModel(
             status=StateStatusEnum.CREATED,
-            states=[ResponseStateModel(state_id=str(state.id), node_name=state.node_name, graph_name=state.graph_name, inputs=state.inputs, created_at=state.created_at) for state in newStates]
+            states=[ResponseStateModel(state_id=str(state.id), identifier=state.identifier, node_name=state.node_name, graph_name=state.graph_name, inputs=state.inputs, created_at=state.created_at) for state in newStates]
         )
 
     except Exception as e:
