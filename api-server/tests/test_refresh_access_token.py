@@ -1,4 +1,3 @@
-import os
 import pytest
 import jwt
 from starlette.responses import JSONResponse
@@ -15,29 +14,28 @@ from app.auth.models.token_type_enum import TokenType
 
 @pytest.mark.asyncio
 async def test_refresh_access_token_success(monkeypatch):
-    # Set fake secret key for testing
-    os.environ["JWT_SECRET_KEY"] = "test_secret"
+    monkeypatch.setenv("JWT_SECRET_KEY", "test_secret")
 
     class DummyUser:
-        id = "123"
+        id = "507f1f77bcf86cd799439011"
         name = "John"
         type = "admin"
         verification_status = "verified"
         status = "active"
 
-    async def mock_user_get(_):
+    async def mock_user_get(_id):
         return DummyUser()
 
-    async def mock_project_get(_):
-        return None  # no project for this test
+    async def mock_project_get(_id):
+        return None
 
-    # Patch User.get and Project.get
-    monkeypatch.setattr("app.auth.controllers.refresh_access_token.User.get", mock_user_get)
-    monkeypatch.setattr("app.auth.controllers.refresh_access_token.Project.get", mock_project_get)
+    # Patch controller dependencies
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", type("User", (), {"get": staticmethod(mock_user_get)}))
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.Project", type("Project", (), {"get": staticmethod(mock_project_get)}))
 
     import datetime
     payload = {
-        "user_id": "123",
+        "user_id": "507f1f77bcf86cd799439011",
         "token_type": TokenType.refresh.value,
         "exp": int((datetime.datetime.now() + datetime.timedelta(seconds=JWT_EXPIRES_IN)).timestamp())
     }
@@ -47,14 +45,16 @@ async def test_refresh_access_token_success(monkeypatch):
 
     assert isinstance(res, TokenResponse)
     decoded_access = jwt.decode(res.access_token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-    assert decoded_access["user_id"] == "123"
+    assert decoded_access["user_id"] == "507f1f77bcf86cd799439011"
     assert decoded_access["token_type"] == "access"
 
 @pytest.mark.asyncio
 async def test_refresh_access_token_invalid_token(monkeypatch):
-    # Create token with wrong type
+    monkeypatch.setenv("JWT_SECRET_KEY", "test_secret")
+
     bad_token = jwt.encode({"token_type": "wrong"}, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
     req = RefreshTokenRequest(refresh_token=bad_token)
     res = await refresh_access_token(req, "req-id")
+
     assert isinstance(res, JSONResponse)
     assert res.status_code == 401
