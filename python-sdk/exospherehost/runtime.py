@@ -306,7 +306,7 @@ class Runtime:
             try:
                 node = self._node_mapping[state["node_name"]]
                 secrets = await self._get_secrets(state["state_id"])
-                outputs = await node()._execute(node.Inputs(**state["inputs"]), node.Secrets(**secrets))
+                outputs = await node()._execute(node.Inputs(**state["inputs"]), node.Secrets(**secrets["secrets"]))
 
                 if outputs is None:
                     outputs = []

@@ -47,12 +47,7 @@ class GraphTemplate(BaseDatabaseModel):
         # 12 bytes nonce + minimum ciphertext + base64 encoding
         if len(secret_value) < 32:  # Minimum length for encrypted string
             raise ValueError("Value appears to be too short for an encrypted string")
-        
-        # Check if the string contains only URL-safe base64 characters
-        url_safe_base64_pattern = r'^[A-Za-z0-9_-]+$'
-        if not re.match(url_safe_base64_pattern, secret_value):
-            raise ValueError("Value must be URL-safe base64 encoded")
-        
+               
         # Try to decode as base64 to ensure it's valid
         try:
             decoded = base64.urlsafe_b64decode(secret_value)
