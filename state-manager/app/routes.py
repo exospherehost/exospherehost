@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, Request, Depends, HTTPException
+from fastapi import APIRouter, status, Request, Depends, HTTPException, BackgroundTasks
 from uuid import uuid4
 from bson import ObjectId
 
@@ -27,7 +27,6 @@ from .controller.register_nodes import register_nodes
 
 from .models.secrets_response import SecretsResponseModel
 from .controller.get_secrets import get_secrets
-from fastapi import BackgroundTasks
 
 logger = LogsManager().get_logger()
 
