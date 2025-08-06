@@ -2,11 +2,14 @@ from app.singletons.logs_manager import LogsManager
 from app.models.graph_models import UpsertGraphTemplateRequest, UpsertGraphTemplateResponse
 from app.models.db.graph_template_model import GraphTemplate
 from app.models.graph_template_validation_status import GraphTemplateValidationStatus
+from app.tasks.verify_graph import verify_graph
+
+from fastapi import BackgroundTasks
 from beanie.operators import Set
 
 logger = LogsManager().get_logger()
 
-async def upsert_graph_template(namespace_name: str, graph_name: str, body: UpsertGraphTemplateRequest, x_exosphere_request_id: str) -> UpsertGraphTemplateResponse:
+async def upsert_graph_template(namespace_name: str, graph_name: str, body: UpsertGraphTemplateRequest, x_exosphere_request_id: str, background_tasks: BackgroundTasks) -> UpsertGraphTemplateResponse:
     try:
         graph_template = await GraphTemplate.find_one(
             GraphTemplate.name == graph_name,
@@ -42,6 +45,8 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
                     validation_errors=[]
                 ).set_secrets(body.secrets)
             )
+
+        background_tasks.add_task(verify_graph, graph_template)
 
         return UpsertGraphTemplateResponse(
             nodes=graph_template.nodes,
