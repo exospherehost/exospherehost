@@ -55,13 +55,13 @@ async def enqueue_state(namespace_name: str, body: EnqueueRequestModel, request:
 
 
 @router.post(
-    "/states/create",
+    "/graph/{graph_name}/states/create",
     response_model=CreateResponseModel,
     status_code=status.HTTP_200_OK,
     response_description="States created successfully",
     tags=["state"]
 )
-async def create_state(namespace_name: str, body: CreateRequestModel, request: Request, api_key: str = Depends(check_api_key)):
+async def create_state(namespace_name: str, graph_name: str, body: CreateRequestModel, request: Request, api_key: str = Depends(check_api_key)):
 
     x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
 
@@ -71,7 +71,7 @@ async def create_state(namespace_name: str, body: CreateRequestModel, request: R
         logger.error(f"API key is invalid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
 
-    return await create_states(namespace_name, body, x_exosphere_request_id)
+    return await create_states(namespace_name, graph_name, body, x_exosphere_request_id)
 
 
 @router.post(
