@@ -5,7 +5,6 @@ from app.models.db.registered_node import RegisteredNode
 from beanie.operators import In
 
 async def verify_nodes_names(nodes: list[NodeTemplate], errors: list[str]):
-    errors = []
     for node in nodes:
         if node.node_name is None or node.node_name == "":
             errors.append(f"Node {node.identifier} has no name")
@@ -24,7 +23,7 @@ async def verify_node_exists(nodes: list[NodeTemplate], graph_namespace: str, er
         RegisteredNode.namespace == graph_namespace
     ).to_list()
     exospherehost_node_names = [
-        node.name for node in graph_namespace_database_nodes if node.namespace == "exospherehost"
+        node.node_name for node in nodes if node.namespace == "exospherehost"
     ]
     exospherehost_database_nodes = await RegisteredNode.find(
         In(RegisteredNode.name, exospherehost_node_names),
