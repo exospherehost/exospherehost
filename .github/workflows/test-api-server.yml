@@ -43,6 +43,9 @@ jobs:
         run: |
           uv sync --group dev
 
+      - name: Set JWT secret for tests
+        run: echo "JWT_SECRET_KEY=test_secret" >> $GITHUB_ENV
+
       - name: Run tests with pytest and coverage
         working-directory: api-server
         run: |
