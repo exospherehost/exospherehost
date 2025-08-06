@@ -27,17 +27,12 @@ class GraphTemplate(BaseDatabaseModel):
             )
         ]
 
-    @property
-    def node_identifier_map(self) -> Dict[str, NodeTemplate]:
-        """Create a dictionary mapping node identifiers to nodes for O(1) lookup."""
-        return {node.identifier: node for node in self.nodes}
-
     def get_node_by_identifier(self, identifier: str) -> NodeTemplate | None:
         """Get a node by its identifier using O(1) dictionary lookup."""
-        node_map = self.node_identifier_map
-        if identifier not in node_map:
-            return None
-        return node_map[identifier]
+        for node in self.nodes:
+            if node.identifier == identifier:
+                return node
+        return None
 
     @field_validator('secrets')
     @classmethod
