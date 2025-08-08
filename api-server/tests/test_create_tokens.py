@@ -1,28 +1,18 @@
 import pytest
-from bson import ObjectId
+import jwt
 from starlette.responses import JSONResponse
-from app.auth.controllers.create_token import create_token
+
+from app.auth.controllers.create_token import create_token, JWT_SECRET_KEY, JWT_ALGORITHM
 from app.auth.models.token_request import TokenRequest
 from app.auth.models.token_response import TokenResponse
 from app.user.models.user_status_enum import UserStatusEnum
 from app.user.models.verification_status_enum import VerificationStatusEnum
-from app.auth.models.token_type_enum import TokenType
-
-
-def assert_json_response(res, expected_status):
-    if isinstance(res, JSONResponse):
-        assert res.status_code == expected_status
-    elif isinstance(res, TokenResponse):
-        raise AssertionError(f"Expected JSONResponse but got TokenResponse: {res.json()}")
-    else:
-        raise AssertionError(f"Unexpected return type: {type(res)}")
 
 
 @pytest.mark.asyncio
 async def test_create_token_success(monkeypatch):
     class DummyUser:
-        identifier = "user"
-        id = ObjectId("507f1f77bcf86cd799439011")
+        id = "507f1f77bcf86cd799439011"
         name = "John"
         type = "admin"
         verification_status = VerificationStatusEnum.VERIFIED.value
@@ -35,14 +25,24 @@ async def test_create_token_success(monkeypatch):
         return DummyUser()
 
     class MockUser:
-        identifier = "user"
+        identifier = "identifier"
         find_one = staticmethod(mock_find_one)
 
+    class MockProject:
+        @staticmethod
+        async def get(_id):
+            return None
+
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
+    monkeypatch.setattr("app.auth.controllers.create_token.Project", MockProject)
 
     req = TokenRequest(identifier="user", credential="pass", project=None, satellites=None)
     res = await create_token(req, "req-id")
+
     assert isinstance(res, TokenResponse)
+    decoded = jwt.decode(res.access_token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+    assert decoded["user_id"] == "507f1f77bcf86cd799439011"
+    assert decoded["token_type"] == "access"
 
 
 @pytest.mark.asyncio
@@ -51,25 +51,24 @@ async def test_create_token_invalid_user(monkeypatch):
         return None
 
     class MockUser:
-        identifier = "user"
+        identifier = "identifier"
         find_one = staticmethod(mock_find_one)
 
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
 
     req = TokenRequest(identifier="bad", credential="pass", project=None, satellites=None)
     res = await create_token(req, "req-id")
-    assert_json_response(res, 401)
+
+    assert isinstance(res, JSONResponse)
+    assert res.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_create_token_inactive_user(monkeypatch):
     class DummyUser:
-        identifier = "user"
-        id = ObjectId()
+        id = "507f1f77bcf86cd799439011"
         verification_status = VerificationStatusEnum.VERIFIED.value
         status = UserStatusEnum.INACTIVE.value
-        name = "John"
-        type = "admin"
 
         def verify_credential(self, cred):
             return True
@@ -78,25 +77,23 @@ async def test_create_token_inactive_user(monkeypatch):
         return DummyUser()
 
     class MockUser:
-        identifier = "user"
         find_one = staticmethod(mock_find_one)
 
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
 
     req = TokenRequest(identifier="user", credential="pass", project=None, satellites=None)
     res = await create_token(req, "req-id")
-    assert_json_response(res, 403)
+
+    assert isinstance(res, JSONResponse)
+    assert res.status_code == 403
 
 
 @pytest.mark.asyncio
 async def test_create_token_unverified_user(monkeypatch):
     class DummyUser:
-        identifier = "user"
-        id = ObjectId()
-        verification_status = VerificationStatusEnum.UNVERIFIED.value
+        id = "507f1f77bcf86cd799439011"
+        verification_status = VerificationStatusEnum.NOT_VERIFIED.value
         status = UserStatusEnum.ACTIVE.value
-        name = "John"
-        type = "admin"
 
         def verify_credential(self, cred):
             return True
@@ -105,27 +102,29 @@ async def test_create_token_unverified_user(monkeypatch):
         return DummyUser()
 
     class MockUser:
-        identifier = "user"
         find_one = staticmethod(mock_find_one)
 
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
 
     req = TokenRequest(identifier="user", credential="pass", project=None, satellites=None)
     res = await create_token(req, "req-id")
-    assert_json_response(res, 403)
+
+    assert isinstance(res, JSONResponse)
+    assert res.status_code == 403
 
 
 @pytest.mark.asyncio
 async def test_create_token_exception(monkeypatch):
-    async def mock_find_one(_query):
+    async def bad_find_one(_query):
         raise Exception("DB error")
 
     class MockUser:
-        identifier = "user"
-        find_one = staticmethod(mock_find_one)
+        find_one = staticmethod(bad_find_one)
 
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
 
     req = TokenRequest(identifier="user", credential="pass", project=None, satellites=None)
     res = await create_token(req, "req-id")
-    assert_json_response(res, 500)
+
+    assert isinstance(res, JSONResponse)
+    assert res.status_code == 500
