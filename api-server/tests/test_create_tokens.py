@@ -1,4 +1,3 @@
-from logging.config import IDENTIFIER
 import pytest
 import jwt
 from starlette.responses import JSONResponse
@@ -26,7 +25,6 @@ async def test_create_token_success(monkeypatch):
         return DummyUser()
 
     class MockUser:
-        identifier = "identifier"
         find_one = staticmethod(mock_find_one)
 
     class MockProject:
