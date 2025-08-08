@@ -66,6 +66,7 @@ async def test_create_token_invalid_user(monkeypatch):
 @pytest.mark.asyncio
 async def test_create_token_inactive_user(monkeypatch):
     class DummyUser:
+        type="admin"
         name="john"
         id = "507f1f77bcf86cd799439011"
         verification_status = VerificationStatusEnum.VERIFIED.value
@@ -93,6 +94,7 @@ async def test_create_token_inactive_user(monkeypatch):
 @pytest.mark.asyncio
 async def test_create_token_unverified_user(monkeypatch):
     class DummyUser:
+        type="admin"
         name="john"
         id = "507f1f77bcf86cd799439011"
         verification_status = VerificationStatusEnum.NOT_VERIFIED.value
