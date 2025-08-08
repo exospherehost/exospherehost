@@ -29,6 +29,7 @@ def make_token(user_id, token_type=TokenType.refresh.value, exp_seconds=JWT_EXPI
 @pytest.mark.asyncio
 async def test_refresh_access_token_success(monkeypatch):
     class DummyUser:
+        name="john"
         type="dummy"
         id = "507f1f77bcf86cd799439011"
         verification_status = VerificationStatusEnum.VERIFIED.value
@@ -72,7 +73,7 @@ async def test_refresh_access_token_expired_token(monkeypatch):
     req = RefreshTokenRequest(refresh_token=token)
     res = await refresh_access_token(req, "req-id")
     assert isinstance(res, JSONResponse)
-    assert res.status_code == 404
+    assert res.status_code == 401
 
 
 @pytest.mark.asyncio

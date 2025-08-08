@@ -25,6 +25,7 @@ async def test_create_token_success(monkeypatch):
         return DummyUser()
 
     class MockUser:
+        identifier="identifier_field"
         find_one = staticmethod(mock_find_one)
 
     class MockProject:
