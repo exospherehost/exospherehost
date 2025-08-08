@@ -34,6 +34,7 @@ async def test_refresh_access_token_success(monkeypatch):
         id = "507f1f77bcf86cd799439011"
         verification_status = VerificationStatusEnum.VERIFIED.value
         status = UserStatusEnum.ACTIVE.value
+        identifier="none"
 
     class MockUser:
         @staticmethod

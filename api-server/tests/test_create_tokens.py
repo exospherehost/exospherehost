@@ -1,3 +1,4 @@
+from logging.config import IDENTIFIER
 import pytest
 import jwt
 from starlette.responses import JSONResponse
@@ -17,7 +18,7 @@ async def test_create_token_success(monkeypatch):
         type = "admin"
         verification_status = VerificationStatusEnum.VERIFIED.value
         status = UserStatusEnum.ACTIVE.value
-
+        identifier="alpha"
         def verify_credential(self, cred):
             return True
 
