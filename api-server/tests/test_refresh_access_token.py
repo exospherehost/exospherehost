@@ -116,6 +116,7 @@ async def test_refresh_access_token_inactive_user(monkeypatch):
 @pytest.mark.asyncio
 async def test_refresh_access_token_unverified_user(monkeypatch):
     class DummyUser:
+        name="john"
         id = "507f1f77bcf86cd799439011"
         verification_status = VerificationStatusEnum.NOT_VERIFIED.value
         status = UserStatusEnum.ACTIVE.value
