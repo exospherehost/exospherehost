@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from exospherehost import Runtime
 from nodes.list_s3_files import ListS3FilesNode
+from nodes.download_s3_file import DownloadS3FileNode
 
 # Load environment variables from .env file
 # EXOSPHERE_STATE_MANAGER_URI is the URI of the state manager
@@ -10,5 +11,5 @@ load_dotenv()
 Runtime(
     name="cloud-storage-runtime",
     namespace="exospherehost",
-    nodes=[ListS3FilesNode]
+    nodes=[ListS3FilesNode, DownloadS3FileNode]
 ).start()
