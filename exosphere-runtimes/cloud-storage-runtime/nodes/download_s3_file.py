@@ -1,7 +1,5 @@
 import boto3
-import os
 from exospherehost import BaseNode
-from typing import List
 from pydantic import BaseModel
 
 
