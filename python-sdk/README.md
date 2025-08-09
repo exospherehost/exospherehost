@@ -23,7 +23,7 @@ pip install exospherehost
 
 ## Quick Start
 
-> Important: In v1, all fields in `Inputs`, `Outputs`, and `Secrets` must be strings. Serialize complex data (e.g., JSON) and parse inside your node.
+> Important: In v1, all fields in `Inputs`, `Outputs`, and `Secrets` must be strings. If you need to pass complex data (e.g., JSON), serialize the data to a string first, then parse that string within your node.
 
 ### Basic Node Creation
 
@@ -170,9 +170,16 @@ class APINode(BaseNode):
                 json={"user_id": self.inputs.user_id, "query": self.inputs.query}
             )
         
-        # Serialize non-string data to string (e.g., JSON)
-        response_str = http_response.text or json.dumps(http_response.json())
-        
+        # Serialize body: prefer JSON if valid; fallback to text or empty string
+        response_text = http_response.text or ""
+        if response_text:
+            try:
+                response_str = json.dumps(http_response.json())
+            except Exception:
+                response_str = response_text
+        else:
+            response_str = ""
+
         return self.Outputs(
             response=response_str,
             status="success"
