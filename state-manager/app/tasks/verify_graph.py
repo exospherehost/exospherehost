@@ -4,6 +4,7 @@ from app.models.db.registered_node import RegisteredNode
 from app.singletons.logs_manager import LogsManager
 from beanie.operators import In
 from json_schema_to_pydantic import create_model
+from collections import deque
 
 logger = LogsManager().get_logger()
 
@@ -103,7 +104,7 @@ async def verify_inputs(graph_nodes: list[NodeTemplate], database_nodes: list[Re
     
     for node in graph_nodes:
         try:
-            model_class = create_model(database_node.inputs)
+            model_class = create_model(look_up_table[node.identifier]["database_node"].inputs_schema)
 
             for field_name, field_info in model_class.model_fields.items():
                 if field_info.annotation is not str:
@@ -118,15 +119,29 @@ async def verify_inputs(graph_nodes: list[NodeTemplate], database_nodes: list[Re
                 splits = look_up_table[node.identifier]["graph_node"].inputs[field_name].split("${{")
                 for split in splits[1:]:
                     if "}}" in split:
-                        output_field_name = split.split("}}")[0].strip()
-                        identifier = output_field_name.split(".")[0].strip()
-                        field = output_field_name.split(".")[2].strip()
+
+                        identifier = None
+                        field = None
+
+                        syntax_string = split.split("}}")[0].strip()
+
+                        if syntax_string.startswith("identifier.") and len(syntax_string.split(".")) == 3:
+                            identifier = syntax_string.split(".")[1].strip()
+                            field = syntax_string.split(".")[2].strip()
+                        else:
+                            errors.append(f"{node.node_name}.Inputs field '{field_name}' references field {syntax_string} which is not a valid output field")
+                            continue
                         
+                        if identifier is None or field is None:
+                            errors.append(f"{node.node_name}.Inputs field '{field_name}' references field {syntax_string} which is not a valid output field")
+                            continue
+
                         if identifier not in dependencies_graph[node.identifier]:
                             errors.append(f"{node.node_name}.Inputs field '{field_name}' references node {identifier} which is not a dependency of {node.identifier}")
                             continue
                         
-                        if field not in look_up_table[identifier]["database_node"].outputs.keys():
+                        output_model_class = create_model(look_up_table[identifier]["database_node"].outputs_schema)
+                        if field not in output_model_class.model_fields.keys():
                             errors.append(f"{node.node_name}.Inputs field '{field_name}' references field {field} of node {identifier} which is not a valid output field")
                             continue
                 
@@ -173,11 +188,14 @@ async def verify_topology(graph_nodes: list[NodeTemplate], errors: list[str]):
         return
     
     # verify that the graph is a tree
-    to_visit = [root_nodes[0].identifier]
+    to_visit = deque([root_nodes[0].identifier])
 
     while len(to_visit) > 0:
-        current_node = to_visit.pop(0)
+        current_node = to_visit.popleft()
         visited[current_node] = True
+
+        if identifier_to_node[current_node].next_nodes is None:
+            continue
 
         for next_node in identifier_to_node[current_node].next_nodes:
             if visited[next_node]:

@@ -1,6 +1,7 @@
 from app.singletons.logs_manager import LogsManager
 from app.models.graph_models import UpsertGraphTemplateResponse
 from app.models.db.graph_template_model import GraphTemplate
+from fastapi import HTTPException, status
 
 logger = LogsManager().get_logger()
 
@@ -19,7 +20,7 @@ async def get_graph_template(namespace_name: str, graph_name: str, x_exosphere_r
                 namespace_name=namespace_name,
                 x_exosphere_request_id=x_exosphere_request_id,
             )
-            raise ValueError(f"Graph template {graph_name} not found in namespace {namespace_name}")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Graph template {graph_name} not found in namespace {namespace_name}")
 
         logger.info(
             "Graph template retrieved",
@@ -32,7 +33,7 @@ async def get_graph_template(namespace_name: str, graph_name: str, x_exosphere_r
             nodes=graph_template.nodes,
             validation_status=graph_template.validation_status,
             validation_errors=graph_template.validation_errors,
-            secrets={secret_name: True for secret_name in graph_template.get_secrets().keys()},
+            secrets={secret_name: True for secret_name in graph_template.secrets.keys()},
             created_at=graph_template.created_at,
             updated_at=graph_template.updated_at,
         )
@@ -44,4 +45,4 @@ async def get_graph_template(namespace_name: str, graph_name: str, x_exosphere_r
             namespace_name=namespace_name,
             x_exosphere_request_id=x_exosphere_request_id,
         )
-        raise e 
+        raise 
