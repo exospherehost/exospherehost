@@ -11,29 +11,27 @@ from app.user.models.verification_status_enum import VerificationStatusEnum
 
 @pytest.mark.asyncio
 async def test_create_token_success(monkeypatch):
-    monkeypatch.setenv("JWT_SECRET_KEY", "test_secret")
-
     class DummyUser:
         id = "507f1f77bcf86cd799439011"
         name = "John"
         type = "admin"
         verification_status = VerificationStatusEnum.VERIFIED.value
         status = UserStatusEnum.ACTIVE.value
+        identifier="alpha"
         def verify_credential(self, cred):
             return True
 
     async def mock_find_one(_query):
         return DummyUser()
 
-    async def mock_project_get(_id):
-        return None
-
     class MockUser:
-        identifier = "identifier"
+        identifier="identifier_field"
         find_one = staticmethod(mock_find_one)
 
     class MockProject:
-        get = staticmethod(mock_project_get)
+        @staticmethod
+        async def get(_id):
+            return None
 
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
     monkeypatch.setattr("app.auth.controllers.create_token.Project", MockProject)
@@ -63,3 +61,77 @@ async def test_create_token_invalid_user(monkeypatch):
 
     assert isinstance(res, JSONResponse)
     assert res.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_create_token_inactive_user(monkeypatch):
+    class DummyUser:
+        type="admin"
+        name="john"
+        id = "507f1f77bcf86cd799439011"
+        verification_status = VerificationStatusEnum.VERIFIED.value
+        status = UserStatusEnum.INACTIVE.value
+
+        def verify_credential(self, cred):
+            return True
+
+    async def mock_find_one(_query):
+        return DummyUser()
+
+    class MockUser:
+        identifier="req-id"
+        find_one = staticmethod(mock_find_one)
+
+    monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
+
+    req = TokenRequest(identifier="user", credential="pass", project=None, satellites=None)
+    res = await create_token(req, "req-id")
+
+    assert isinstance(res, JSONResponse)
+    assert res.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_create_token_unverified_user(monkeypatch):
+    class DummyUser:
+        type="admin"
+        name="john"
+        id = "507f1f77bcf86cd799439011"
+        verification_status = VerificationStatusEnum.NOT_VERIFIED.value
+        status = UserStatusEnum.ACTIVE.value
+
+        def verify_credential(self, cred):
+            return True
+
+    async def mock_find_one(_query):
+        return DummyUser()
+
+    class MockUser:
+        identifier="req-id"
+        find_one = staticmethod(mock_find_one)
+
+    monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
+
+    req = TokenRequest(identifier="user", credential="pass", project=None, satellites=None)
+    res = await create_token(req, "req-id")
+
+    assert isinstance(res, JSONResponse)
+    assert res.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_create_token_exception(monkeypatch):
+    async def bad_find_one(_query):
+        raise Exception("DB error")
+
+    class MockUser:
+        identifier="req-id"
+        find_one = staticmethod(bad_find_one)
+
+    monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
+
+    req = TokenRequest(identifier="user", credential="pass", project=None, satellites=None)
+    res = await create_token(req, "req-id")
+
+    assert isinstance(res, JSONResponse)
+    assert res.status_code == 500
