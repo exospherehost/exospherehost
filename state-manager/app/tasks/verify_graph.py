@@ -94,7 +94,7 @@ async def get_database_nodes(nodes: list[NodeTemplate], graph_namespace: str):
 async def verify_inputs(graph_nodes: list[NodeTemplate], database_nodes: list[RegisteredNode], dependencies_graph: dict[str, set[str]], errors: list[str]):
     look_up_table = {}
     for node in graph_nodes:
-        look_up_table[node.identifier]["graph_node"] = node
+        look_up_table[node.identifier] = {"graph_node": node}
 
         for database_node in database_nodes:
             if database_node.name == node.node_name and database_node.namespace == node.namespace:
