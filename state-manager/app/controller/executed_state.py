@@ -23,14 +23,14 @@ async def executed_state(namespace_name: str, state_id: ObjectId, body: Executed
         
         if len(body.outputs) == 0:
             await State.find_one(State.id == state_id).set(
-                {"status": StateStatusEnum.EXECUTED, "outputs": body.outputs}
+                {"status": StateStatusEnum.EXECUTED, "outputs": {}, "parents": {**state.parents, state.identifier: ObjectId(state.id)}}
             )
 
             background_tasks.add_task(create_next_state, state)
 
         else:
             await State.find_one(State.id == state_id).set(
-                {"status": StateStatusEnum.EXECUTED, "outputs": body.outputs[0]}
+                {"status": StateStatusEnum.EXECUTED, "outputs": body.outputs[0], "parents": {**state.parents, state.identifier: ObjectId(state.id)}}
             )
             background_tasks.add_task(create_next_state, state)
 
@@ -44,7 +44,10 @@ async def executed_state(namespace_name: str, state_id: ObjectId, body: Executed
                     inputs=state.inputs,
                     outputs=output,
                     error=None,
-                    parents=state.parents
+                    parents={
+                        **state.parents,
+                        state.identifier: ObjectId(state.id)
+                    }
                 )
                 await new_state.save()
                 background_tasks.add_task(create_next_state, new_state)
