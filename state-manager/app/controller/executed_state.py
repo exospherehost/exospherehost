@@ -21,11 +21,33 @@ async def executed_state(namespace_name: str, state_id: ObjectId, body: Executed
         if state.status != StateStatusEnum.QUEUED:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="State is not queued")
         
-        await State.find_one(State.id == state_id).set(
-            {"status": StateStatusEnum.EXECUTED, "outputs": body.outputs}
-        )
+        if len(body.outputs) == 0:
+            await State.find_one(State.id == state_id).set(
+                {"status": StateStatusEnum.EXECUTED, "outputs": body.outputs}
+            )
 
-        background_tasks.add_task(create_next_state, state)
+            background_tasks.add_task(create_next_state, state)
+
+        else:
+            await State.find_one(State.id == state_id).set(
+                {"status": StateStatusEnum.EXECUTED, "outputs": body.outputs[0]}
+            )
+            background_tasks.add_task(create_next_state, state)
+
+            for output in body.outputs[1:]:
+                new_state = State(
+                    node_name=state.node_name,
+                    namespace_name=state.namespace_name,
+                    identifier=state.identifier,
+                    graph_name=state.graph_name,
+                    status=StateStatusEnum.CREATED,
+                    inputs=state.inputs,
+                    outputs=output,
+                    error=None,
+                    parents=state.parents
+                )
+                await new_state.save()
+                background_tasks.add_task(create_next_state, new_state)
 
         return ExecutedResponseModel(status=StateStatusEnum.EXECUTED)
 

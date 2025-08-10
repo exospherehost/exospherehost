@@ -38,6 +38,8 @@ async def create_next_state(state: State):
         next_node_identifier = node_template.next_nodes
         if not next_node_identifier:
             raise Exception(f"Node template {state.identifier} has no next nodes")
+        
+        cache_states = {}         
 
         for identifier in next_node_identifier:
             next_node_template = graph_template.get_node_by_identifier(identifier)
@@ -47,7 +49,7 @@ async def create_next_state(state: State):
             registered_node = await RegisteredNode.find_one(RegisteredNode.name == next_node_template.node_name, RegisteredNode.namespace == next_node_template.namespace)
 
             if not registered_node:
-                continue
+                raise Exception(f"Registered node {next_node_template.node_name} not found")
 
             next_node_input_model = create_model(registered_node.inputs_schema)
             next_node_input_data = {}
@@ -76,10 +78,14 @@ async def create_next_state(state: State):
                             
                         if not parent_id:
                             raise Exception(f"Parent identifier '{input_identifier}' not found in state parents.")
-                            
-                        dependent_state = await State.get(ObjectId(parent_id))
-                        if not dependent_state:
-                            raise Exception(f"Dependent state {input_identifier} not found")
+
+                        if parent_id not in cache_states:
+                            dependent_state = await State.get(ObjectId(parent_id))
+                            if not dependent_state:
+                                raise Exception(f"Dependent state {input_identifier} not found")
+                            cache_states[parent_id] = dependent_state
+                        else:
+                            dependent_state = cache_states[parent_id]
                             
                         if input_field not in dependent_state.outputs:
                             raise Exception(f"Input field {input_field} not found in dependent state {input_identifier}")
@@ -105,6 +111,7 @@ async def create_next_state(state: State):
                     next_node_template.identifier: ObjectId(state.id)
                 }
             )
+
             await new_state.save()
         
         state.status = StateStatusEnum.SUCCESS
