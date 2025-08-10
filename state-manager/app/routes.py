@@ -81,7 +81,7 @@ async def create_state(namespace_name: str, graph_name: str, body: CreateRequest
     response_description="State executed successfully",
     tags=["state"]
 )
-async def executed_state_route(namespace_name: str, state_id: str, body: ExecutedRequestModel, request: Request, api_key: str = Depends(check_api_key)):
+async def executed_state_route(namespace_name: str, state_id: str, body: ExecutedRequestModel, request: Request, background_tasks: BackgroundTasks, api_key: str = Depends(check_api_key)):
 
     x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
 
@@ -91,7 +91,7 @@ async def executed_state_route(namespace_name: str, state_id: str, body: Execute
         logger.error(f"API key is invalid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
 
-    return await executed_state(namespace_name, ObjectId(state_id), body, x_exosphere_request_id)
+    return await executed_state(namespace_name, ObjectId(state_id), body, x_exosphere_request_id, background_tasks)
 
 
 @router.post(
