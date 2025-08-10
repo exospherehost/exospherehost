@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 from bson import ObjectId
 
@@ -14,12 +15,20 @@ async def create_next_state(state: State):
     graph_template = None
 
     try:
+        start_time = time.time()
+        timeout_seconds = 300  # 5 minutes
+        
         while True:
             graph_template = await GraphTemplate.find_one(GraphTemplate.name == state.graph_name, GraphTemplate.namespace == state.namespace_name)
             if not graph_template:
                 raise Exception(f"Graph template {state.graph_name} not found")
             if graph_template.validation_status == GraphTemplateValidationStatus.VALID:
                 break
+            
+            # Check if we've exceeded the timeout
+            if time.time() - start_time > timeout_seconds:
+                raise Exception(f"Timeout waiting for graph template {state.graph_name} to become valid after {timeout_seconds} seconds")
+            
             await asyncio.sleep(1)
 
         node_template = graph_template.get_node_by_identifier(state.identifier)
