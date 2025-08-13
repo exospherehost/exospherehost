@@ -110,7 +110,7 @@ async def test_refresh_access_token_inactive_user(monkeypatch):
     req = RefreshTokenRequest(refresh_token=token)
     res = await refresh_access_token(req, "req-id")
     assert isinstance(res, JSONResponse)
-    assert res.status_code == 403
+    assert res.status_code == 401
 
 
 @pytest.mark.asyncio
