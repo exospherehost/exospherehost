@@ -25,10 +25,10 @@ export default function OrbitalSystem() {
           <div className="flex flex-col justify-start items-center md:items-start px-4 md:pl-20  pb-2 md:py-0 max-w-xl mx-auto mt-[10vh]">
                  
             <h1 className={`${pattanakarn.className} text-white text-3xl sm:text-3xl md:text-5xl lg:text-6xl leading-tight mb-4 drop-shadow-lg text-center md:text-left`}>
-              batch ai agents for any scale
+              scalable infra for your ai agents
             </h1>
-            <p className={`${darkerGrotesque.className} text-[#B3D6FF] text-sm sm:text-base md:text-lg lg:text-xl mb-6 md:mb-8 drop-shadow-md text-center md:text-left`}>
-            Truly dynamic, built for agents at scale. Branching agent flows, autoscaling compute, and state persistence for your AI agents.
+            <p className={`${darkerGrotesque.className} text-[#B3D6FF] text-sm sm:text-base md:text-lg lga:text-xl mb-6 md:mb-8 drop-shadow-md text-center md:text-left`}>
+            Dynamically branch workflows at runtime, automatically scale compute resources, and reliably persist agent state so your AI agents can handle any workload effortlessly.
             </p>
             <div className="flex flex-col md:flex-row items-center gap-3 mb-4 w-full md:justify-start justify-center">
             <button className="relative inline-flex z-200 h-10 overflow-hidden rounded-xl p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 pointer-events-auto mt-2 group"
@@ -38,7 +38,7 @@ export default function OrbitalSystem() {
             >
               <span className="absolute Z-200 inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#8bdfff_0%,#e4587d_50%,#66d1b5_100%)] group-hover:animate-none" />
               <span className={`${darkerGrotesque.className} inline-flex h-full w-full cursor-pointer items-center justify-center rounded-xl bg-slate-950 px-5 py-4 text-md font-medium text-white backdrop-blur-3xl`}>
-              Start batching
+              See how it works
               </span>
             </button>
             <button className="relative inline-flex z-200 h-10 overflow-hidden rounded-xl p-[1px] f pointer-events-auto mt-2 transition-all duration-300 hover:shadow-lg"

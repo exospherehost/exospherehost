@@ -23,6 +23,8 @@ pip install exospherehost
 
 ## Quick Start
 
+> Important: In v1, all fields in `Inputs`, `Outputs`, and `Secrets` must be strings. If you need to pass complex data (e.g., JSON), serialize the data to a string first, then parse that string within your node.
+
 ### Basic Node Creation
 
 Create a simple node that processes data:
@@ -34,24 +36,24 @@ from pydantic import BaseModel
 class SampleNode(BaseNode):
     class Inputs(BaseModel):
         name: str
-        data: dict
+        data: str  # v1: strings only
 
     class Outputs(BaseModel):
         message: str
-        processed_data: dict
+        processed_data: str  # v1: strings only
 
     async def execute(self) -> Outputs:
         print(f"Processing data for: {self.inputs.name}")
-        # Your processing logic here
-        processed_data = {"status": "completed", "input": self.inputs.data}
+        # Your processing logic here; serialize complex data to strings (e.g., JSON)
+        processed_data = f"completed:{self.inputs.data}"
         return self.Outputs(
-            message="success", 
+            message="success",
             processed_data=processed_data
         )
 
 # Initialize the runtime
 Runtime(
-    namespace="MyProject", 
+    namespace="MyProject",
     name="DataProcessor",
     nodes=[SampleNode]
 ).start()
@@ -71,6 +73,7 @@ export EXOSPHERE_API_KEY="your-api-key"
 - **Distributed Execution**: Run nodes across multiple compute resources
 - **State Management**: Automatic state persistence and recovery
 - **Type Safety**: Full Pydantic integration for input/output validation
+- **String-only data model (v1)**: All `Inputs`, `Outputs`, and `Secrets` fields are strings. Serialize non-string data (e.g., JSON) as needed.
 - **Async Support**: Native async/await support for high-performance operations
 - **Error Handling**: Built-in retry mechanisms and error recovery
 - **Scalability**: Designed for high-volume batch processing and workflows
@@ -103,15 +106,16 @@ Nodes are the building blocks of your workflows. Each node:
 class ConfigurableNode(BaseNode):
     class Inputs(BaseModel):
         text: str
-        max_length: int = 100
+        max_length: str = "100"  # v1: strings only
 
     class Outputs(BaseModel):
         result: str
-        length: int
+        length: str  # v1: strings only
 
     async def execute(self) -> Outputs:
-        result = self.inputs.text[:self.inputs.max_length]
-        return self.Outputs(result=result, length=len(result))
+        max_length = int(self.inputs.max_length)
+        result = self.inputs.text[:max_length]
+        return self.Outputs(result=result, length=str(len(result)))
 ```
 
 ### Error Handling
@@ -122,7 +126,7 @@ class RobustNode(BaseNode):
         data: str
 
     class Outputs(BaseModel):
-        success: bool
+        success: str
         result: str
 
     async def execute(self) -> Outputs:
@@ -137,6 +141,7 @@ Secrets allow you to securely manage sensitive configuration data like API keys,
 ```python
 from exospherehost import Runtime, BaseNode
 from pydantic import BaseModel
+import json
 
 class APINode(BaseNode):
     class Inputs(BaseModel):
@@ -144,7 +149,7 @@ class APINode(BaseNode):
         query: str
 
     class Outputs(BaseModel):
-        response: dict
+        response: str  # v1: strings only
         status: str
 
     class Secrets(BaseModel):
@@ -159,14 +164,24 @@ class APINode(BaseNode):
         # Use secrets for API calls
         import httpx
         async with httpx.AsyncClient() as client:
-            response = await client.post(
+            http_response = await client.post(
                 f"{self.secrets.api_endpoint}/process",
                 headers=headers,
                 json={"user_id": self.inputs.user_id, "query": self.inputs.query}
             )
         
+        # Serialize body: prefer JSON if valid; fallback to text or empty string
+        response_text = http_response.text or ""
+        if response_text:
+            try:
+                response_str = json.dumps(http_response.json())
+            except Exception:
+                response_str = response_text
+        else:
+            response_str = ""
+
         return self.Outputs(
-            response=response.json(),
+            response=response_str,
             status="success"
         )
 ```
@@ -175,6 +190,7 @@ class APINode(BaseNode):
 
 - **Security**: Secrets are stored securely by the ExosphereHost Runtime and are never exposed in logs or error messages
 - **Validation**: The `Secrets` class uses Pydantic for automatic validation of secret values
+- **String-only (v1)**: All `Secrets` fields must be strings.
 - **Access**: Secrets are available via `self.secrets` during node execution
 - **Types**: Common secret types include API keys, database credentials, encryption keys, and authentication tokens
 - **Injection**: Secrets are injected by the Runtime at execution time, so you don't need to handle them manually

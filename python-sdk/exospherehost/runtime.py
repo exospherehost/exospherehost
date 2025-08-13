@@ -279,6 +279,15 @@ class Runtime:
                 errors.append(f"{node.__name__} does not have an Secrets class")
             if not issubclass(node.Secrets, BaseModel):
                 errors.append(f"{node.__name__} does not have an Secrets class that inherits from pydantic.BaseModel")
+
+            # check all data objects are strings
+            for field_name, field_info in node.Inputs.model_fields.items():
+                if field_info.annotation is not str:
+                    errors.append(f"{node.__name__}.Inputs field '{field_name}' must be of type str, got {field_info.annotation}")
+            
+            for field_name, field_info in node.Outputs.model_fields.items():
+                if field_info.annotation is not str:
+                    errors.append(f"{node.__name__}.Outputs field '{field_name}' must be of type str, got {field_info.annotation}")
             
             for field_name, field_info in node.Secrets.model_fields.items():
                 if field_info.annotation is not str:
