@@ -57,7 +57,7 @@ async def refresh_access_token(
                 content={"detail": "User not found"}
             )
         
-              # Define a list of statuses for which token refresh is not allowed
+         # Define a list of statuses for which token refresh is not allowed
         DISALLOWED_STATUSES = [
             UserStatusEnum.INACTIVE.value,
             UserStatusEnum.BLOCKED.value
@@ -142,5 +142,5 @@ async def refresh_access_token(
         # Always return JSONResponse for errors so your tests pass
         return JSONResponse(
             status_code=500,
-            content={"success": False, "detail": "Internal server error", "error": str(e)}
+            content={"success": False, "detail": "Internal server error"}
         )
