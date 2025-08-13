@@ -3,7 +3,7 @@ import jwt
 from datetime import datetime, timedelta
 from starlette.responses import JSONResponse
 from bson import ObjectId
-
+from typing import Union
 from ..models.refresh_token_request import RefreshTokenRequest
 from ..models.token_response import TokenResponse
 from ..models.token_claims import TokenClaims
@@ -28,7 +28,7 @@ JWT_EXPIRES_IN = 3600  # 1 hour
 async def refresh_access_token(
     request: RefreshTokenRequest, 
     x_exosphere_request_id: str
-) -> TokenResponse:
+) -> "Union[TokenResponse,JSONResponse]":
     """
     Takes refresh token and returns a new access token.
     Denies for inactive/blocked or unverified users.
@@ -57,15 +57,21 @@ async def refresh_access_token(
                 content={"detail": "User not found"}
             )
         
-        # Deny if inactive/blocked (not ACTIVE)
-        if user.status != UserStatusEnum.ACTIVE.value:
+              # Define a list of statuses for which token refresh is not allowed
+        DISALLOWED_STATUSES = [
+            UserStatusEnum.INACTIVE.value,
+            UserStatusEnum.BLOCKED.value
+        ]
+
+        # Deny if user status is in the disallowed list
+        if user.status in DISALLOWED_STATUSES:
             logger.warning(
-                f"Inactive or blocked user attempted token refresh: {user.id}",
+                f"User with disallowed status attempted token refresh: {user.id} (status: {user.status})",
                 x_exosphere_request_id=x_exosphere_request_id
             )
             return JSONResponse(
-                status_code=403,
-                content={"detail": "User account is inactive or blocked"}
+                status_code=401,
+                content={"detail": "TOKEN NOT ALLOWED: User account is inactive or blocked."}
             )
         
         # Deny if unverified
@@ -78,6 +84,7 @@ async def refresh_access_token(
                 status_code=403,
                 content={"success": False, "detail": "User is not verified"}
             )
+
 
         privilege = None
         project_id = payload.get("project")
@@ -96,7 +103,7 @@ async def refresh_access_token(
             if not privilege:
                 logger.error("User does not have access to the project", x_exosphere_request_id=x_exosphere_request_id)
                 return JSONResponse(status_code=403, content={"success": False, "detail": "User does not have access to the project"})
-        
+
         # Create new access token
         token_claims = TokenClaims(
             user_id=str(user.id),
