@@ -2,6 +2,7 @@ import pytest
 import jwt
 import datetime
 from bson import ObjectId
+import json
 from starlette.responses import JSONResponse
 
 from app.auth.controllers.refresh_access_token import (
@@ -55,11 +56,12 @@ async def test_refresh_access_token_success(monkeypatch):
 
     assert isinstance(res, TokenResponse)
     decoded = jwt.decode(res.access_token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+    assert decoded["user-id"]== "507f1f77bcf86cd799439011"
     assert decoded["token_type"] == "access"
 
 
 @pytest.mark.asyncio
-async def test_refresh_access_token_invalid_token(monkeypatch):
+async def test_refresh_access_token_invalid_token():
     bad_token = jwt.encode({"token_type": "wrong"}, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
     req = RefreshTokenRequest(refresh_token=bad_token)
     res = await refresh_access_token(req, "req-id")
@@ -68,12 +70,14 @@ async def test_refresh_access_token_invalid_token(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_refresh_access_token_expired_token(monkeypatch):
+async def test_refresh_access_token_expired_token():
     token = make_token("507f1f77bcf86cd799439011", exp_seconds=-10)
     req = RefreshTokenRequest(refresh_token=token)
     res = await refresh_access_token(req, "req-id")
     assert isinstance(res, JSONResponse)
     assert res.status_code == 401
+    # verify the error payload
+    assert json.loads(res.body) == {"detail": "Refresh token expired"}
 
 
 @pytest.mark.asyncio
@@ -151,3 +155,23 @@ async def test_refresh_access_token_exception(monkeypatch):
     res = await refresh_access_token(req, "req-id")
     assert isinstance(res, JSONResponse)
     assert res.status_code == 500
+
+@pytest.mark.asyncio
+async def test_refresh_access_token_blocked_user(monkeypatch):
+    class DummyUser:
+        id = "507f1f77bcf86cd799439011"
+        verification_status = VerificationStatusEnum.VERIFIED.value
+        status = UserStatusEnum.BLOCKED.value
+
+    class MockUser:
+        @staticmethod
+        async def get(_id):
+            return DummyUser()
+
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
+
+    token = make_token("507f1f77bcf86cd799439011")
+    req = RefreshTokenRequest(refresh_token=token)
+    res = await refresh_access_token(req, "req-id")
+    assert isinstance(res, JSONResponse)
+    assert res.status_code == 401    
