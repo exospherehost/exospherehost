@@ -121,7 +121,7 @@ async def test_refresh_access_token_unverified_user(monkeypatch):
         id = "507f1f77bcf86cd799439011"
         verification_status = VerificationStatusEnum.NOT_VERIFIED.value
         status = UserStatusEnum.ACTIVE.value
-
+        identifier = "none"
     class MockUser:
         @staticmethod
         async def get(_id):
