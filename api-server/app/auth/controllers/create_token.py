@@ -1,3 +1,4 @@
+from ctypes import Union
 import os
 import jwt
 from datetime import datetime, timedelta
@@ -23,7 +24,7 @@ JWT_ALGORITHM = "HS256"
 JWT_EXPIRES_IN = 3600        # 1 hour
 REFRESH_EXPIRES_IN = 3600*24 # 1 day
 
-async def create_token(request: TokenRequest, x_exosphere_request_id: str):
+async def create_token(request: TokenRequest, x_exosphere_request_id: str)->JSONResponse:
     try:
         logger.info("Finding user", x_exosphere_request_id=x_exosphere_request_id)
         user = await User.find_one(User.identifier == request.identifier)
@@ -44,7 +45,7 @@ async def create_token(request: TokenRequest, x_exosphere_request_id: str):
         # Check for unverified users
         if getattr(user, "verification_status", None) == "NOT_VERIFIED":
             logger.error("Unverified user - token request denied", x_exosphere_request_id=x_exosphere_request_id)
-            return JSONResponse(status_code=401, content={"success": False, "detail": "User is not verified"})
+            return JSONResponse(status_code=403, content={"success": False, "detail": "User is not verified"})
 
         logger.info("User found and credential verified", x_exosphere_request_id=x_exosphere_request_id)
 
@@ -98,5 +99,4 @@ async def create_token(request: TokenRequest, x_exosphere_request_id: str):
         )
     except Exception as e:
         logger.error("Error creating token", error=e, x_exosphere_request_id=x_exosphere_request_id)
-        return JSONResponse(status_code=500, content={"success": False, "detail": "Internal server error", "error": str(e)})
-
+        return JSONResponse(status_code=500, content={"success": False, "detail": "Internal server error"})
