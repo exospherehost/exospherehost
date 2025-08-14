@@ -16,7 +16,14 @@ from app.auth.models.token_response import TokenResponse
 from app.auth.models.token_type_enum import TokenType
 from app.user.models.user_status_enum import UserStatusEnum
 from app.user.models.verification_status_enum import VerificationStatusEnum
-from tests.test_utlis.token_helpers import make_token
+
+def make_token(user_id, token_type=TokenType.refresh.value, exp_seconds=JWT_EXPIRES_IN):
+    payload = {
+        "user_id": str(user_id),
+        "token_type": token_type,
+        "exp": int((datetime.datetime.now() + datetime.timedelta(seconds=exp_seconds)).timestamp())
+    }
+    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM) 
 
 def _assert_json_error(res, expected_status: int, expected_detail: str | None = None):
     assert isinstance(res, JSONResponse)
