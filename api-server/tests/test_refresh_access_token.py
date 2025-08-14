@@ -79,7 +79,7 @@ async def test_refresh_access_token_expired_token():
     token = make_token("507f1f77bcf86cd799439011", exp_seconds=-10)
     req = RefreshTokenRequest(refresh_token=token)
     res = await refresh_access_token(req, "req-id")
-    _assert_json_error( res ,401,"Refresh token expired")
+    _assert_json_error(res, 401, "Refresh token expired")
 @pytest.mark.asyncio
 async def test_refresh_access_token_user_not_found(monkeypatch):
     class MockUser:
@@ -168,5 +168,4 @@ async def test_refresh_access_token_blocked_user(monkeypatch):
     token = make_token("507f1f77bcf86cd799439011")
     req = RefreshTokenRequest(refresh_token=token)
     res = await refresh_access_token(req, "req-id")
-    assert isinstance(res, JSONResponse)
-    assert res.status_code == 401
+    _assert_json_error(res, 401)

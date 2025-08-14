@@ -1,4 +1,4 @@
-from ctypes import Union
+from typing import Union
 import os
 import jwt
 from datetime import datetime, timedelta
@@ -24,7 +24,7 @@ JWT_ALGORITHM = "HS256"
 JWT_EXPIRES_IN = 3600        # 1 hour
 REFRESH_EXPIRES_IN = 3600*24 # 1 day
 
-async def create_token(request: TokenRequest, x_exosphere_request_id: str)->JSONResponse:
+async def create_token(request: TokenRequest, x_exosphere_request_id: str)->Union[JSONResponse,TokenResponse]:
     try:
         logger.info("Finding user", x_exosphere_request_id=x_exosphere_request_id)
         user = await User.find_one(User.identifier == request.identifier)

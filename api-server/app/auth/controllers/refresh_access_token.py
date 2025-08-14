@@ -27,8 +27,8 @@ JWT_EXPIRES_IN = 3600  # 1 hour
 
 async def refresh_access_token(
     request: RefreshTokenRequest, 
-    x_exosphere_request_id: str
-) -> "Union[TokenResponse,JSONResponse]":
+    x_exosphere_request_id: str | None
+) -> Union[TokenResponse,JSONResponse]:
     """
     Takes refresh token and returns a new access token.
     Denies for inactive/blocked or unverified users.
@@ -46,7 +46,7 @@ async def refresh_access_token(
         if payload.get("token_type") != TokenType.refresh.value:
             return JSONResponse(
                 status_code=401, 
-                content={"detail": "Invalid token type"}
+                content={"success": False, "detail": "Invalid token type"}
             )
 
         # Get user
@@ -54,24 +54,25 @@ async def refresh_access_token(
         if not user:
             return JSONResponse(
                 status_code=401,
-                content={"detail": "User not found"}
+                content={"success": False, "detail": "User not found"}
             )
         
-         # Define a list of statuses for which token refresh is not allowed
+        # Define a list of statuses for which token refresh is not allowed
+        status_value = getattr(user.status, "value", user.status)
         DISALLOWED_STATUSES = [
             UserStatusEnum.INACTIVE.value,
             UserStatusEnum.BLOCKED.value
         ]
 
         # Deny if user status is in the disallowed list
-        if user.status in DISALLOWED_STATUSES:
+        if status_value in DISALLOWED_STATUSES:
             logger.warning(
                 f"User with disallowed status attempted token refresh: {user.id} (status: {user.status})",
                 x_exosphere_request_id=x_exosphere_request_id
             )
             return JSONResponse(
                 status_code=401,
-                content={"detail": "TOKEN NOT ALLOWED: User account is inactive or blocked."}
+                content={"success": False, "detail": "TOKEN NOT ALLOWED: User account is inactive or blocked."}
             )
         
         # Deny if unverified
@@ -131,7 +132,7 @@ async def refresh_access_token(
     except jwt.ExpiredSignatureError:
         return JSONResponse(
             status_code=401,
-            content={"detail": "Refresh token expired"}
+            content={"success": False, "detail": "Refresh token expired"}
         )
     except Exception as e:
         logger.error(
