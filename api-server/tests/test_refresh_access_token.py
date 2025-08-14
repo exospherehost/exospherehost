@@ -16,7 +16,7 @@ from app.auth.models.token_response import TokenResponse
 from app.auth.models.token_type_enum import TokenType
 from app.user.models.user_status_enum import UserStatusEnum
 from app.user.models.verification_status_enum import VerificationStatusEnum
-from test_utlis.token_helpers import make_token
+from tests.test_utlis.token_helpers import make_token
 
 def _assert_json_error(res, expected_status: int, expected_detail: str | None = None):
     assert isinstance(res, JSONResponse)
