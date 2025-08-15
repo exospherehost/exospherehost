@@ -17,7 +17,7 @@ from app.auth.models.token_type_enum import TokenType
 from app.user.models.user_status_enum import UserStatusEnum
 from app.user.models.verification_status_enum import VerificationStatusEnum
 
-def make_token(user_id, token_type=TokenType.refresh.value, exp_seconds=JWT_EXPIRES_IN):
+def make_token(user_id, token_type=TokenType.refresh.value, exp_seconds=JWT_EXPIRES_IN or JWT_EXPIRES_IN):
     payload = {
         "user_id": str(user_id),
         "token_type": token_type,
@@ -63,7 +63,7 @@ async def test_refresh_access_token_success(monkeypatch):
 
     assert isinstance(res, TokenResponse)
     decoded = jwt.decode(res.access_token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-    assert decoded["user_id"]== "507f1f77bcf86cd799439011"
+    assert decoded["user_id"] == "507f1f77bcf86cd799439011"
     assert decoded["token_type"] == "access"
 
 
@@ -72,7 +72,7 @@ async def test_refresh_access_token_invalid_token():
     bad_token = jwt.encode({"token_type": "wrong"}, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
     req = RefreshTokenRequest(refresh_token=bad_token)
     res = await refresh_access_token(req, "req-id")
-    _assert_json_error(res,401,"Invalid token type")
+    _assert_json_error(res, 401, "Invalid token type")
 
 @pytest.mark.asyncio
 async def test_refresh_access_token_expired_token():

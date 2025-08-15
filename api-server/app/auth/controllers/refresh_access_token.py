@@ -51,6 +51,13 @@ async def refresh_access_token(
 
         # Get user
         user = await User.get(ObjectId(payload["user_id"]))
+        try:
+            user = await User.get(ObjectId(payload["user_id"]))
+        except Exception:
+           return JSONResponse(
+                status_code=401,
+                content={"success": False, "detail": "Invalid token: bad user id"}
+            )
         if not user:
             return JSONResponse(
                 status_code=401,
@@ -76,7 +83,7 @@ async def refresh_access_token(
             )
         
         # Deny if unverified
-        if user.verification_status == VerificationStatusEnum.NOT_VERIFIED.value:
+        if getattr(user.verification_status, "value", user.verification_status) == VerificationStatusEnum.NOT_VERIFIED.value:
             logger.error(
                 "Unverified user - refresh token request denied", 
                 x_exosphere_request_id=x_exosphere_request_id
@@ -90,16 +97,21 @@ async def refresh_access_token(
         privilege = None
         project_id = payload.get("project")
         if project_id:
-            project = await Project.get(ObjectId(project_id))
+            try:
+                project = await Project.get(ObjectId(project_id))
+            except Exception:
+                logger.error("Invalid project id", x_exosphere_request_id=x_exosphere_request_id)
+                return JSONResponse(status_code=404, content={"success": False, "detail": "Project not found"})
             if not project:
                 logger.error("Project not found", x_exosphere_request_id=x_exosphere_request_id)
                 return JSONResponse(status_code=404, content={"success": False, "detail": "Project not found"})
             logger.info("Project found", x_exosphere_request_id=x_exosphere_request_id)
             if project.super_admin.ref.id == user.id:
                 privilege = "super_admin"
-            for project_user in project.users:
-                if project_user.user.ref.id == user.id:
-                    privilege = project_user.permission.value
+            else:
+                for project_user in project.users:
+                    if project_user.user.ref.id == user.id:
+                        privilege = project_user.permission.value
                     break
             if not privilege:
                 logger.error("User does not have access to the project", x_exosphere_request_id=x_exosphere_request_id)
@@ -140,7 +152,7 @@ async def refresh_access_token(
             error=e, 
             x_exosphere_request_id=x_exosphere_request_id
         )
-        # Always return JSONResponse for errors so your tests pass
+        # Always return JSONResponse for errors for consistent API behavior
         return JSONResponse(
             status_code=500,
             content={"success": False, "detail": "Internal server error"}

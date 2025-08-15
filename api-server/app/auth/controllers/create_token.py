@@ -38,30 +38,36 @@ async def create_token(request: TokenRequest, x_exosphere_request_id: str)->Unio
             return JSONResponse(status_code=401, content={"success": False, "detail": "Invalid credential"})
         
         # Check for inactive users
-        if getattr(user, "status", None) == "INACTIVE":
+        if getattr(user, "status", None) == ("INACTIVE","BLOCKED"):
             logger.error("Inactive user - token request denied", x_exosphere_request_id=x_exosphere_request_id)
-            return JSONResponse(status_code=403, content={"success": False, "detail": "User is inactive"})
+            return JSONResponse(status_code=403, content={"success": False, "detail": "User is inactive or blocked"})
 
-        # Check for unverified users
-        if getattr(user, "verification_status", None) == "NOT_VERIFIED":
-            logger.error("Unverified user - token request denied", x_exosphere_request_id=x_exosphere_request_id)
-            return JSONResponse(status_code=403, content={"success": False, "detail": "User is not verified"})
+         # Check for inactive/blocked users
+        status_value = getattr(getattr(user, "status", None), "value", getattr(user, "status", None))
+        if status_value in ("INACTIVE", "BLOCKED"):
+            logger.error("Inactive or blocked user - token request denied", x_exosphere_request_id=x_exosphere_request_id)
+            return JSONResponse(status_code=403, content={"success": False, "detail": "User is inactive or blocked"})
 
         logger.info("User found and credential verified", x_exosphere_request_id=x_exosphere_request_id)
 
         privilege = None
         if request.project:
-            project = await Project.get(ObjectId(request.project))
+            try:
+               project = await Project.get(ObjectId(request.project))
+            except Exception:
+                logger.error("Invalid project id", x_exosphere_request_id=x_exosphere_request_id)
+                return JSONResponse(status_code=404, content={"success": False, "detail": "Project not found"})
             if not project:
                 logger.error("Project not found", x_exosphere_request_id=x_exosphere_request_id)
                 return JSONResponse(status_code=404, content={"success": False, "detail": "Project not found"})
             logger.info("Project found", x_exosphere_request_id=x_exosphere_request_id)
             if project.super_admin.ref.id == user.id:
                 privilege = "super_admin"
-            for project_user in project.users:
-                if project_user.user.ref.id == user.id:
-                    privilege = project_user.permission.value
-                    break
+            else:    
+               for project_user in project.users:
+                   if project_user.user.ref.id == user.id:
+                      privilege = project_user.permission.value
+                   break
             if not privilege:
                 logger.error("User does not have access to the project", x_exosphere_request_id=x_exosphere_request_id)
                 return JSONResponse(status_code=403, content={"success": False, "detail": "User does not have access to the project"})
