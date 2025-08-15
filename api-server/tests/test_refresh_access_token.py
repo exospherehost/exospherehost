@@ -3,291 +3,307 @@ import jwt
 import datetime
 from bson import ObjectId
 import json
+
 from starlette.responses import JSONResponse
 from bson.errors import InvalidId
-from app.auth.controllers.refresh_access_token import (
-    refresh_access_token,
-    JWT_SECRET_KEY,
-    JWT_ALGORITHM,
-    JWT_EXPIRES_IN
-)
-from app.auth.models.refresh_token_request import RefreshTokenRequest
-from app.auth.models.token_response import TokenResponse
-from app.auth.models.token_type_enum import TokenType
-from app.user.models.user_status_enum import UserStatusEnum
-from app.user.models.verification_status_enum import VerificationStatusEnum
 
-def make_token(user_id, token_type=TokenType.refresh.value, exp_seconds=JWT_EXPIRES_IN):
+from app.auth.controllers import refresh_access_token as refresh_access_token_func
+from app.auth.controllers.refresh_access_token import JWT_SECRET_KEY, JWT_ALGORITHM
+from app.auth.models import RefreshTokenRequest, TokenResponse
+from app.auth.models.token_type_enum import TokenType
+from app.user.models import VerificationEnum, StatusEnum
+
+def make_token(user_id, token_type=TokenType.refresh.value, exp_seconds=3600):
     payload = {
         "user_id": str(user_id),
         "token_type": token_type,
-        "exp": int((datetime.datetime.now() + datetime.timedelta(seconds=exp_seconds)).timestamp())
+        "exp": int(datetime.datetime.utcnow().timestamp()) + exp_seconds
     }
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
-def _assert_json_error(res, expected_status: int, expected_detail: str | None = None):
+def _assert_json_error(res, expected_status, expected_detail=None):
     assert isinstance(res, JSONResponse)
     assert res.status_code == expected_status
     body = json.loads(res.body)
     assert body.get("success") is False
-    if expected_detail is not None:
+    if expected_detail:
         assert expected_detail in body.get("detail", "")
 
 @pytest.mark.asyncio
-async def test_refresh_access_token_success(monkeypatch):
+async def test_refresh_success(monkeypatch):
     class DummyUser:
-        name = "john"
-        type = "dummy"
-        id = "507f1f77bcf86cd799439011"
-        verification_status = VerificationStatusEnum.VERIFIED.value
-        status = UserStatusEnum.ACTIVE.value
-        identifier = "none"
+        id = "507f"
+        name = "Alice"
+        type = "user"
+        verification_status = VerificationEnum.VERIFIED.value
+        status = StatusEnum.ACTIVE.value
+        identifier = "alice"
 
     class MockUser:
         @staticmethod
-        async def get(_id):
+        async def get(_):
             return DummyUser()
 
     class MockProject:
         @staticmethod
-        async def get(_id):
+        async def get(_):
             return None
 
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    monkeypatch.setattr("app.project.models.project_database_model.Project", MockProject)
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.Project", MockProject)
 
-    token = make_token("507f1f77bcf86cd799439011")
+    token = make_token("507f")
     req = RefreshTokenRequest(refresh_token=token)
-    res = await refresh_access_token(req, "req-id")
+    res = await refresh_access_token_func(req, "req-id")
     assert isinstance(res, TokenResponse)
     decoded = jwt.decode(res.access_token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-    assert decoded["user_id"] == "507f1f77bcf86cd799439011"
+    assert decoded["user_id"] == "507f"
     assert decoded["token_type"] == "access"
 
 @pytest.mark.asyncio
-async def test_refresh_access_token_invalid_token():
-    bad_token = jwt.encode({"token_type": "wrong"}, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
-    req = RefreshTokenRequest(refresh_token=bad_token)
-    res = await refresh_access_token(req, "req-id")
+async def test_refresh_invalid_token():
+    token = jwt.encode({"token_type": "invalid"}, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    req = RefreshTokenRequest(refresh_token=token)
+    res = await refresh_access_token_func(req, "req-id")
     _assert_json_error(res, 401, "Invalid token type")
 
 @pytest.mark.asyncio
-async def test_refresh_access_token_expired_token():
-    token = make_token("507f1f77bcf86cd799439011", exp_seconds=-10)
-    req = RefreshTokenRequest(refresh_token=token)
-    res = await refresh_access_token(req, "req-id")
+async def test_refresh_expired_token():
+    expired_token = make_token("507f", exp_seconds=-10)
+    req = RefreshTokenRequest(refresh_token=expired_token)
+    res = await refresh_access_token_func(req, "req-id")
     _assert_json_error(res, 401, "Refresh token expired")
 
 @pytest.mark.asyncio
-async def test_refresh_access_token_user_not_found(monkeypatch):
+async def test_refresh_user_not_found(monkeypatch):
     class MockUser:
         @staticmethod
-        async def get(_id):
+        async def get(_):
             return None
 
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    token = make_token(ObjectId())
+    token = make_token("507f")
     req = RefreshTokenRequest(refresh_token=token)
-    res = await refresh_access_token(req, "req-id")
+    res = await refresh_access_token_func(req, "req-id")
     _assert_json_error(res, 401)
 
 @pytest.mark.asyncio
-async def test_refresh_access_token_inactive_user(monkeypatch):
+async def test_refresh_inactive_user(monkeypatch):
     class DummyUser:
-        id = "507f1f77bcf86cd799439011"
-        verification_status = VerificationStatusEnum.VERIFIED.value
-        status = UserStatusEnum.INACTIVE.value
+        id = "507f"
+        verification_status = VerificationEnum.VERIFIED.value
+        status = StatusEnum.INACTIVE.value
 
     class MockUser:
         @staticmethod
-        async def get(_id):
+        async def get(_):
             return DummyUser()
 
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    token = make_token("507f1f77bcf86cd799439011")
+    token = make_token("507f")
     req = RefreshTokenRequest(refresh_token=token)
-    res = await refresh_access_token(req, "req-id")
+    res = await refresh_access_token_func(req, "req-id")
     _assert_json_error(res, 401)
 
 @pytest.mark.asyncio
-async def test_refresh_access_token_unverified_user(monkeypatch):
+async def test_refresh_unverified_user(monkeypatch):
     class DummyUser:
-        type = "trial"
-        name = "john"
-        id = "507f1f77bcf86cd799439011"
-        verification_status = VerificationStatusEnum.NOT_VERIFIED.value
-        status = UserStatusEnum.ACTIVE.value
+        id = "507f"
+        verification_status = VerificationEnum.NOT_VERIFIED.value
+        status = StatusEnum.ACTIVE.value
 
     class MockUser:
         @staticmethod
-        async def get(_id):
+        async def get(_):
             return DummyUser()
 
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    token = make_token("507f1f77bcf86cd799439011")
+    token = make_token("507f")
     req = RefreshTokenRequest(refresh_token=token)
-    res = await refresh_access_token(req, "req-id")
+    res = await refresh_access_token_func(req, "req-id")
     _assert_json_error(res, 403)
 
 @pytest.mark.asyncio
-async def test_refresh_access_token_exception(monkeypatch):
-    async def bad_get(_id):
-        raise Exception("DB fail")
+async def test_refresh_exception(monkeypatch):
+    async def raise_exc(_):
+        raise Exception("db fail")
 
     class MockUser:
-        get = staticmethod(bad_get)
+        get = staticmethod(raise_exc)
 
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    token = make_token(ObjectId())
+    token = make_token("507f")
     req = RefreshTokenRequest(refresh_token=token)
-    res = await refresh_access_token(req, "req-id")
+    res = await refresh_access_token_func(req, "req-id")
     _assert_json_error(res, 500)
 
 @pytest.mark.asyncio
-async def test_refresh_access_token_blocked_user(monkeypatch):
+async def test_refresh_blocked_user(monkeypatch):
     class DummyUser:
-        id = "507f1f77bcf86cd799439011"
-        verification_status = VerificationStatusEnum.VERIFIED.value
-        status = UserStatusEnum.BLOCKED.value
+        id = "507f"
+        verification_status = VerificationEnum.VERIFIED.value
+        status = StatusEnum.BLOCKED.value
 
     class MockUser:
         @staticmethod
-        async def get(_id):
+        async def get(_):
             return DummyUser()
 
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    token = make_token("507f1f77bcf86cd799439011")
+    token = make_token("507f")
     req = RefreshTokenRequest(refresh_token=token)
-    res = await refresh_access_token(req, "req-id")
+    res = await refresh_access_token_func(req, "req-id")
     _assert_json_error(res, 401)
 
-# ---- PROJECT TESTS ----
-
 @pytest.mark.asyncio
-async def test_refresh_token_invalid_project(monkeypatch):
+async def test_refresh_invalid_project(monkeypatch):
     class DummyUser:
-        id = "user123"
-        verification_status = "VERIFIED"
-        status = "ACTIVE"
+        id = "projuser"
+        verification_status = VerificationEnum.VERIFIED.value
+        status = StatusEnum.ACTIVE.value
+
     class MockUser:
         @staticmethod
-        async def get(_id):
+        async def get(_):
             return DummyUser()
+
     class MockProject:
         @staticmethod
-        async def get(_id):
-            raise InvalidId("invalid project")
+        async def get(_):
+            raise InvalidId("bad id")
+
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    monkeypatch.setattr("app.project.models.project_database_model.Project", MockProject)
-    token = make_token(DummyUser.id)
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.Project", MockProject)
+
+    token = make_token("projuser")
     req = RefreshTokenRequest(refresh_token=token)
-    res = await refresh_access_token(req, "req-id")
-    _assert_json_error(res, 404, "Project")
+    res = await refresh_access_token_func(req, "req-id")
+    _assert_json_error(res, 404)
 
 @pytest.mark.asyncio
-async def test_refresh_token_project_not_found(monkeypatch):
+async def test_refresh_project_not_found(monkeypatch):
     class DummyUser:
-        id = "user123"
-        verification_status = "VERIFIED"
-        status = "ACTIVE"
+        id = "projuser"
+        verification_status = VerificationEnum.VERIFIED.value
+        status = StatusEnum.ACTIVE.value
+
     class MockUser:
         @staticmethod
-        async def get(_id):
+        async def get(_):
             return DummyUser()
+
     class MockProject:
         @staticmethod
-        async def get(_id):
+        async def get(_):
             return None
+
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    monkeypatch.setattr("app.project.models.project_database_model.Project", MockProject)
-    token = make_token(DummyUser.id)
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.Project", MockProject)
+
+    token = make_token("projuser")
     req = RefreshTokenRequest(refresh_token=token)
-    res = await refresh_access_token(req, "req-id")
-    _assert_json_error(res, 404, "Project")
+    res = await refresh_access_token_func(req, "req-id")
+    _assert_json_error(res, 404)
 
 @pytest.mark.asyncio
-async def test_refresh_token_project_privilege_superadmin(monkeypatch):
+async def test_refresh_superadmin_privilege(monkeypatch):
     class DummyUser:
-        id = "user123"
-        verification_status = "VERIFIED"
-        status = "ACTIVE"
+        id = "adminuser"
+        verification_status = VerificationEnum.VERIFIED.value
+        status = StatusEnum.ACTIVE.value
+
     class MockUser:
         @staticmethod
-        async def get(_id):
+        async def get(_):
             return DummyUser()
+
     class Ref:
-        id = "user123"
+        id = "adminuser"
+
     class SuperAdmin:
         ref = Ref()
+
     class MockProject:
         super_admin = SuperAdmin()
         users = []
+
         @staticmethod
-        async def get(_id):
+        async def get(_):
             return MockProject()
+
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    monkeypatch.setattr("app.project.models.project_database_model.Project", MockProject)
-    token = make_token(DummyUser.id)
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.Project", MockProject)
+
+    token = make_token("adminuser")
     req = RefreshTokenRequest(refresh_token=token)
-    res = await refresh_access_token(req, "req-id")
+    res = await refresh_access_token_func(req, "req-id")
     assert isinstance(res, TokenResponse)
 
 @pytest.mark.asyncio
-async def test_refresh_token_project_privilege_user(monkeypatch):
+async def test_refresh_user_privilege(monkeypatch):
     class DummyUser:
-        id = "user123"
-        verification_status = "VERIFIED"
-        status = "ACTIVE"
-    class MockUser:
-        @staticmethod
-        async def get(_id):
-            return DummyUser()
+        id = "userpriv"
+        verification_status = VerificationEnum.VERIFIED.value
+        status = StatusEnum.ACTIVE.value
+
     class ProjectUser:
         permission = type("Permission", (), {"value": "read"})()
-        user = type("User", (), {"ref": type("Ref", (), {"id": "user123"})()})()
+        user = type("User", (), {"ref": type("Ref", (), {"id": "userpriv"})()})()
+
+    class MockUser:
+        @staticmethod
+        async def get(_):
+            return DummyUser()
+
     class Ref:
-        id = "not_user"
-    class SuperAdmin:
-        ref = Ref()
+        id = "otheruser"
+
     class MockProject:
-        super_admin = SuperAdmin()
+        super_admin = type("SuperAdmin", (), {"ref": Ref()})()
         users = [ProjectUser]
         @staticmethod
-        async def get(_id):
+        async def get(_):
             return MockProject()
+
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    monkeypatch.setattr("app.project.models.project_database_model.Project", MockProject)
-    token = make_token(DummyUser.id)
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.Project", MockProject)
+
+    token = make_token("userpriv")
     req = RefreshTokenRequest(refresh_token=token)
-    res = await refresh_access_token(req, "req-id")
+    res = await refresh_access_token_func(req, "req-id")
     assert isinstance(res, TokenResponse)
 
 @pytest.mark.asyncio
-async def test_refresh_token_project_no_access(monkeypatch):
+async def test_refresh_no_privilege(monkeypatch):
     class DummyUser:
-        id = "user123"
-        verification_status = "VERIFIED"
-        status = "ACTIVE"
-    class MockUser:
-        @staticmethod
-        async def get(_id):
-            return DummyUser()
+        id = "noaccess"
+        verification_status = VerificationEnum.VERIFIED.value
+        status = StatusEnum.ACTIVE.value
+
     class ProjectUser:
         permission = type("Permission", (), {"value": "read"})()
-        user = type("User", (), {"ref": type("Ref", (), {"id": "other_user"})()})()
+        user = type("User", (), {"ref": type("Ref", (), {"id": "otheruser"})()})()
+
+    class MockUser:
+        @staticmethod
+        async def get(_):
+            return DummyUser()
+
     class Ref:
-        id = "not_user"
-    class SuperAdmin:
-        ref = Ref()
+        id = "someuser"
+
     class MockProject:
-        super_admin = SuperAdmin()
+        super_admin = type("SuperAdmin", (), {"ref": Ref()})()
         users = [ProjectUser]
         @staticmethod
-        async def get(_id):
+        async def get(_):
             return MockProject()
+
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    monkeypatch.setattr("app.project.models.project_database_model.Project", MockProject)
-    token = make_token(DummyUser.id)
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.Project", MockProject)
+
+    token = make_token("noaccess")
     req = RefreshTokenRequest(refresh_token=token)
-    res = await refresh_access_token(req, "req-id")
-    _assert_json_error(res, 403, "User")
+    res = await refresh_access_token_func(req, "req-id")
+    _assert_json_error(res, 403)
+

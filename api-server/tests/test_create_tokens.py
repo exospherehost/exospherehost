@@ -19,11 +19,11 @@ async def test_create_token_success(monkeypatch):
         status = UserStatusEnum.ACTIVE.value
         def verify_credential(self, cred): return True
 
-    async def mock_find_one(_query): return DummyUser()
-
     class MockUser:
         identifier = "identifier"
-        find_one = staticmethod(mock_find_one)
+        @staticmethod
+        async def find_one(_q):
+            return DummyUser()
 
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
     req = TokenRequest(identifier="user", credential="pass", project=None, satellites=None)
@@ -35,10 +35,11 @@ async def test_create_token_success(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_create_token_invalid_user(monkeypatch):
-    async def mock_find_one(_query): return None
     class MockUser:
         identifier = "identifier"
-        find_one = staticmethod(mock_find_one)
+        @staticmethod
+        async def find_one(_q):
+            return None
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
     req = TokenRequest(identifier="bad", credential="pass", project=None, satellites=None)
     res = await create_token(req, "req-id")
@@ -55,10 +56,11 @@ async def test_create_token_inactive_user(monkeypatch):
         status = UserStatusEnum.INACTIVE.value
         def verify_credential(self, cred): return True
 
-    async def mock_find_one(_query): return DummyUser()
     class MockUser:
         identifier = "identifier"
-        find_one = staticmethod(mock_find_one)
+        @staticmethod
+        async def find_one(_q):
+            return DummyUser()
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
     req = TokenRequest(identifier="user", credential="pass", project=None, satellites=None)
     res = await create_token(req, "req-id")
@@ -75,10 +77,11 @@ async def test_create_token_unverified_user(monkeypatch):
         status = UserStatusEnum.ACTIVE.value
         def verify_credential(self, cred): return True
 
-    async def mock_find_one(_query): return DummyUser()
     class MockUser:
         identifier = "identifier"
-        find_one = staticmethod(mock_find_one)
+        @staticmethod
+        async def find_one(_q):
+            return DummyUser()
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
     req = TokenRequest(identifier="user", credential="pass", project=None, satellites=None)
     res = await create_token(req, "req-id")
@@ -87,10 +90,11 @@ async def test_create_token_unverified_user(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_create_token_exception(monkeypatch):
-    async def bad_find_one(_query): raise Exception("DB error")
     class MockUser:
         identifier = "identifier"
-        find_one = staticmethod(bad_find_one)
+        @staticmethod
+        async def find_one(_q):
+            raise Exception("DB error")
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
     req = TokenRequest(identifier="user", credential="pass", project=None, satellites=None)
     res = await create_token(req, "req-id")
@@ -107,10 +111,11 @@ async def test_create_token_blocked_user(monkeypatch):
         status = UserStatusEnum.BLOCKED.value
         def verify_credential(self, cred): return True
 
-    async def mock_find_one(_query): return DummyUser()
     class MockUser:
         identifier = "identifier"
-        find_one = staticmethod(mock_find_one)
+        @staticmethod
+        async def find_one(_q):
+            return DummyUser()
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
     req = TokenRequest(identifier="user", credential="pass", project=None, satellites=None)
     res = await create_token(req, "req-id")
@@ -130,13 +135,13 @@ async def test_create_token_invalid_project_id(monkeypatch):
         def verify_credential(self, cred): return True
     class MockUser:
         identifier = "identifier"
-        find_one = staticmethod(lambda _q: DummyUser())
+        @staticmethod
+        async def find_one(_q): return DummyUser()
     class MockProject:
         @staticmethod
-        async def get(_id):
-            raise InvalidId("invalid project")
+        async def get(_id): raise InvalidId("invalid project")
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
-    monkeypatch.setattr("app.project.models.project_database_model.Project", MockProject)
+    monkeypatch.setattr("app.auth.controllers.create_token.Project", MockProject)
     req = TokenRequest(identifier="user", credential="pass", project="invalid-id", satellites=None)
     res = await create_token(req, "req-id")
     assert isinstance(res, JSONResponse)
@@ -154,12 +159,13 @@ async def test_create_token_project_not_found(monkeypatch):
         def verify_credential(self, cred): return True
     class MockUser:
         identifier = "identifier"
-        find_one = staticmethod(lambda _q: DummyUser())
+        @staticmethod
+        async def find_one(_q): return DummyUser()
     class MockProject:
         @staticmethod
         async def get(_id): return None
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
-    monkeypatch.setattr("app.project.models.project_database_model.Project", MockProject)
+    monkeypatch.setattr("app.auth.controllers.create_token.Project", MockProject)
     req = TokenRequest(identifier="user", credential="pass", project="507f1...", satellites=None)
     res = await create_token(req, "req-id")
     assert isinstance(res, JSONResponse)
@@ -177,7 +183,8 @@ async def test_create_token_super_admin_project(monkeypatch):
         def verify_credential(self, cred): return True
     class MockUser:
         identifier = "identifier"
-        find_one = staticmethod(lambda _q: DummyUser())
+        @staticmethod
+        async def find_one(_q): return DummyUser()
 
     class Ref:
         id = "user123"
@@ -189,7 +196,7 @@ async def test_create_token_super_admin_project(monkeypatch):
         @staticmethod
         async def get(_id): return MockProject()
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
-    monkeypatch.setattr("app.project.models.project_database_model.Project", MockProject)
+    monkeypatch.setattr("app.auth.controllers.create_token.Project", MockProject)
     req = TokenRequest(identifier="user", credential="pass", project="507f1...", satellites=None)
     res = await create_token(req, "req-id")
     assert isinstance(res, TokenResponse)
@@ -208,7 +215,8 @@ async def test_create_token_user_with_project_permission(monkeypatch):
         user = type("User", (), {"ref": type("Ref", (), {"id": "user123"})()})()
     class MockUser:
         identifier = "identifier"
-        find_one = staticmethod(lambda _q: DummyUser())
+        @staticmethod
+        async def find_one(_q): return DummyUser()
     class Ref:
         id = "not_user"
     class SuperAdmin:
@@ -219,7 +227,7 @@ async def test_create_token_user_with_project_permission(monkeypatch):
         @staticmethod
         async def get(_id): return MockProject()
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
-    monkeypatch.setattr("app.project.models.project_database_model.Project", MockProject)
+    monkeypatch.setattr("app.auth.controllers.create_token.Project", MockProject)
     req = TokenRequest(identifier="user", credential="pass", project="507f1...", satellites=None)
     res = await create_token(req, "req-id")
     assert isinstance(res, TokenResponse)
@@ -238,7 +246,8 @@ async def test_create_token_user_without_project_permission(monkeypatch):
         user = type("User", (), {"ref": type("Ref", (), {"id": "other_user"})()})()
     class MockUser:
         identifier = "identifier"
-        find_one = staticmethod(lambda _q: DummyUser())
+        @staticmethod
+        async def find_one(_q): return DummyUser()
     class Ref:
         id = "not_user"
     class SuperAdmin:
@@ -249,7 +258,7 @@ async def test_create_token_user_without_project_permission(monkeypatch):
         @staticmethod
         async def get(_id): return MockProject()
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
-    monkeypatch.setattr("app.project.models.project_database_model.Project", MockProject)
+    monkeypatch.setattr("app.auth.controllers.create_token.Project", MockProject)
     req = TokenRequest(identifier="user", credential="pass", project="507f1...", satellites=None)
     res = await create_token(req, "req-id")
     assert isinstance(res, JSONResponse)
