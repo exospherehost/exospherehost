@@ -135,3 +135,25 @@ async def test_create_token_exception(monkeypatch):
 
     assert isinstance(res, JSONResponse)
     assert res.status_code == 500
+@pytest.mark.asyncio
+async def test_create_token_blocked_user(monkeypatch):
+    class DummyUser:
+        type = "admin"
+        name = "john"
+        id = "507f1f77bcf86cd799439011"
+        verification_status = VerificationStatusEnum.VERIFIED.value
+        status = UserStatusEnum.BLOCKED.value
+        def verify_credential(self, cred): return True
+
+    async def mock_find_one(_query): return DummyUser()
+
+    class MockUser:
+        identifier = "identifier"
+        find_one = staticmethod(mock_find_one)
+
+    monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
+
+    req = TokenRequest(identifier="user", credential="pass", project=None, satellites=None)
+    res = await create_token(req, "req-id")
+    assert isinstance(res, JSONResponse)
+    assert res.status_code == 403

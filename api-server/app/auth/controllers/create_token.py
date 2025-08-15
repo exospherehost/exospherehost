@@ -46,6 +46,12 @@ async def create_token(request: TokenRequest, x_exosphere_request_id: str)->Unio
 
         logger.info("User found and credential verified", x_exosphere_request_id=x_exosphere_request_id)
 
+        # Deny unverified users
+        verification_status_value = getattr(getattr(user, "verification_status", None), "value", getattr(user, "verification_status", None))
+        if verification_status_value == "NOT_VERIFIED":
+            logger.error("Unverified user - token request denied", x_exosphere_request_id=x_exosphere_request_id)
+            return JSONResponse(status_code=403, content={"success": False, "detail": "User is not verified"})
+
         privilege = None
         if request.project:
             try:

@@ -28,8 +28,9 @@ def make_token(user_id, token_type=TokenType.refresh.value, exp_seconds=JWT_EXPI
 def _assert_json_error(res, expected_status: int, expected_detail: str | None = None):
     assert isinstance(res, JSONResponse)
     assert res.status_code == expected_status
+    body = json.loads(res.body)
+    assert body.get("success") is False
     if expected_detail is not None:
-        body = json.loads(res.body)
         assert body.get("detail") == expected_detail
 
 
@@ -37,12 +38,12 @@ def _assert_json_error(res, expected_status: int, expected_detail: str | None = 
 @pytest.mark.asyncio
 async def test_refresh_access_token_success(monkeypatch):
     class DummyUser:
-        name= "john"
-        type= "dummy"
+        name = "john"
+        type = "dummy"
         id = "507f1f77bcf86cd799439011"
         verification_status = VerificationStatusEnum.VERIFIED.value
         status = UserStatusEnum.ACTIVE.value
-        identifier= "none"
+        identifier = "none"
 
     class MockUser:
         @staticmethod
@@ -118,8 +119,8 @@ async def test_refresh_access_token_inactive_user(monkeypatch):
 @pytest.mark.asyncio
 async def test_refresh_access_token_unverified_user(monkeypatch):
     class DummyUser:
-        type= "trial"
-        name= "john"
+        type = "trial"
+        name = "john"
         id = "507f1f77bcf86cd799439011"
         verification_status = VerificationStatusEnum.NOT_VERIFIED.value
         status = UserStatusEnum.ACTIVE.value
