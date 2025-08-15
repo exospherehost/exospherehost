@@ -37,10 +37,6 @@ async def create_token(request: TokenRequest, x_exosphere_request_id: str)->Unio
             logger.error("Invalid credential", x_exosphere_request_id=x_exosphere_request_id)
             return JSONResponse(status_code=401, content={"success": False, "detail": "Invalid credential"})
         
-        # Check for inactive users
-        if getattr(user, "status", None) == ("INACTIVE","BLOCKED"):
-            logger.error("Inactive user - token request denied", x_exosphere_request_id=x_exosphere_request_id)
-            return JSONResponse(status_code=403, content={"success": False, "detail": "User is inactive or blocked"})
 
          # Check for inactive/blocked users
         status_value = getattr(getattr(user, "status", None), "value", getattr(user, "status", None))
@@ -67,7 +63,7 @@ async def create_token(request: TokenRequest, x_exosphere_request_id: str)->Unio
                for project_user in project.users:
                    if project_user.user.ref.id == user.id:
                       privilege = project_user.permission.value
-                   break
+                      break
             if not privilege:
                 logger.error("User does not have access to the project", x_exosphere_request_id=x_exosphere_request_id)
                 return JSONResponse(status_code=403, content={"success": False, "detail": "User does not have access to the project"})

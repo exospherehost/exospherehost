@@ -17,7 +17,7 @@ from app.auth.models.token_type_enum import TokenType
 from app.user.models.user_status_enum import UserStatusEnum
 from app.user.models.verification_status_enum import VerificationStatusEnum
 
-def make_token(user_id, token_type=TokenType.refresh.value, exp_seconds=JWT_EXPIRES_IN or JWT_EXPIRES_IN):
+def make_token(user_id, token_type=TokenType.refresh.value, exp_seconds=JWT_EXPIRES_IN ):
     payload = {
         "user_id": str(user_id),
         "token_type": token_type,
@@ -92,7 +92,7 @@ async def test_refresh_access_token_user_not_found(monkeypatch):
     token = make_token(ObjectId())
     req = RefreshTokenRequest(refresh_token=token)
     res = await refresh_access_token(req, "req-id")
-    _assert_json_error(res,401)
+    _assert_json_error(res, 401)
 
 
 @pytest.mark.asyncio
@@ -112,7 +112,7 @@ async def test_refresh_access_token_inactive_user(monkeypatch):
     token = make_token("507f1f77bcf86cd799439011")
     req = RefreshTokenRequest(refresh_token=token)
     res = await refresh_access_token(req, "req-id")
-    _assert_json_error(res,401)
+    _assert_json_error(res, 401)
 
 
 @pytest.mark.asyncio
@@ -134,7 +134,7 @@ async def test_refresh_access_token_unverified_user(monkeypatch):
     token = make_token("507f1f77bcf86cd799439011")
     req = RefreshTokenRequest(refresh_token=token)
     res = await refresh_access_token(req, "req-id")
-    _assert_json_error(res,403)
+    _assert_json_error(res, 403)
 
 @pytest.mark.asyncio
 async def test_refresh_access_token_exception(monkeypatch):
@@ -149,7 +149,7 @@ async def test_refresh_access_token_exception(monkeypatch):
     token = make_token(ObjectId())
     req = RefreshTokenRequest(refresh_token=token)
     res = await refresh_access_token(req, "req-id")
-    _assert_json_error(res,500)
+    _assert_json_error(res, 500)
 
 @pytest.mark.asyncio
 async def test_refresh_access_token_blocked_user(monkeypatch):

@@ -50,7 +50,6 @@ async def refresh_access_token(
             )
 
         # Get user
-        user = await User.get(ObjectId(payload["user_id"]))
         try:
             user = await User.get(ObjectId(payload["user_id"]))
         except Exception:
@@ -112,7 +111,7 @@ async def refresh_access_token(
                 for project_user in project.users:
                     if project_user.user.ref.id == user.id:
                         privilege = project_user.permission.value
-                    break
+                        break
             if not privilege:
                 logger.error("User does not have access to the project", x_exosphere_request_id=x_exosphere_request_id)
                 return JSONResponse(status_code=403, content={"success": False, "detail": "User does not have access to the project"})
