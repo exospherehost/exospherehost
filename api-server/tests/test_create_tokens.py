@@ -150,3 +150,158 @@ async def test_create_token_blocked_user(monkeypatch):
     res = await create_token(req, "req-id")
     assert isinstance(res, JSONResponse)
     assert res.status_code == 403
+
+@pytest.mark.asyncio
+async def test_create_token_invalid_project_id(monkeypatch):
+    class DummyUser:
+        id = "user123"
+        name = "John"
+        type = "admin"
+        verification_status = "VERIFIED"
+        status = "ACTIVE"
+        def verify_credential(self, _): return True
+
+    class MockUser:
+        identifier = "identifier"
+        find_one = staticmethod(lambda _query: DummyUser())
+
+    class MockProject:
+        @staticmethod
+        async def get(_id):
+            raise InvalidId("invalid project")
+
+    monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
+    monkeypatch.setattr("app.project.database.Project", MockProject)
+
+    req = TokenRequest(identifier="user", credential="pass", project="invalid-id", satellites=None)
+    res = await create_token(req, "req-id")
+
+    assert isinstance(res, JSONResponse)
+    assert res.status_code == 400
+    assert b"Invalid project" in res.body
+
+@pytest.mark.asyncio
+async def test_create_token_project_not_found(monkeypatch):
+    class DummyUser:
+        id = "user123"
+        name = "John"
+        type = "admin"
+        verification_status = "VERIFIED"
+        status = "ACTIVE"
+        def verify_credential(self, _): return True
+
+    class MockUser:
+        identifier = "identifier"
+        find_one = staticmethod(lambda _query: DummyUser())
+
+    class MockProject:
+        @staticmethod
+        async def get(_id):
+            return None
+
+    monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
+    monkeypatch.setattr("app.project.database.Project", MockProject)
+
+    req = TokenRequest(identifier="user", credential="pass", project="507f1...", satellites=None)
+    res = await create_token(req, "req-id")
+
+    assert isinstance(res, JSONResponse)
+    assert res.status_code == 404
+    assert b"Project" in res.body
+
+@pytest.mark.asyncio
+async def test_create_token_super_admin_project(monkeypatch):
+    class DummyUser:
+        id = "user123"
+        name = "John"
+        type = "admin"
+        verification_status = "VERIFIED"
+        status = "ACTIVE"
+        def verify_credential(self, _): return True
+
+    class MockUser:
+        identifier = "identifier"
+        find_one = staticmethod(lambda _query: DummyUser())
+
+    class MockProject:
+        super_admin = type("SuperAdmin", (), {"ref": type("Ref", (), {"id": "user123"})()})()
+        users = []
+        @staticmethod
+        async def get(_id):
+            return MockProject()
+
+    monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
+    monkeypatch.setattr("app.project.database.Project", MockProject)
+
+    req = TokenRequest(identifier="user", credential="pass", project="507f1...", satellites=None)
+    res = await create_token(req, "req-id")
+
+    assert isinstance(res, TokenResponse)
+
+@pytest.mark.asyncio
+async def test_create_token_user_with_project_permission(monkeypatch):
+    class DummyUser:
+        id = "user123"
+        name = "John"
+        type = "admin"
+        verification_status = "VERIFIED"
+        status = "ACTIVE"
+        def verify_credential(self, _): return True
+
+    class ProjectUser:
+        permission = type("Permission", (), {"value": "read"})()
+        user = type("User", (), {"ref": type("Ref", (), {"id": "user123"})()})()
+
+    class MockUser:
+        identifier = "identifier"
+        find_one = staticmethod(lambda _query: DummyUser())
+
+    class MockProject:
+        super_admin = type("SuperAdmin", (), {"ref": type("Ref", (), {"id": "not_user"})()})()
+        users = [ProjectUser]
+        @staticmethod
+        async def get(_id):
+            return MockProject()
+
+    monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
+    monkeypatch.setattr("app.project.database.Project", MockProject)
+
+    req = TokenRequest(identifier="user", credential="pass", project="507f1...", satellites=None)
+    res = await create_token(req, "req-id")
+
+    assert isinstance(res, TokenResponse)
+
+@pytest.mark.asyncio
+async def test_create_token_user_without_project_permission(monkeypatch):
+    class DummyUser:
+        id = "user123"
+        name = "John"
+        type = "admin"
+        verification_status = "VERIFIED"
+        status = "ACTIVE"
+        def verify_credential(self, _): return True
+
+    class ProjectUser:
+        permission = type("Permission", (), {"value": "read"})()
+        user = type("User", (), {"ref": type("Ref", (), {"id": "other_user"})()})()
+
+    class MockUser:
+        identifier = "identifier"
+        find_one = staticmethod(lambda _query: DummyUser())
+
+    class MockProject:
+        super_admin = type("SuperAdmin", (), {"ref": type("Ref", (), {"id": "not_user"})()})()
+        users = [ProjectUser]
+        @staticmethod
+        async def get(_id):
+            return MockProject()
+
+    monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
+    monkeypatch.setattr("app.project.database.Project", MockProject)
+
+    req = TokenRequest(identifier="user", credential="pass", project="507f1...", satellites=None)
+    res = await create_token(req, "req-id")
+
+    assert isinstance(res, JSONResponse)
+    assert res.status_code == 403
+    assert b"User" in res.body

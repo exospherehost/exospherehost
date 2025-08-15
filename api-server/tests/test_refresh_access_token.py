@@ -170,3 +170,148 @@ async def test_refresh_access_token_blocked_user(monkeypatch):
     req = RefreshTokenRequest(refresh_token=token)
     res = await refresh_access_token(req, "req-id")
     _assert_json_error(res, 401)
+    
+@pytest.mark.asyncio
+async def test_refresh_token_invalid_project(monkeypatch):
+    class DummyUser:
+        id = "user123"
+        verification_status = "VERIFIED"
+        status = "ACTIVE"
+
+    class MockUser:
+        @staticmethod
+        async def get(_id):
+            return DummyUser()
+
+    class MockProject:
+        @staticmethod
+        async def get(_id):
+            raise InvalidId("invalid project")
+
+    monkeypatch.setattr("app.auth.controllers.refresh_token.User", MockUser)
+    monkeypatch.setattr("app.project.database.Project", MockProject)
+
+    token = make_token(DummyUser.id)
+    req = RefreshTokenRequest(token)
+    res = await refresh_token(req, "req-id")
+
+    _assert_json_error(res, 404, "Project")
+
+@pytest.mark.asyncio
+async def test_refresh_token_project_not_found(monkeypatch):
+    class DummyUser:
+        id = "user123"
+        verification_status = "VERIFIED"
+        status = "ACTIVE"
+
+    class MockUser:
+        @staticmethod
+        async def get(_id):
+            return DummyUser()
+
+    class MockProject:
+        @staticmethod
+        async def get(_id):
+            return None
+
+    monkeypatch.setattr("app.auth.controllers.refresh_token.User", MockUser)
+    monkeypatch.setattr("app.project.database.Project", MockProject)
+
+    token = make_token(DummyUser.id)
+    req = RefreshTokenRequest(token)
+    res = await refresh_token(req, "req-id")
+
+    _assert_json_error(res, 404, "Project")
+
+@pytest.mark.asyncio
+async def test_refresh_token_project_privilege_superadmin(monkeypatch):
+    class DummyUser:
+        id = "user123"
+        verification_status = "VERIFIED"
+        status = "ACTIVE"
+
+    class MockUser:
+        @staticmethod
+        async def get(_id):
+            return DummyUser()
+
+    class MockProject:
+        super_admin = type("SuperAdmin", (), {"ref": type("Ref", (), {"id": "user123"})()})()
+        users = []
+        @staticmethod
+        async def get(_id):
+            return MockProject()
+
+    monkeypatch.setattr("app.auth.controllers.refresh_token.User", MockUser)
+    monkeypatch.setattr("app.project.database.Project", MockProject)
+
+    token = make_token(DummyUser.id)
+    req = RefreshTokenRequest(token)
+    res = await refresh_token(req, "req-id")
+
+    assert isinstance(res, TokenResponse)
+
+@pytest.mark.asyncio
+async def test_refresh_token_project_privilege_user(monkeypatch):
+    class DummyUser:
+        id = "user123"
+        verification_status = "VERIFIED"
+        status = "ACTIVE"
+
+    class MockUser:
+        @staticmethod
+        async def get(_id):
+            return DummyUser()
+
+    class ProjectUser:
+        permission = type("Permission", (), {"value": "read"})()
+        user = type("User", (), {"ref": type("Ref", (), {"id": "user123"})()})()
+
+    class MockProject:
+        super_admin = type("SuperAdmin", (), {"ref": type("Ref", (), {"id": "not_user"})()})()
+        users = [ProjectUser]
+        @staticmethod
+        async def get(_id):
+            return MockProject()
+
+    monkeypatch.setattr("app.auth.controllers.refresh_token.User", MockUser)
+    monkeypatch.setattr("app.project.database.Project", MockProject)
+
+    token = make_token(DummyUser.id)
+    req = RefreshTokenRequest(token)
+    res = await refresh_token(req, "req-id")
+
+    assert isinstance(res, TokenResponse)
+
+@pytest.mark.asyncio
+async def test_refresh_token_project_no_access(monkeypatch):
+    class DummyUser:
+        id = "user123"
+        verification_status = "VERIFIED"
+        status = "ACTIVE"
+
+    class MockUser:
+        @staticmethod
+        async def get(_id):
+            return DummyUser()
+
+    class ProjectUser:
+        permission = type("Permission", (), {"value": "read"})()
+        user = type("User", (), {"ref": type("Ref", (), {"id": "other_user"})()})()
+
+    class MockProject:
+        super_admin = type("SuperAdmin", (), {"ref": type("Ref", (), {"id": "not_user"})()})()
+        users = [ProjectUser]
+
+        @staticmethod
+        async def get(_id):
+            return MockProject()
+
+    monkeypatch.setattr("app.auth.controllers.refresh_token.User", MockUser)
+    monkeypatch.setattr("app.project.database.Project", MockProject)
+
+    token = make_token(DummyUser.id)
+    req = RefreshTokenRequest(token)
+    res = await refresh_token(req, "req-id")
+
+    _assert_json_error(res, 403, "User")
