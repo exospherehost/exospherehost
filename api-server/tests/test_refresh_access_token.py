@@ -4,6 +4,7 @@ import datetime
 from bson import ObjectId
 import json
 from starlette.responses import JSONResponse
+from bson.errors import InvalidId
 
 from app.auth.controllers.refresh_access_token import (
     refresh_access_token,
@@ -170,7 +171,7 @@ async def test_refresh_access_token_blocked_user(monkeypatch):
     req = RefreshTokenRequest(refresh_token=token)
     res = await refresh_access_token(req, "req-id")
     _assert_json_error(res, 401)
-    
+
 @pytest.mark.asyncio
 async def test_refresh_token_invalid_project(monkeypatch):
     class DummyUser:
@@ -188,12 +189,12 @@ async def test_refresh_token_invalid_project(monkeypatch):
         async def get(_id):
             raise InvalidId("invalid project")
 
-    monkeypatch.setattr("app.auth.controllers.refresh_token.User", MockUser)
-    monkeypatch.setattr("app.project.database.Project", MockProject)
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
+    monkeypatch.setattr("app.project.database_model.Project", MockProject)
 
     token = make_token(DummyUser.id)
     req = RefreshTokenRequest(token)
-    res = await refresh_token(req, "req-id")
+    res = await refresh_access_token(req, "req-id")
 
     _assert_json_error(res, 404, "Project")
 
@@ -214,12 +215,12 @@ async def test_refresh_token_project_not_found(monkeypatch):
         async def get(_id):
             return None
 
-    monkeypatch.setattr("app.auth.controllers.refresh_token.User", MockUser)
-    monkeypatch.setattr("app.project.database.Project", MockProject)
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
+    monkeypatch.setattr("app.project.database_model.Project", MockProject)
 
     token = make_token(DummyUser.id)
     req = RefreshTokenRequest(token)
-    res = await refresh_token(req, "req-id")
+    res = await refresh_access_token(req, "req-id")
 
     _assert_json_error(res, 404, "Project")
 
@@ -242,12 +243,12 @@ async def test_refresh_token_project_privilege_superadmin(monkeypatch):
         async def get(_id):
             return MockProject()
 
-    monkeypatch.setattr("app.auth.controllers.refresh_token.User", MockUser)
-    monkeypatch.setattr("app.project.database.Project", MockProject)
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
+    monkeypatch.setattr("app.project.database_model.Project", MockProject)
 
     token = make_token(DummyUser.id)
     req = RefreshTokenRequest(token)
-    res = await refresh_token(req, "req-id")
+    res = await refresh_access_token(req, "req-id")
 
     assert isinstance(res, TokenResponse)
 
@@ -274,12 +275,12 @@ async def test_refresh_token_project_privilege_user(monkeypatch):
         async def get(_id):
             return MockProject()
 
-    monkeypatch.setattr("app.auth.controllers.refresh_token.User", MockUser)
-    monkeypatch.setattr("app.project.database.Project", MockProject)
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
+    monkeypatch.setattr("app.project.database_model.Project", MockProject)
 
     token = make_token(DummyUser.id)
     req = RefreshTokenRequest(token)
-    res = await refresh_token(req, "req-id")
+    res = await refresh_access_token(req, "req-id")
 
     assert isinstance(res, TokenResponse)
 
@@ -307,11 +308,11 @@ async def test_refresh_token_project_no_access(monkeypatch):
         async def get(_id):
             return MockProject()
 
-    monkeypatch.setattr("app.auth.controllers.refresh_token.User", MockUser)
-    monkeypatch.setattr("app.project.database.Project", MockProject)
+    monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
+    monkeypatch.setattr("app.project.database_model.Project", MockProject)
 
     token = make_token(DummyUser.id)
     req = RefreshTokenRequest(token)
-    res = await refresh_token(req, "req-id")
+    res = await refresh_access_token(req, "req-id")
 
     _assert_json_error(res, 403, "User")
