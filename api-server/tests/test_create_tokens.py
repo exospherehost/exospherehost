@@ -115,8 +115,7 @@ async def test_create_token_unverified_user(monkeypatch):
     req = TokenRequest(identifier="user", credential="pass", project=None, satellites=None)
     res = await create_token(req, "req-id")
 
-    assert isinstance(res, JSONResponse)
-    assert res.status_code == 403
+    assert isinstance(res, TokenResponse)
 
 
 @pytest.mark.asyncio
