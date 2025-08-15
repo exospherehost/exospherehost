@@ -4,6 +4,8 @@ import jwt
 from datetime import datetime, timedelta
 from starlette.responses import JSONResponse
 from bson import ObjectId
+from bson.errors import InvalidId
+
 
 from ..models.token_request import TokenRequest
 from ..models.token_response import TokenResponse
@@ -18,13 +20,14 @@ from app.project.models.project_database_model import Project
 logger = LogsManager().get_logger()
 
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-if not JWT_SECRET_KEY:
-    raise ValueError("JWT_SECRET_KEY environment variable is not set or is empty.")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRES_IN = 3600        # 1 hour
 REFRESH_EXPIRES_IN = 3600*24 # 1 day
 
-async def create_token(request: TokenRequest, x_exosphere_request_id: str)->Union[JSONResponse,TokenResponse]:
+async def create_token(request: TokenRequest, x_exosphere_request_id: str) -> Union[JSONResponse,TokenResponse]:
+    if not JWT_SECRET_KEY:
+        logger.error("JWT secret missing", x_exosphere_request_id=x_exosphere_request_id)
+        return JSONResponse(status_code=500, content={"success": False, "detail": "Internal server error"})
     try:
         logger.info("Finding user", x_exosphere_request_id=x_exosphere_request_id)
         user = await User.find_one(User.identifier == request.identifier)
@@ -55,10 +58,13 @@ async def create_token(request: TokenRequest, x_exosphere_request_id: str)->Unio
         privilege = None
         if request.project:
             try:
-               project = await Project.get(ObjectId(request.project))
-            except Exception:
+                project = await Project.get(ObjectId(request.project))
+            except InvalidId:
                 logger.error("Invalid project id", x_exosphere_request_id=x_exosphere_request_id)
-                return JSONResponse(status_code=404, content={"success": False, "detail": "Project not found"})
+                return JSONResponse(status_code=400, content={"success": False, "detail": "Invalid project id"})
+            except Exception as e:
+                logger.error("Error loading project", error=e, x_exosphere_request_id=x_exosphere_request_id)
+                return JSONResponse(status_code=500, content={"success": False, "detail": "Internal server error"})
             if not project:
                 logger.error("Project not found", x_exosphere_request_id=x_exosphere_request_id)
                 return JSONResponse(status_code=404, content={"success": False, "detail": "Project not found"})

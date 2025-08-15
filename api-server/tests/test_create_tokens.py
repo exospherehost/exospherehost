@@ -17,7 +17,6 @@ async def test_create_token_success(monkeypatch):
         type = "admin"
         verification_status = VerificationStatusEnum.VERIFIED.value
         status = UserStatusEnum.ACTIVE.value
-        identifier="alpha"
         def verify_credential(self, cred):
             return True
 
@@ -25,16 +24,10 @@ async def test_create_token_success(monkeypatch):
         return DummyUser()
 
     class MockUser:
-        identifier="identifier_field"
+        identifier="identifier"
         find_one = staticmethod(mock_find_one)
 
-    class MockProject:
-        @staticmethod
-        async def get(_id):
-            return None
-
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
-    monkeypatch.setattr("app.auth.controllers.create_token.Project", MockProject)
 
     req = TokenRequest(identifier="user", credential="pass", project=None, satellites=None)
     res = await create_token(req, "req-id")

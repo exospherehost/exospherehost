@@ -8,6 +8,7 @@ from ..models.refresh_token_request import RefreshTokenRequest
 from ..models.token_response import TokenResponse
 from ..models.token_claims import TokenClaims
 from ..models.token_type_enum import TokenType
+from bson.errors import InvalidId
 
 from app.singletons.logs_manager import LogsManager
 
@@ -52,16 +53,11 @@ async def refresh_access_token(
         # Get user
         try:
             user = await User.get(ObjectId(payload["user_id"]))
-        except Exception:
-           return JSONResponse(
-                status_code=401,
-                content={"success": False, "detail": "Invalid token: bad user id"}
-            )
+        except InvalidId:
+            logger.error("Invalid user id in token", x_exosphere_request_id=x_exosphere_request_id)
+            return JSONResponse(status_code=401, content={"success": False, "detail": "Invalid token"})
         if not user:
-            return JSONResponse(
-                status_code=401,
-                content={"success": False, "detail": "User not found"}
-            )
+            return JSONResponse(status_code=401, content={"success": False, "detail": "User not found"})
         
         # Define a list of statuses for which token refresh is not allowed
         status_value = getattr(user.status, "value", user.status)
@@ -98,11 +94,10 @@ async def refresh_access_token(
         if project_id:
             try:
                 project = await Project.get(ObjectId(project_id))
-            except Exception:
+            except InvalidId:
                 logger.error("Invalid project id", x_exosphere_request_id=x_exosphere_request_id)
                 return JSONResponse(status_code=404, content={"success": False, "detail": "Project not found"})
             if not project:
-                logger.error("Project not found", x_exosphere_request_id=x_exosphere_request_id)
                 return JSONResponse(status_code=404, content={"success": False, "detail": "Project not found"})
             logger.info("Project found", x_exosphere_request_id=x_exosphere_request_id)
             if project.super_admin.ref.id == user.id:
@@ -141,18 +136,7 @@ async def refresh_access_token(
         )
         
     except jwt.ExpiredSignatureError:
-        return JSONResponse(
-            status_code=401,
-            content={"success": False, "detail": "Refresh token expired"}
-        )
+        return JSONResponse(status_code=401, content={"success": False, "detail": "Refresh token expired"})
     except Exception as e:
-        logger.error(
-            "Error refreshing token", 
-            error=e, 
-            x_exosphere_request_id=x_exosphere_request_id
-        )
-        # Always return JSONResponse for errors for consistent API behavior
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "detail": "Internal server error"}
-        )
+        logger.exception("Error refreshing token", exc_info=e, x_exosphere_request_id=x_exosphere_request_id)
+        return JSONResponse(status_code=500, content={"success": False, "detail": "Internal server error"})
