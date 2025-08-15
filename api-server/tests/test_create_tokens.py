@@ -72,7 +72,7 @@ async def test_create_token_inactive_user(monkeypatch):
         return DummyUser()
 
     class MockUser:
-        identifier="req-id"
+        identifier="identifier"
         find_one = staticmethod(mock_find_one)
 
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
@@ -100,7 +100,7 @@ async def test_create_token_unverified_user(monkeypatch):
         return DummyUser()
 
     class MockUser:
-        identifier="req-id"
+        identifier="identifier"
         find_one = staticmethod(mock_find_one)
 
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
@@ -118,7 +118,7 @@ async def test_create_token_exception(monkeypatch):
         raise Exception("DB error")
 
     class MockUser:
-        identifier="req-id"
+        identifier="identifier"
         find_one = staticmethod(bad_find_one)
 
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)

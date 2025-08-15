@@ -29,7 +29,7 @@ JWT_EXPIRES_IN = 3600  # 1 hour
 async def refresh_access_token(
     request: RefreshTokenRequest, 
     x_exosphere_request_id: str | None
-) -> Union[TokenResponse,JSONResponse]:
+) -> Union[TokenResponse, JSONResponse]:
     """
     Takes refresh token and returns a new access token.
     Denies for inactive/blocked or unverified users.
@@ -94,7 +94,7 @@ async def refresh_access_token(
         if project_id:
             try:
                 project = await Project.get(ObjectId(project_id))
-            except InvalidId:
+            except (InvalidId, TypeError):
                 logger.error("Invalid project id", x_exosphere_request_id=x_exosphere_request_id)
                 return JSONResponse(status_code=404, content={"success": False, "detail": "Project not found"})
             if not project:
@@ -111,14 +111,16 @@ async def refresh_access_token(
                 logger.error("User does not have access to the project", x_exosphere_request_id=x_exosphere_request_id)
                 return JSONResponse(status_code=403, content={"success": False, "detail": "User does not have access to the project"})
 
+        # Get normalized verification status for consistency
+        verification_status_value = getattr(user.verification_status, "value", user.verification_status)
+
         # Create new access token
         token_claims = TokenClaims(
             user_id=str(user.id),
             user_name=user.name,
             user_type=user.type,
-            verification_status=user.verification_status,
-            status=user.status,
-            project=project_id,  
+            verification_status=verification_status_value,
+            status=status_value,
             previlage=privilege,  
             satellites=payload.get("satellites"),
             exp=int((datetime.now() + timedelta(seconds=JWT_EXPIRES_IN)).timestamp()),
