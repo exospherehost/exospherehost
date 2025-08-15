@@ -1,6 +1,7 @@
 import pytest
 import jwt
 from starlette.responses import JSONResponse
+from bson.errors import InvalidId
 
 from app.auth.controllers.create_token import create_token, JWT_SECRET_KEY, JWT_ALGORITHM
 from app.auth.models.token_request import TokenRequest
@@ -171,7 +172,7 @@ async def test_create_token_invalid_project_id(monkeypatch):
             raise InvalidId("invalid project")
 
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
-    monkeypatch.setattr("app.project.database.Project", MockProject)
+    monkeypatch.setattr("app.user.models.user_database_model", MockProject)
 
     req = TokenRequest(identifier="user", credential="pass", project="invalid-id", satellites=None)
     res = await create_token(req, "req-id")
@@ -200,7 +201,7 @@ async def test_create_token_project_not_found(monkeypatch):
             return None
 
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
-    monkeypatch.setattr("app.project.database.Project", MockProject)
+    monkeypatch.setattr("app.user.models.useapp.user.models.user_database_modelr_database_model", MockProject)
 
     req = TokenRequest(identifier="user", credential="pass", project="507f1...", satellites=None)
     res = await create_token(req, "req-id")
@@ -231,7 +232,7 @@ async def test_create_token_super_admin_project(monkeypatch):
             return MockProject()
 
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
-    monkeypatch.setattr("app.project.database.Project", MockProject)
+    monkeypatch.setattr("app.user.models.user_database_model", MockProject)
 
     req = TokenRequest(identifier="user", credential="pass", project="507f1...", satellites=None)
     res = await create_token(req, "req-id")
@@ -264,7 +265,7 @@ async def test_create_token_user_with_project_permission(monkeypatch):
             return MockProject()
 
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
-    monkeypatch.setattr("app.project.database.Project", MockProject)
+    monkeypatch.setattr("app.user.models.user_database_model", MockProject)
 
     req = TokenRequest(identifier="user", credential="pass", project="507f1...", satellites=None)
     res = await create_token(req, "req-id")
@@ -297,7 +298,7 @@ async def test_create_token_user_without_project_permission(monkeypatch):
             return MockProject()
 
     monkeypatch.setattr("app.auth.controllers.create_token.User", MockUser)
-    monkeypatch.setattr("app.project.database.Project", MockProject)
+    monkeypatch.setattr("app.user.models.user_database_model", MockProject)
 
     req = TokenRequest(identifier="user", credential="pass", project="507f1...", satellites=None)
     res = await create_token(req, "req-id")

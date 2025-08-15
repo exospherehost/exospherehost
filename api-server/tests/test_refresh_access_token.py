@@ -190,7 +190,7 @@ async def test_refresh_token_invalid_project(monkeypatch):
             raise InvalidId("invalid project")
 
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    monkeypatch.setattr("app.project.database_model.Project", MockProject)
+    monkeypatch.setattr("app.user.models.user_database_model", MockProject)
 
     token = make_token(DummyUser.id)
     req = RefreshTokenRequest(token)
@@ -216,7 +216,7 @@ async def test_refresh_token_project_not_found(monkeypatch):
             return None
 
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    monkeypatch.setattr("app.project.database_model.Project", MockProject)
+    monkeypatch.setattr("app.user.models.user_database_model", MockProject)
 
     token = make_token(DummyUser.id)
     req = RefreshTokenRequest(token)
@@ -244,7 +244,7 @@ async def test_refresh_token_project_privilege_superadmin(monkeypatch):
             return MockProject()
 
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    monkeypatch.setattr("app.project.database_model.Project", MockProject)
+    monkeypatch.setattr("app.user.models.user_database_model", MockProject)
 
     token = make_token(DummyUser.id)
     req = RefreshTokenRequest(token)
@@ -276,7 +276,7 @@ async def test_refresh_token_project_privilege_user(monkeypatch):
             return MockProject()
 
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    monkeypatch.setattr("app.project.database_model.Project", MockProject)
+    monkeypatch.setattr("app.user.models.user_database_model", MockProject)
 
     token = make_token(DummyUser.id)
     req = RefreshTokenRequest(token)
@@ -309,7 +309,7 @@ async def test_refresh_token_project_no_access(monkeypatch):
             return MockProject()
 
     monkeypatch.setattr("app.auth.controllers.refresh_access_token.User", MockUser)
-    monkeypatch.setattr("app.project.database_model.Project", MockProject)
+    monkeypatch.setattr("app.user.models.user_database_model", MockProject)
 
     token = make_token(DummyUser.id)
     req = RefreshTokenRequest(token)
