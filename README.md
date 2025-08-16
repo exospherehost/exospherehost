@@ -1,55 +1,87 @@
+# ExosphereHost
+
 ![logo light](assets/logo-light.svg#gh-light-mode-only)
 ![logo dark](assets/logo-dark.svg#gh-dark-mode-only)
 
-> We are building a world where creators and innovators can fully dedicate themselves to crafting extraordinary products and services, unburdened by the complexities of the underlying infrastructure. We foresee a future where intelligent systems seamlessly operate behind the scenes, tackling intricate, high-scale challenges with immense computational demands and vast data movements.
+[![GitHub Stars](https://img.shields.io/github/stars/exospherehost/exospherehost?style=social)](https://github.com/exospherehost/exospherehost)
+[![License](https://img.shields.io/badge/License-ELv2-blue.svg)](LICENSE.md)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Discord](https://img.shields.io/discord/1234567890?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/JzCT6HRN)
 
-To realize this, we are pioneering an open-source infrastructure layer for background AI workflows and agents that is robust, affordable, and effortless to use, empowering the scalable solutions and transformative tasks of today, tomorrow, and beyond.
+> **Our Vision:** We are building a world where creators and innovators can fully dedicate themselves to crafting extraordinary products and services, unburdened by the complexities of the underlying infrastructure. We foresee a future where intelligent systems seamlessly operate behind the scenes, tackling intricate, high-scale challenges with immense computational demands and vast data movements.
 
-## Core Concepts
-To have an intution of the first version of the platform, we would highly recommend watching the video below, this explains using our cluster apis with YML input, we are working on more modalities like pythonic control systems.
+**ExosphereHost** is an open-source infrastructure layer for background AI workflows and agents that is robust, affordable, and effortless to use, empowering the scalable solutions and transformative tasks of today, tomorrow, and beyond.
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.12+
+- Docker (optional, for local development)
+- UV package manager (recommended)
+
+### Installation
+
+#### Using Python SDK
+```bash
+pip install exospherehost
+```
+
+#### Clone Repository
+```bash
+git clone https://github.com/exospherehost/exospherehost.git
+cd exospherehost
+```
+
+### Environment Setup
+```bash
+export EXOSPHERE_STATE_MANAGER_URI="your-state-manager-uri"
+export EXOSPHERE_API_KEY="your-api-key"
+```
+
+## 🏗️ Architecture Overview
+
+ExosphereHost consists of several key components:
+
+- **🛰️ Satellites**: Pre-implemented serverless functions optimized for AI workflows
+- **🌌 Clusters**: Collections of satellites working together to achieve specific goals
+- **🔄 Orbit**: Container runtime for managing satellite lifecycles
+- **🖥️ API Server**: RESTful API interface for managing projects, users, and workflows
+- **📊 State Manager**: Distributed state management for workflow coordination
+- **🎯 Python SDK**: Developer-friendly SDK for building distributed AI applications
+
+## 🛰️ Core Concepts
+
+### Satellites
+Satellites are the core building blocks for ExosphereHost. They are lego blocks designed for specific purposes that can be connected together to create complex systems in minutes without worrying about the underlying infrastructure.
+
+**Key Properties:**
+- ✅ Idempotent and stateless
+- 🏷️ Unique identifier format: `satellite/project-name/satellite-name`
+- ⚙️ Configurable via `config` parameter
+- 🔗 Completely independent of other satellites
+- 📋 Return structured list of objects
+- 📈 Built-in status tracking and retry mechanisms
+
+**Cost Optimization:** Our in-house optimization can lead to **50-75% cost savings** on LLMs like DeepSeek R1 70B, Gemma 3 27B, etc.
+
+### Clusters
+A Cluster is a collection of satellites connected together to form a complete workflow.
+
+**Key Properties:**
+- 🔗 Connected satellites forming a system
+- 🏷️ Unique identifier format: `cluster/project-name/cluster-name`
+- ⏱️ SLA-based pricing: `6h`, `12h`, `24h` (higher SLA = lower cost)
+- 🎯 Multiple trigger types: `cron`, `api-call`, events
+- 📊 Configurable logging and failure handling
+- 🔄 Built-in retry and error recovery
+
+## 📋 Example: Financial Report Processing
+
+Here's a complete example of processing quarterly financial reports using our cluster API:
 
 <a href="https://www.youtube.com/watch?v=tfVYXpjyGqQ" target="_blank">
-  <img src="assets/cluster-api-yt.png" alt="Cluster API YT">
+  <img src="assets/cluster-api-yt.png" alt="Cluster API Tutorial">
 </a>
-
-### Satellite
-Satellites are the core building blocks for exosphere. They are lego blocks designed for a specific purpose: you can connect them together to create complex systems in a matter of minutes without worrying about the underlying infrastructure.
-
-They are pre-implemented serverless functions highly optimized for workflows and high volume batch processing, optimized for cost, reliability, developer velocity and ease of use.
-
-Our in-house optimization for workflows and batch processing can lead to significant cost savings, for example you can expect a cost per token saving of about 50-75% on LLMs like DeepSeek R1 70B, Gemma 3 27B, etc.
-
-Each of these satellites must satisfy the following properties:
-
-1. Should be idempotent and stateless.
-2. Should have a unique identifier of the format `satellite/unique-project-name/satellite-name`, example: `satellite/exospherehost/deepseek-r1-distrill-llama-70b`
-3. Should take a `config` parameter as an `object` to control or modify the behaviour.
-4. Should be totally independent of any other satellite.
-5. Should return a `list` of `objects`.
-6. Should have following necessary fields: `parents`, `children`, `identifier`, `status`, `retries`, `delay`. Most of these fields are optional are set by the platform itself.
-7. Should provide a clean interface for the user to check the status of the satellite and get output data.
-
-Further work is being done to allow users to bring their own satellites and use our core infrastructure to manage their lifecycle.
-
-### Cluster
-A Cluster is a collection of satellites connected together to form a complete workflow: a series of satellities working together to achieve a common goal.
-
-Each of these clusters must satisfy the following properties:
-
-1. Should be a collection of satellites that are connected together to form a system.
-2. Should have a unique identifier of the format `cluster/unique-project-name/cluster-name`, example: `cluster/aikin/structured-json`
-3. Should define a necessary parameter of `SLA` denoting the maximum time to complete the cluster, **higher the SLA, lower the cost** as systems have more time to optimize for the task (currently supported: `6h`, `12h`, `24h`)
-4. Should have a necessary `trigger` parameter to start the cluster, this can be a `cron` expression, or an `api-call` or other possible events.
-5. Each cluster can also define `logs` parameter to configure log forwarding to a specific destination like `NewRelic`, `Kusto`, `CloudWatch` or any other logging service.
-6. Each cluster can also define `failure` steps to handle the cluster in case of failure, this could again be a set of satellites to run in case of failure.
-
-Developers can define their own clusters using our cluster api, which supports cluster creation, deletion, status, logs and other operations. Currently we are supporting cluster creation through `YML` files or our APIs and SDKs.
-
-### Orbit
-Orbit is the core compute platform capable of managing the lifecycle of satellites and clusters optimally across multiple computes including GPUs, CPUs, and other hardware. Further allowing developers to write their own satellites and plug-in with our core exosphere platform.
-
-## Example
-Here is an example of using our cluster api to create a satellite cluster to get structured json from PDF files of quaterly financial reports. The workflow in the image could be represented as the `YML` file below.
 
 ![Example Workflow](assets/example-workflow.png)
 
@@ -199,36 +231,187 @@ cluster:
                     Cluster ${{cluster.identifier}} failed at ${{cluster.trigger}} for file $${{satellites.get-files-from-s3.output.file-path}}  with error ${{satellites.get-files-from-s3.output.error}}, file has been moved to failure bucket with path $${{satellites.move-to-failure-bucket.output.file-uri}}
 ```
 
-This could also be represented as a pythonic control using our SDK/APIs, checkout [documentation](https://docs.exosphere.host) for more details.
+## 🐍 Python SDK Usage
 
-## Documentation
-For more information, please refer to our [documentation](https://docs.exosphere.host).
+Create distributed AI workflows using our Python SDK:
 
-### Steps to build the Documentation locally
-1. Install UV: Follow the official instructions [here](https://docs.astral.sh/uv/#installation).
-2. Clone this repository, use command `git clone https://github.com/exospherehost/exospherehost.git`
-3. Install dependencies by navigating to `docs` folder and executing `uv sync`
-4. Use the command `uv run mkdocs serve` while `docs` folder being your working path.
+```python
+from exospherehost import Runtime, BaseNode
+from pydantic import BaseModel
 
-### Contribute to Documentation
-We encourage contributions to the documentation page, you can simply add a new PR with the `documentation` label.
+class DataProcessorNode(BaseNode):
+    class Inputs(BaseModel):
+        name: str
+        data: str
 
-## Open Source Commitment
+    class Outputs(BaseModel):
+        message: str
+        processed_data: str
 
-We believe that humanity would not have been able to achieve the level of innovation and progress we have today without the support of open source and community, we want to be a part of this movement and support the open source community. In following ways: 
+    async def execute(self) -> Outputs:
+        print(f"Processing data for: {self.inputs.name}")
+        processed_data = f"completed:{self.inputs.data}"
+        return self.Outputs(
+            message="success",
+            processed_data=processed_data
+        )
 
-1. We will be open sourcing majority of our codebase for exosphere.host and making it available to the community. We welcome all sort of contributions and feedback from the community and will be happy to collaborate with you.
-2. For whatever the profits which we generate from exosphere.host, we will be donating a portion of it to open source projects and communities. If you have any questions, suggestions or ideas.
-3. We would further be collaborating with various open source student programs to provide support, encourage and mentor the next generation of open source contributors.
+# Initialize and start the runtime
+Runtime(
+    namespace="MyProject",
+    name="DataProcessor",
+    nodes=[DataProcessorNode]
+).start()
+```
 
-Please feel free to reach out to us at [nivedit@exosphere.host](mailto:nivedit@exosphere.host). Lets push the boundaries of possibilities for humanity together!
+## 🏗️ Repository Structure
 
-## Contributing
-We welcome community contributions. For guidelines, refer to our [CONTRIBUTING.md](/CONTRIBUTING.md). Further we are thankful to all the contributors helping us to simplify infrastructure starting with the process of building and deploying AI workflows and agents.
+```
+exospherehost/
+├── 📁 api-server/          # FastAPI-based REST API server
+├── 📁 python-sdk/          # Official Python SDK
+├── 📁 state-manager/       # Distributed state management
+├── 📁 exosphere-runtimes/  # Runtime environments for satellites
+├── 📁 landing-page/        # Next.js landing page
+├── 📁 docs/               # MkDocs documentation
+├── 📁 k8s/               # Kubernetes deployment configs
+├── 📁 assets/            # Images and static assets
+├── 📁 .github/           # GitHub workflows and templates
+└── 📄 README.md          # This file
+```
+
+## 🛠️ Development Setup
+
+### Local Development Environment
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/exospherehost/exospherehost.git
+   cd exospherehost
+   ```
+
+2. **Set up API Server:**
+   ```bash
+   cd api-server
+   uv sync
+   cp .env.example .env  # Configure your environment
+   uv run python run.py
+   ```
+
+3. **Set up State Manager:**
+   ```bash
+   cd state-manager
+   uv sync
+   uv run python run.py
+   ```
+
+4. **Set up Landing Page:**
+   ```bash
+   cd landing-page
+   npm install
+   npm run dev
+   ```
+
+5. **Build Documentation:**
+   ```bash
+   cd docs
+   uv sync
+   uv run mkdocs serve
+   ```
+
+### Docker Development
+
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+## 📚 Documentation
+
+### 🌐 Online Documentation
+- **Main Documentation**: [https://docs.exosphere.host](https://docs.exosphere.host)
+- **API Reference**: [https://docs.exosphere.host/api-server/swagger](https://docs.exosphere.host/api-server/swagger)
+- **Python SDK**: [https://docs.exosphere.host/python-sdk](https://docs.exosphere.host/python-sdk)
+
+### 🏠 Local Documentation
+Build and serve documentation locally:
+
+1. **Install UV**: Follow the official instructions [here](https://docs.astral.sh/uv/#installation)
+2. **Navigate to docs folder**: `cd docs`
+3. **Install dependencies**: `uv sync`
+4. **Serve documentation**: `uv run mkdocs serve`
+
+The documentation will be available at `http://localhost:8000`
+
+### 📝 Contributing to Documentation
+We encourage contributions to the documentation! Simply:
+1. Fork the repository
+2. Make your changes in the `docs/docs/` directory
+3. Submit a pull request with the `documentation` label
+
+## 🤝 Contributing
+
+We welcome community contributions! Here's how you can help:
+
+### 🐛 Reporting Issues
+- Check existing [issues](https://github.com/exospherehost/exospherehost/issues)
+- Create a new issue with detailed description
+- Include steps to reproduce for bugs
+
+### 🔧 Development Contributions
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
+3. **Commit** your changes: `git commit -m 'Add amazing feature'`
+4. **Push** to the branch: `git push origin feature/amazing-feature`
+5. **Open** a Pull Request
+
+### 📋 Contribution Guidelines
+- Follow our [Code of Conduct](CODE_OF_CONDUCT.md)
+- Read the [Contributing Guidelines](CONTRIBUTING.md)
+- Ensure tests pass and code is properly formatted
+- Update documentation for new features
+
+## 🌟 Open Source Commitment
+
+We believe in the power of open source and are committed to:
+
+1. **🔓 Open Source Everything**: We're open-sourcing the majority of our codebase and welcome contributions from the community
+2. **💰 Profit Sharing**: A portion of our profits goes back to open source projects and communities
+3. **🎓 Student Programs**: We collaborate with open source student programs to mentor the next generation of contributors
+
+## 🛡️ Security
+
+We take security seriously. Please refer to our [Security Policy](SECURITY.md) for reporting vulnerabilities.
+
+## 📄 License
+
+This project is licensed under the **Elastic License 2.0 (ELv2)**. See the [LICENSE.md](LICENSE.md) file for details.
+
+The Python SDK is licensed under the **MIT License**.
+
+## 📞 Support & Community
+
+- **📧 Email**: [nivedit@exosphere.host](mailto:nivedit@exosphere.host)
+- **💬 Discord**: [Join our community](https://discord.gg/JzCT6HRN)
+- **🐦 Twitter**: [@exospherehost](https://x.com/exospherehost)
+- **💼 LinkedIn**: [exospherehost](https://www.linkedin.com/company/exospherehost/)
+- **📺 YouTube**: [@exospherehost](https://www.youtube.com/@exospherehost)
+- **📸 Instagram**: [@exospherehost](https://www.instagram.com/exospherehost/)
+
+## 👥 Contributors
+
+Thanks to all the amazing contributors helping us simplify infrastructure for AI workflows and agents!
 
 ![exosphere.host Contributors](https://contrib.rocks/image?repo=exospherehost/exospherehost)
 
-## Star History
+## ⭐ Star History
+
 <a href="https://www.star-history.com/#exospherehost/exospherehost&Date" target="_blank">
  <picture>
    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=exospherehost/exospherehost&type=Date&theme=dark" />
@@ -236,3 +419,7 @@ We welcome community contributions. For guidelines, refer to our [CONTRIBUTING.m
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=exospherehost/exospherehost&type=Date" />
  </picture>
 </a>
+
+---
+
+**Let's push the boundaries of possibilities for humanity together! 🚀**
