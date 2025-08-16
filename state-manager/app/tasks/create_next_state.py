@@ -6,7 +6,6 @@ from app.models.db.graph_template_model import GraphTemplate
 from app.models.graph_template_validation_status import GraphTemplateValidationStatus
 from app.models.db.registered_node import RegisteredNode
 from app.models.state_status_enum import StateStatusEnum
-from app.models.db.state import State
 from beanie.operators import NE, NotIn
 
 from json_schema_to_pydantic import create_model
