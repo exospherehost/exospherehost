@@ -12,5 +12,10 @@
       "tag:yaml.org,2002:python/object/apply:pymdownx.slugs.slugify mapping"
     ],
     "python.analysis.typeCheckingMode": "basic",
-    "python.analysis.autoImportCompletions": true
+    "python.analysis.autoImportCompletions": true,
+    "python.testing.pytestArgs": [
+      "state-manager"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }

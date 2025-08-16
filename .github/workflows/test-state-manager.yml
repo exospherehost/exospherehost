@@ -1,0 +1,67 @@
+name: State Manager Unit Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'state-manager/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'state-manager/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          cache: true
+
+      - name: Install dev dependencies with uv
+        working-directory: state-manager
+        run: |
+          uv sync --group dev
+
+      - name: Run unit tests with pytest and coverage
+        working-directory: state-manager
+        run: |
+          uv run pytest tests/unit/ --cov=app --cov-report=xml --cov-report=term-missing -v --junitxml=pytest-report.xml
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: exospherehost/exospherehost
+          files: state-manager/coverage.xml
+          flags: state-manager-unittests
+          name: state-manager-coverage-report
+          fail_ci_if_error: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: state-manager-test-results
+          path: state-manager/pytest-report.xml
+          retention-days: 30

@@ -8,7 +8,9 @@ dependencies = [
     "beanie>=2.0.0",
     "cryptography>=45.0.5",
     "fastapi>=0.116.1",
+    "httpx>=0.28.1",
     "json-schema-to-pydantic>=0.4.1",
+    "pytest-cov>=6.2.1",
     "python-dotenv>=1.1.1",
     "structlog>=25.4.0",
     "uvicorn>=0.35.0",
@@ -17,4 +19,6 @@ dependencies = [
 [dependency-groups]
 dev = [
     "ruff>=0.12.5",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
 ]

@@ -1,5 +1,6 @@
+from beanie import PydanticObjectId
 from app.models.executed_models import ExecutedRequestModel, ExecutedResponseModel
-from bson import ObjectId
+
 from fastapi import HTTPException, status, BackgroundTasks
 
 from app.models.db.state import State
@@ -9,7 +10,7 @@ from app.tasks.create_next_state import create_next_state
 
 logger = LogsManager().get_logger()
 
-async def executed_state(namespace_name: str, state_id: ObjectId, body: ExecutedRequestModel, x_exosphere_request_id: str, background_tasks: BackgroundTasks) -> ExecutedResponseModel:
+async def executed_state(namespace_name: str, state_id: PydanticObjectId, body: ExecutedRequestModel, x_exosphere_request_id: str, background_tasks: BackgroundTasks) -> ExecutedResponseModel:
 
     try:
         logger.info(f"Executed state {state_id} for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
@@ -22,17 +23,18 @@ async def executed_state(namespace_name: str, state_id: ObjectId, body: Executed
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="State is not queued")
         
         if len(body.outputs) == 0:
-            await State.find_one(State.id == state_id).set(
-                {"status": StateStatusEnum.EXECUTED, "outputs": {}, "parents": {**state.parents, state.identifier: state.id}}
-            )
+            state.status = StateStatusEnum.EXECUTED
+            state.outputs = {}
+            state.parents = {**state.parents, state.identifier: state.id}
+            await state.save()
 
             background_tasks.add_task(create_next_state, state)
 
-        else:
-            
+        else:            
             state.outputs = body.outputs[0]
             state.status = StateStatusEnum.EXECUTED
             state.parents = {**state.parents, state.identifier: state.id}
+
             await state.save()
 
             background_tasks.add_task(create_next_state, state)
@@ -43,6 +45,7 @@ async def executed_state(namespace_name: str, state_id: ObjectId, body: Executed
                     namespace_name=state.namespace_name,
                     identifier=state.identifier,
                     graph_name=state.graph_name,
+                    run_id=state.run_id,
                     status=StateStatusEnum.CREATED,
                     inputs=state.inputs,
                     outputs=output,

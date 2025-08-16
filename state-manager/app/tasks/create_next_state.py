@@ -136,6 +136,7 @@ async def create_next_state(state: State):
                 namespace_name=next_node_template.namespace,
                 identifier=next_node_template.identifier,
                 graph_name=state.graph_name,
+                run_id=state.run_id,
                 status=StateStatusEnum.CREATED,
                 inputs=next_node_input_data,
                 outputs={},
