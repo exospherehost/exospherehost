@@ -219,7 +219,7 @@ async def verify_topology(graph_nodes: list[NodeTemplate], errors: list[str]):
     
     return dependency_graph
 
-async def verify_dependencies(graph_nodes: list[NodeTemplate], dependency_graph: dict | None, errors: list[str]):
+async def verify_unites(graph_nodes: list[NodeTemplate], dependency_graph: dict | None, errors: list[str]):
     if dependency_graph is None:
         return
     
@@ -246,7 +246,7 @@ async def verify_graph(graph_template: GraphTemplate):
         if dependency_graph is not None and len(errors) == 0:        
             await verify_inputs(graph_template.nodes, database_nodes, dependency_graph, errors)
 
-        await verify_dependencies(graph_template.nodes, dependency_graph, errors)
+        await verify_unites(graph_template.nodes, dependency_graph, errors)
 
         if errors or dependency_graph is None:
             graph_template.validation_status = GraphTemplateValidationStatus.INVALID
