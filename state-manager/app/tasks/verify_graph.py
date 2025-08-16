@@ -219,6 +219,22 @@ async def verify_topology(graph_nodes: list[NodeTemplate], errors: list[str]):
     
     return dependency_graph
 
+
+async def verify_dependencies(graph_nodes: list[NodeTemplate], dependency_graph: dict | None, errors: list[str]):
+    if dependency_graph is None:
+        return
+    
+    for node in graph_nodes:
+        if node.depends is None or len(node.depends) == 0:
+            continue
+        for depend in node.depends:
+            if depend.identifier not in graph_nodes:
+                errors.append(f"Node {node.identifier} depends on {depend.identifier} which does not exist")
+            
+            if depend.identifier not in dependency_graph[node.identifier]:
+                errors.append(f"Node {node.identifier} depends on {depend.identifier} which is not a dependency of {node.identifier}")
+    
+
 async def verify_graph(graph_template: GraphTemplate):
     try:
         errors = []
@@ -229,16 +245,19 @@ async def verify_graph(graph_template: GraphTemplate):
         await verify_node_exists(graph_template.nodes, database_nodes, errors)
         await verify_node_identifiers(graph_template.nodes, errors)
         await verify_secrets(graph_template, database_nodes, errors)
-        dependency_graph = await verify_topology(graph_template.nodes, errors)   
+        dependency_graph = await verify_topology(graph_template.nodes, errors)
 
         if dependency_graph is not None and len(errors) == 0:        
             await verify_inputs(graph_template.nodes, database_nodes, dependency_graph, errors)
+
+        await verify_dependencies(graph_template.nodes, dependency_graph, errors)
 
         if errors or dependency_graph is None:
             graph_template.validation_status = GraphTemplateValidationStatus.INVALID
             graph_template.validation_errors = errors
             await graph_template.save()
             return
+        
         graph_template.validation_status = GraphTemplateValidationStatus.VALID
         graph_template.validation_errors = None
         await graph_template.save()

@@ -6,6 +6,8 @@ from app.models.db.graph_template_model import GraphTemplate
 from app.models.graph_template_validation_status import GraphTemplateValidationStatus
 from app.models.db.registered_node import RegisteredNode
 from app.models.state_status_enum import StateStatusEnum
+from app.models.db.state import State
+from beanie.operators import NE, NotIn
 
 from json_schema_to_pydantic import create_model
 
@@ -48,6 +50,30 @@ async def create_next_state(state: State):
         for identifier in next_node_identifier:
             next_node_template = graph_template.get_node_by_identifier(identifier)
             if not next_node_template:
+                continue
+
+            pending_count = 0
+            if next_node_template.depends is not None and len(next_node_template.depends) > 0:
+                for depend in next_node_template.depends:
+                    if depend.identifier == state.identifier:
+                        pending_count = await State.find(
+                            State.identifier == depend.identifier,
+                            State.namespace_name == state.namespace_name,
+                            State.graph_name == state.graph_name,
+                            NotIn(State.status, [StateStatusEnum.SUCCESS, StateStatusEnum.EXECUTED])
+                        ).count()
+                    else:
+                        pending_count = await State.find(
+                            State.identifier == depend.identifier,
+                            State.namespace_name == state.namespace_name,
+                            State.graph_name == state.graph_name,
+                            NE(State.status, StateStatusEnum.SUCCESS)
+                        ).count()
+                    if pending_count > 0:
+                        depends_satisfied = False
+                        break
+            
+            if not depends_satisfied:
                 continue
 
             registered_node = await RegisteredNode.find_one(RegisteredNode.name == next_node_template.node_name, RegisteredNode.namespace == next_node_template.namespace)
