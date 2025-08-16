@@ -9,9 +9,9 @@ from app.models.state_status_enum import StateStatusEnum
 from beanie.operators import NE, NotIn
 from app.singletons.logs_manager import LogsManager
 
-logger = LogsManager().get_logger()
-
 from json_schema_to_pydantic import create_model
+
+logger = LogsManager().get_logger()
 
 async def create_next_state(state: State):
     graph_template = None
@@ -59,18 +59,18 @@ async def create_next_state(state: State):
                 pending_count = 0
                 for depend in next_node_template.depends:
                     if depend.identifier == state.identifier:
-                        pending_count = await State.find(
-                            State.identifier == depend.identifier,
-                            State.namespace_name == state.namespace_name,
-                            State.graph_name == state.graph_name,
-                            NotIn(State.status, [StateStatusEnum.SUCCESS, StateStatusEnum.EXECUTED])
-                        ).count()
+                        continue
                     else:
+                        root_parent = state.parents.get(depend.identifier)
+                        if root_parent is None:
+                            raise Exception(f"Root parent of {depend.identifier} not found")
+                        
                         pending_count = await State.find(
                             State.identifier == depend.identifier,
                             State.namespace_name == state.namespace_name,
                             State.graph_name == state.graph_name,
-                            NE(State.status, StateStatusEnum.SUCCESS)
+                            NE(State.status, StateStatusEnum.SUCCESS),
+                            {f"parents.{depend.identifier}": parents[depend.identifier]}
                         ).count()
                     if pending_count > 0:
                         logger.info(f"Node {next_node_template.identifier} depends on {depend.identifier} but it is not satisfied")
