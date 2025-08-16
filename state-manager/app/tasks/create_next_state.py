@@ -55,9 +55,9 @@ async def create_next_state(state: State):
                 continue
 
             depends_satisfied = True
-            if next_node_template.depends is not None and len(next_node_template.depends) > 0:
+            if next_node_template.unites is not None and len(next_node_template.unites) > 0:
                 pending_count = 0
-                for depend in next_node_template.depends:
+                for depend in next_node_template.unites:
                     if depend.identifier == state.identifier:
                         continue
                     else:

@@ -2,7 +2,7 @@ from pydantic import Field, BaseModel
 from typing import Any, Optional, List
 
 
-class Depend(BaseModel):
+class Unites(BaseModel):
     identifier: str = Field(..., description="Identifier of the node")
 
 
@@ -12,4 +12,4 @@ class NodeTemplate(BaseModel):
     identifier: str = Field(..., description="Identifier of the node")
     inputs: dict[str, Any] = Field(..., description="Inputs of the node")
     next_nodes: Optional[List[str]] = Field(None, description="Next nodes to execute")
-    depends: Optional[List[Depend]] = Field(None, description="Depends on of the node")
+    unites: Optional[List[Unites]] = Field(None, description="Unites of the node")

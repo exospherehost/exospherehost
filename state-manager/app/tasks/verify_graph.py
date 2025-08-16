@@ -219,15 +219,14 @@ async def verify_topology(graph_nodes: list[NodeTemplate], errors: list[str]):
     
     return dependency_graph
 
-
 async def verify_dependencies(graph_nodes: list[NodeTemplate], dependency_graph: dict | None, errors: list[str]):
     if dependency_graph is None:
         return
     
     for node in graph_nodes:
-        if node.depends is None or len(node.depends) == 0:
+        if node.unites is None or len(node.unites) == 0:
             continue
-        for depend in node.depends:
+        for depend in node.unites:
             if depend.identifier not in dependency_graph[node.identifier]:
                 errors.append(f"Node {node.identifier} depends on {depend.identifier} which is not a dependency of {node.identifier}")
     
