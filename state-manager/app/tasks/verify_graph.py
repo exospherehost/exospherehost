@@ -228,9 +228,6 @@ async def verify_dependencies(graph_nodes: list[NodeTemplate], dependency_graph:
         if node.depends is None or len(node.depends) == 0:
             continue
         for depend in node.depends:
-            if depend.identifier not in graph_nodes:
-                errors.append(f"Node {node.identifier} depends on {depend.identifier} which does not exist")
-            
             if depend.identifier not in dependency_graph[node.identifier]:
                 errors.append(f"Node {node.identifier} depends on {depend.identifier} which is not a dependency of {node.identifier}")
     

@@ -7,6 +7,9 @@ from app.models.graph_template_validation_status import GraphTemplateValidationS
 from app.models.db.registered_node import RegisteredNode
 from app.models.state_status_enum import StateStatusEnum
 from beanie.operators import NE, NotIn
+from app.singletons.logs_manager import LogsManager
+
+logger = LogsManager().get_logger()
 
 from json_schema_to_pydantic import create_model
 
@@ -51,8 +54,9 @@ async def create_next_state(state: State):
             if not next_node_template:
                 continue
 
-            pending_count = 0
+            depends_satisfied = True
             if next_node_template.depends is not None and len(next_node_template.depends) > 0:
+                pending_count = 0
                 for depend in next_node_template.depends:
                     if depend.identifier == state.identifier:
                         pending_count = await State.find(
@@ -69,6 +73,7 @@ async def create_next_state(state: State):
                             NE(State.status, StateStatusEnum.SUCCESS)
                         ).count()
                     if pending_count > 0:
+                        logger.info(f"Node {next_node_template.identifier} depends on {depend.identifier} but it is not satisfied")
                         depends_satisfied = False
                         break
             
