@@ -31,4 +31,6 @@ version = {attr = "exospherehost._version.version"}
 [dependency-groups]
 dev = [
     "ruff>=0.12.5",
+    "pytest>=8.3.0",
+    "pytest-cov>=5.0.0",
 ]

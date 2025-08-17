@@ -40,9 +40,6 @@ class BadNodeWrongTypes(BaseNode):
 		return self.Outputs(ok=True)
 
 
-def _set_required_env(tmp_path):
-	os.environ["EXOSPHERE_STATE_MANAGER_URI"] = "http://example.com"
-	os.environ["EXOSPHERE_API_KEY"] = "key"
 
 
 def test_runtime_missing_config_raises(monkeypatch):

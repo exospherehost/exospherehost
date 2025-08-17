@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "python-sdk/**"
+      - "python-sdk/exospherehost/_version.py"
       - ".github/workflows/publish-python-sdk.yml"
 
 permissions:
