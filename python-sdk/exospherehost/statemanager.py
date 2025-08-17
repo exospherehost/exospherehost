@@ -1,10 +1,10 @@
 import os
 import aiohttp
 import asyncio
+import time
 
 from typing import Any
 from pydantic import BaseModel
-from datetime import datetime, timedelta
 
 
 class TriggerState(BaseModel):
@@ -207,16 +207,16 @@ class StateManager:
         }
         async with aiohttp.ClientSession() as session:
             async with session.put(endpoint, json=body, headers=headers) as response: # type: ignore
-                if response.status != 201:
+                if response.status not in [200, 201]:
                     raise Exception(f"Failed to upsert graph: {response.status} {await response.text()}")
                 graph = await response.json()
 
         validation_state = graph["validation_status"]
         
-        start_time = datetime.now()
+        start_time = time.monotonic()
         while validation_state == "PENDING":
-            if datetime.now() - start_time > timedelta(seconds=validation_timeout):
-                raise Exception(f"Graph validation timed out after {validation_timeout} seconds")
+            if time.monotonic() - start_time > validation_timeout:
+                raise Exception(f"Graph validation check timed out after {validation_timeout} seconds")
             await asyncio.sleep(polling_interval)
             graph = await self.get_graph(graph_name)
             validation_state = graph["validation_status"]
