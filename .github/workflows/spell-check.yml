@@ -18,6 +18,6 @@ jobs:
         run: pip install codespell
 
       - name: Run codespell
-        run: codespell . --skip="venv,*.lock,*.min.js,*.map,*.svg,*.png,*.jpg,*.jpeg, package.json, package-lock.json, node_modules,.git"
+        run: codespell . -I .codespellignorewords --skip="venv,*.lock,*.min.js,*.map,*.svg,*.png,*.jpg,*.jpeg, package.json, package-lock.json, node_modules,.git"
         continue-on-error: false
 
