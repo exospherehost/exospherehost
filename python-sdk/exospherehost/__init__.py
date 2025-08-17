@@ -37,7 +37,8 @@ Example usage:
 from ._version import version as __version__
 from .runtime import Runtime
 from .node.BaseNode import BaseNode
+from .statemanager import StateManager, TriggerState
 
 VERSION = __version__
 
-__all__ = ["Runtime", "BaseNode", "VERSION"]
+__all__ = ["Runtime", "BaseNode", "StateManager", "TriggerState", "VERSION"]

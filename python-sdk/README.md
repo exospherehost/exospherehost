@@ -195,6 +195,117 @@ class APINode(BaseNode):
 - **Types**: Common secret types include API keys, database credentials, encryption keys, and authentication tokens
 - **Injection**: Secrets are injected by the Runtime at execution time, so you don't need to handle them manually
 
+## State Management
+
+The SDK provides a `StateManager` class for programmatically triggering graph executions and managing workflow states. This is useful for integrating ExosphereHost workflows into existing applications or for building custom orchestration logic.
+
+### StateManager Class
+
+The `StateManager` class allows you to trigger graph executions with custom trigger states. It handles authentication and communication with the ExosphereHost state manager service.
+
+#### Initialization
+
+```python
+from exospherehost import StateManager
+
+# Initialize with explicit configuration
+state_manager = StateManager(
+    namespace="MyProject",
+    state_manager_uri="https://your-state-manager.exosphere.host",
+    key="your-api-key",
+    state_manager_version="v0"
+)
+
+# Or initialize with environment variables
+state_manager = StateManager(namespace="MyProject")
+```
+
+**Parameters:**
+- `namespace` (str): The namespace for your project
+- `state_manager_uri` (str, optional): The URI of the state manager service. If not provided, reads from `EXOSPHERE_STATE_MANAGER_URI` environment variable
+- `key` (str, optional): Your API key. If not provided, reads from `EXOSPHERE_API_KEY` environment variable
+- `state_manager_version` (str): The API version to use (default: "v0")
+
+#### Triggering Graph Execution
+
+```python
+from exospherehost import StateManager, TriggerState
+
+# Create a single trigger state
+trigger_state = TriggerState(
+    identifier="user-login",
+    inputs={
+        "user_id": "12345",
+        "session_token": "abc123def456",
+        "timestamp": "2024-01-15T10:30:00Z"
+    }
+)
+
+# Trigger a single state
+result = await state_manager.trigger("my-graph", state=trigger_state)
+
+# Or trigger multiple states
+trigger_states = [
+    TriggerState(identifier="trigger1", inputs={"key1": "value1"}),
+    TriggerState(identifier="trigger2", inputs={"key2": "value2"})
+]
+
+result = await state_manager.trigger("my-graph", states=trigger_states)
+```
+
+**Parameters:**
+- `graph_name` (str): The name of the graph to trigger
+- `state` (TriggerState, optional): A single trigger state
+- `states` (list[TriggerState], optional): A list of trigger states
+
+**Returns:**
+- `dict`: The JSON response from the state manager API
+
+**Raises:**
+- `ValueError`: If neither `state` nor `states` is provided, if both are provided, or if `states` is an empty list
+- `Exception`: If the API request fails with a non-200 status code
+
+### TriggerState Class
+
+The `TriggerState` class represents a trigger state for graph execution. It contains an identifier and a set of input parameters that will be passed to the graph when it is triggered.
+
+#### Creating Trigger States
+
+```python
+from exospherehost import TriggerState
+
+# Basic trigger state
+trigger_state = TriggerState(
+    identifier="data-processing",
+    inputs={
+        "file_path": "/path/to/data.csv",
+        "batch_size": "1000",
+        "priority": "high"
+    }
+)
+
+# Trigger state with complex data (serialized as JSON)
+import json
+
+complex_data = {
+    "filters": ["active", "verified"],
+    "date_range": {"start": "2024-01-01", "end": "2024-01-31"},
+    "options": {"include_metadata": True, "format": "json"}
+}
+
+trigger_state = TriggerState(
+    identifier="complex-processing",
+    inputs={
+        "config": json.dumps(complex_data),
+        "user_id": "12345"
+    }
+)
+```
+
+**Attributes:**
+- `identifier` (str): A unique identifier for this trigger state. Used to distinguish between different trigger states and may be used by the graph to determine how to process the trigger
+- `inputs` (dict[str, str]): A dictionary of input parameters that will be passed to the graph. The keys are parameter names and values are parameter values, both as strings
+
 ## Integration with ExosphereHost Platform
 
 The Python SDK integrates seamlessly with the ExosphereHost platform, providing:
