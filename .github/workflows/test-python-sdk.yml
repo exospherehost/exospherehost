@@ -32,6 +32,11 @@ jobs:
         run: |
           uv sync --group dev
 
+      - name: Install python-sdk package (editable)
+        working-directory: python-sdk
+        run: |
+          uv pip install -e .
+
       - name: Run tests with pytest and coverage
         working-directory: python-sdk
         run: |

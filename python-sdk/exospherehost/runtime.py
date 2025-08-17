@@ -3,7 +3,7 @@ import os
 from asyncio import Queue, sleep
 from typing import List, Dict
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 from .node.BaseNode import BaseNode
 from aiohttp import ClientSession
 from logging import getLogger

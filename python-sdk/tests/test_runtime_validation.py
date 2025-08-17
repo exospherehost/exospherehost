@@ -1,4 +1,3 @@
-import os
 import pytest
 from pydantic import BaseModel
 from exospherehost.runtime import Runtime
