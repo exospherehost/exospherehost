@@ -271,27 +271,31 @@ class Runtime:
                 errors.append(f"{node.__name__} does not have an Inputs class")
             if not hasattr(node, "Outputs"):
                 errors.append(f"{node.__name__} does not have an Outputs class")
-            if not issubclass(node.Inputs, BaseModel):
-                errors.append(f"{node.__name__} does not have an Inputs class that inherits from pydantic.BaseModel")                                          
-            if not issubclass(node.Outputs, BaseModel):
+            inputs_is_basemodel = hasattr(node, "Inputs") and issubclass(node.Inputs, BaseModel)
+            if not inputs_is_basemodel:
+                errors.append(f"{node.__name__} does not have an Inputs class that inherits from pydantic.BaseModel")
+            outputs_is_basemodel = hasattr(node, "Outputs") and issubclass(node.Outputs, BaseModel)
+            if not outputs_is_basemodel:
                 errors.append(f"{node.__name__} does not have an Outputs class that inherits from pydantic.BaseModel")
             if not hasattr(node, "Secrets"):
                 errors.append(f"{node.__name__} does not have an Secrets class")
-            if not issubclass(node.Secrets, BaseModel):
+            secrets_is_basemodel = hasattr(node, "Secrets") and issubclass(node.Secrets, BaseModel)
+            if not secrets_is_basemodel:
                 errors.append(f"{node.__name__} does not have an Secrets class that inherits from pydantic.BaseModel")
 
             # check all data objects are strings
-            for field_name, field_info in node.Inputs.model_fields.items():
-                if field_info.annotation is not str:
-                    errors.append(f"{node.__name__}.Inputs field '{field_name}' must be of type str, got {field_info.annotation}")
-            
-            for field_name, field_info in node.Outputs.model_fields.items():
-                if field_info.annotation is not str:
-                    errors.append(f"{node.__name__}.Outputs field '{field_name}' must be of type str, got {field_info.annotation}")
-            
-            for field_name, field_info in node.Secrets.model_fields.items():
-                if field_info.annotation is not str:
-                    errors.append(f"{node.__name__}.Secrets field '{field_name}' must be of type str, got {field_info.annotation}")
+            if inputs_is_basemodel:
+                for field_name, field_info in node.Inputs.model_fields.items():
+                    if field_info.annotation is not str:
+                        errors.append(f"{node.__name__}.Inputs field '{field_name}' must be of type str, got {field_info.annotation}")
+            if outputs_is_basemodel:
+                for field_name, field_info in node.Outputs.model_fields.items():
+                    if field_info.annotation is not str:
+                        errors.append(f"{node.__name__}.Outputs field '{field_name}' must be of type str, got {field_info.annotation}")
+            if secrets_is_basemodel:
+                for field_name, field_info in node.Secrets.model_fields.items():
+                    if field_info.annotation is not str:
+                        errors.append(f"{node.__name__}.Secrets field '{field_name}' must be of type str, got {field_info.annotation}")
         
         # Find nodes with the same __class__.__name__
         class_names = [node.__name__ for node in self._nodes]
@@ -300,7 +304,7 @@ class Runtime:
             errors.append(f"Duplicate node class names found: {duplicate_class_names}")
 
         if len(errors) > 0:
-            raise ValidationError("Following errors while validating nodes: " + "\n".join(errors))
+            raise ValueError("Following errors while validating nodes: " + "\n".join(errors))
         
     async def _worker(self):
         """
