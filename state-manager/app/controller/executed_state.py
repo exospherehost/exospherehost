@@ -46,7 +46,7 @@ async def executed_state(namespace_name: str, state_id: PydanticObjectId, body: 
                     identifier=state.identifier,
                     graph_name=state.graph_name,
                     run_id=state.run_id,
-                    status=StateStatusEnum.CREATED,
+                    status=StateStatusEnum.EXECUTED,
                     inputs=state.inputs,
                     outputs=output,
                     error=None,
