@@ -12,3 +12,4 @@ class StateStatusEnum(str, Enum):
     ERRORED = 'ERRORED'
     CANCELLED = 'CANCELLED'
     SUCCESS = 'SUCCESS'
+    NEXT_CREATED_ERROR = 'NEXT_CREATED_ERROR'

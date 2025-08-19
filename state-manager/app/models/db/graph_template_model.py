@@ -1,4 +1,6 @@
 import base64
+import time
+import asyncio
 
 from .base import BaseDatabaseModel
 from pydantic import Field, field_validator
@@ -79,3 +81,29 @@ class GraphTemplate(BaseDatabaseModel):
         if secret_name not in self.secrets:
             return None
         return get_encrypter().decrypt(self.secrets[secret_name])
+
+    def is_valid(self) -> bool:
+        return self.validation_status == GraphTemplateValidationStatus.VALID
+
+    def is_validating(self) -> bool:
+        return self.validation_status == GraphTemplateValidationStatus.ONGOING or self.validation_status == GraphTemplateValidationStatus.PENDING
+    
+    @staticmethod
+    async def get(namespace: str, graph_name: str) -> "GraphTemplate":
+        graph_template = await GraphTemplate.find_one(GraphTemplate.namespace == namespace, GraphTemplate.name == graph_name)
+        if not graph_template:
+            raise ValueError(f"Graph template not found for namespace: {namespace} and graph name: {graph_name}")
+        return graph_template
+    
+    @staticmethod
+    async def get_valid(namespace: str, graph_name: str, polling_interval: int = 1, timeout: int = 300) -> "GraphTemplate":
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            graph_template = await GraphTemplate.get(namespace, graph_name)
+            if graph_template.is_valid():
+                return graph_template
+            if graph_template.is_validating():
+                await asyncio.sleep(polling_interval)
+            else:
+                raise ValueError(f"Graph template is not validating for namespace: {namespace} and graph name: {graph_name}")
+        raise ValueError(f"Graph template is not valid for namespace: {namespace} and graph name: {graph_name} after {timeout} seconds")
