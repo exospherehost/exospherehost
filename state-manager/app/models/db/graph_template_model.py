@@ -96,9 +96,19 @@ class GraphTemplate(BaseDatabaseModel):
         return graph_template
     
     @staticmethod
-    async def get_valid(namespace: str, graph_name: str, polling_interval: int = 1, timeout: int = 300) -> "GraphTemplate":
-        start_time = time.time()
-        while time.time() - start_time < timeout:
+    async def get_valid(namespace: str, graph_name: str, polling_interval: float = 1.0, timeout: float = 300.0) -> "GraphTemplate":
+        # Validate polling_interval and timeout
+        if polling_interval <= 0:
+            raise ValueError("polling_interval must be positive")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
+        
+        # Coerce polling_interval to a sensible minimum
+        if polling_interval < 0.1:
+            polling_interval = 0.1
+        
+        start_time = time.monotonic()
+        while time.monotonic() - start_time < timeout:
             graph_template = await GraphTemplate.get(namespace, graph_name)
             if graph_template.is_valid():
                 return graph_template

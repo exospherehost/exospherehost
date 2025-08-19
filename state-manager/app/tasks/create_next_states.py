@@ -24,7 +24,7 @@ class DependentString(BaseModel):
     
     def generate_string(self) -> str:
         base = self.head
-        for key in range(len(self.dependents)):
+        for key in sorted(self.dependents.keys()):
             dependent = self.dependents[key]
             if not dependent.value:
                 raise ValueError(f"Dependent value is not set for: {dependent}")
@@ -40,10 +40,8 @@ async def mark_success_states(state_ids: list[PydanticObjectId]):
 
 
 async def check_unites_satisfied(namespace: str, graph_name: str, node_template: NodeTemplate, parents: dict[str, PydanticObjectId]) -> bool:
-    satisfied = True
-
     if node_template.unites is None or len(node_template.unites) == 0:
-        return satisfied
+        return True
     
     for unit in node_template.unites:
         unites_id = parents.get(unit.identifier)
@@ -59,37 +57,67 @@ async def check_unites_satisfied(namespace: str, graph_name: str, node_template:
                     f"parents.{unit.identifier}": unites_id
                 }
             ).count()
-            if pending_count == 0:
-                satisfied = False
-                break
-
-    return satisfied
+            if pending_count > 0:
+                return False
+    return True
 
 def get_dependents(syntax_string: str) -> DependentString:
     splits = syntax_string.split("${{")
-    if len(splits) == 0:
+    if len(splits) <= 1:
         return DependentString(head=syntax_string, dependents={})
 
-    dependent_string = DependentString(head=splits[0].strip(), dependents={})
+    dependent_string = DependentString(head=splits[0], dependents={})
     order = 0
 
     for split in splits[1:]:
-        if not "}}" in split:
-            raise Exception(f"Invalid syntax string placefolder {split} for: {syntax_string}"+"${{ not closed")
+        if "}}" not in split:
+            raise ValueError(f"Invalid syntax string placefolder {split} for: {syntax_string} '${{' not closed")
         placeholder_content, tail = split.split("}}")
 
         parts = [p.strip() for p in placeholder_content.split(".")]
         if len(parts) != 3 or parts[1] != "outputs":
-            raise Exception(f"Invalid syntax string placefolder {placeholder_content} for: {syntax_string}")
+            raise ValueError(f"Invalid syntax string placefolder {placeholder_content} for: {syntax_string}")
         
-        dependent_string.dependents[order] = Dependent(identifier=parts[0], field=parts[2], tail=tail.strip())
+        dependent_string.dependents[order] = Dependent(identifier=parts[0], field=parts[2], tail=tail)
         order += 1
 
     return dependent_string
 
+def validate_dependencies(next_state_node_template: NodeTemplate, next_state_input_model: Type[BaseModel], identifier: str, parents: dict[str, State]) -> None:
+    """Validate that all dependencies exist before processing them."""
+    # 1) Confirm each model field is present in next_state_node_template.inputs
+    for field_name in next_state_input_model.model_fields.keys():
+        if field_name not in next_state_node_template.inputs:
+            raise ValueError(f"Field '{field_name}' not found in inputs for template '{next_state_node_template.identifier}'")
+    
+    # 2) For each placeholder, verify the identifier is either current or present in parents
+    for field_name in next_state_input_model.model_fields.keys():
+        dependency_string = get_dependents(next_state_node_template.inputs[field_name])
+        
+        for dependent in dependency_string.dependents.values():
+            if dependent.identifier != identifier and dependent.identifier not in parents:
+                raise KeyError(f"Identifier '{dependent.identifier}' not found in parents for template '{next_state_node_template.identifier}'")
+    
+    # 3) For each dependent, verify the target output field exists on the resolved state
+    for field_name in next_state_input_model.model_fields.keys():
+        dependency_string = get_dependents(next_state_node_template.inputs[field_name])
+        
+        for dependent in dependency_string.dependents.values():
+            if dependent.identifier == identifier:
+                # This will be resolved to current_state later, skip validation here
+                continue
+            else:
+                parent_state = parents[dependent.identifier]
+                if dependent.field not in parent_state.outputs:
+                    raise AttributeError(f"Output field '{dependent.field}' not found on state '{dependent.identifier}' for template '{next_state_node_template.identifier}'")
+
+
 async def create_next_states(state_ids: list[PydanticObjectId], identifier: str, namespace: str, graph_name: str, parents_ids: dict[str, PydanticObjectId]):
 
     try:
+        if len(state_ids) == 0:
+            raise ValueError("State ids is empty")
+        
         graph_template = await GraphTemplate.get_valid(namespace, graph_name)
         
         current_state_node_template = graph_template.get_node_by_identifier(identifier)
@@ -101,35 +129,37 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
             await mark_success_states(state_ids)
             return
         
-        cached_states = {}
-        cached_registerd_nodes = {}
+        cached_registered_nodes = {}
         cached_input_models = {}
         current_states = []
         new_states = []
 
-        async def get_registerd_node(node_template: NodeTemplate) -> RegisteredNode:
-            if node_template.node_name not in cached_registerd_nodes:
-                registerd_node = await RegisteredNode.find_one(
+        async def get_registered_node(node_template: NodeTemplate) -> RegisteredNode:
+            if node_template.node_name not in cached_registered_nodes:
+                registered_node = await RegisteredNode.find_one(
                     RegisteredNode.name == node_template.node_name,
                     RegisteredNode.namespace == node_template.namespace,
                 )
-                if not registerd_node:
+                if not registered_node:
                     raise ValueError(f"Registered node not found for node name: {node_template.node_name} and namespace: {node_template.namespace}")
-                cached_registerd_nodes[node_template.node_name] = registerd_node
-            return cached_registerd_nodes[node_template.node_name]
+                cached_registered_nodes[node_template.node_name] = registered_node
+            return cached_registered_nodes[node_template.node_name]
         
         async def get_input_model(node_template: NodeTemplate) -> Type[BaseModel]:
             if node_template.node_name not in cached_input_models:
-                cached_input_models[node_template.node_name] = create_model((await get_registerd_node(node_template)).inputs_schema)
+                cached_input_models[node_template.node_name] = create_model((await get_registered_node(node_template)).inputs_schema)
             return cached_input_models[node_template.node_name]
 
         current_states = await State.find(
             In(State.id, state_ids)
         ).to_list()
 
-        parent_states = await State.find(
-            In(State.id, parents_ids.values())
-        ).to_list()
+        if not parents_ids:
+            parent_states = []
+        else:
+            parent_states = await State.find(
+                In(State.id, parents_ids.values())
+            ).to_list()
 
         parents = {}
         for parent_state in parent_states:
@@ -145,13 +175,20 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
                     continue
                 
                 next_state_input_model = await get_input_model(next_state_node_template)
+                
+                # Validate dependencies before processing
+                validate_dependencies(next_state_node_template, next_state_input_model, identifier, parents)
+                
                 next_state_input_data = {}
 
                 for field_name, _ in next_state_input_model.model_fields.items():
                     dependency_string = get_dependents(next_state_node_template.inputs[field_name])
 
-                    for key in range(len(dependency_string.dependents)):
+                    for key in sorted(dependency_string.dependents.keys()):
                         if dependency_string.dependents[key].identifier == identifier:
+                            # Validate current_state output field exists
+                            if dependency_string.dependents[key].field not in current_state.outputs:
+                                raise AttributeError(f"Output field '{dependency_string.dependents[key].field}' not found on current state '{identifier}' for template '{next_state_node_template.identifier}'")
                             dependency_string.dependents[key].value = current_state.outputs[dependency_string.dependents[key].field]
                         else:
                             dependency_string.dependents[key].value = parents[dependency_string.dependents[key].identifier].outputs[dependency_string.dependents[key].field]

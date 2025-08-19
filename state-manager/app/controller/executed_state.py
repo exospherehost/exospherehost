@@ -7,7 +7,7 @@ from fastapi import HTTPException, status, BackgroundTasks
 from app.models.db.state import State
 from app.models.state_status_enum import StateStatusEnum
 from app.singletons.logs_manager import LogsManager
-from app.tasks.create_next_state import create_next_state
+from app.tasks.create_next_states import create_next_states
 
 logger = LogsManager().get_logger()
 
@@ -23,19 +23,20 @@ async def executed_state(namespace_name: str, state_id: PydanticObjectId, body: 
         if state.status != StateStatusEnum.QUEUED:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="State is not queued")
         
+        next_state_ids = []
         if len(body.outputs) == 0:
             state.status = StateStatusEnum.EXECUTED
             state.outputs = {}
             await state.save()
 
-            background_tasks.add_task(create_next_state, state)
+            next_state_ids.append(state.id)
 
         else:            
             state.outputs = body.outputs[0]
             state.status = StateStatusEnum.EXECUTED
 
             await state.save()
-            background_tasks.add_task(create_next_state, state)
+            next_state_ids.append(state.id)
 
             new_states = []
             for output in body.outputs[1:]:
@@ -54,16 +55,9 @@ async def executed_state(namespace_name: str, state_id: PydanticObjectId, body: 
 
             if len(new_states) > 0:
                 inserted_ids = (await State.insert_many(new_states)).inserted_ids
+                next_state_ids.extend(inserted_ids)
 
-                inserted_states = await State.find(
-                    In(State.id, inserted_ids)
-                ).to_list()
-                
-                if len(inserted_states) != len(new_states):
-                    raise RuntimeError(f"Failed to insert all new states. Expected {len(new_states)} states, but only {len(inserted_states)} were inserted")
-
-                for inserted_state in inserted_states:
-                    background_tasks.add_task(create_next_state, inserted_state)
+        background_tasks.add_task(create_next_states, next_state_ids, state.identifier, state.namespace_name, state.graph_name, state.parents)
 
         return ExecutedResponseModel(status=StateStatusEnum.EXECUTED)
 
