@@ -118,6 +118,9 @@ class TestExecutedState:
         # Additional calls in the loop also return query objects with set method
         mock_state_class.find_one = AsyncMock(return_value=mock_state)
         mock_state.save = AsyncMock()
+        new_ids = [PydanticObjectId(), PydanticObjectId()]
+        mock_state_class.insert_many = AsyncMock(return_value=MagicMock(inserted_ids=new_ids))
+        mock_state_class.find = MagicMock(return_value=AsyncMock(to_list=AsyncMock(return_value=[mock_state, mock_state])))
         
         # Mock State.save() for new states
         mock_new_state = MagicMock()
