@@ -1,5 +1,4 @@
 from beanie import PydanticObjectId
-from beanie.operators import In
 from app.models.executed_models import ExecutedRequestModel, ExecutedResponseModel
 
 from fastapi import HTTPException, status, BackgroundTasks

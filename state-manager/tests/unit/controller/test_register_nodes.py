@@ -1,12 +1,10 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from typing import List
 from beanie.operators import Set
 
 from app.controller.register_nodes import register_nodes
 from app.models.register_nodes_request import RegisterNodesRequestModel, NodeRegistrationModel
 from app.models.register_nodes_response import RegisterNodesResponseModel, RegisteredNodeModel
-from app.models.db.registered_node import RegisteredNode
 
 
 class TestRegisterNodes:

@@ -1,5 +1,5 @@
 from beanie import PydanticObjectId
-from beanie.operators import In, NE
+from beanie.operators import NE
 from app.singletons.logs_manager import LogsManager
 from app.models.db.graph_template_model import GraphTemplate
 from app.models.db.state import State

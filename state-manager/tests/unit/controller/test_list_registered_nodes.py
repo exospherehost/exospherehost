@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from typing import List
 
 from app.controller.list_registered_nodes import list_registered_nodes
 from app.models.db.registered_node import RegisteredNode

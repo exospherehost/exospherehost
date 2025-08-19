@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from typing import List
 
 from app.controller.list_graph_templates import list_graph_templates
 from app.models.db.graph_template_model import GraphTemplate

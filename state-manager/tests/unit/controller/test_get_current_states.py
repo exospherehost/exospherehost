@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from typing import List
 
 from app.controller.get_current_states import get_current_states
 from app.models.db.state import State
