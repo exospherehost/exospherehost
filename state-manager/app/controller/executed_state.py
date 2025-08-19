@@ -26,7 +26,6 @@ async def executed_state(namespace_name: str, state_id: PydanticObjectId, body: 
         if len(body.outputs) == 0:
             state.status = StateStatusEnum.EXECUTED
             state.outputs = {}
-            state.parents = {**state.parents, state.identifier: state.id}
             await state.save()
 
             background_tasks.add_task(create_next_state, state)
@@ -34,7 +33,6 @@ async def executed_state(namespace_name: str, state_id: PydanticObjectId, body: 
         else:            
             state.outputs = body.outputs[0]
             state.status = StateStatusEnum.EXECUTED
-            state.parents = {**state.parents, state.identifier: state.id}
 
             await state.save()
             background_tasks.add_task(create_next_state, state)
@@ -51,10 +49,7 @@ async def executed_state(namespace_name: str, state_id: PydanticObjectId, body: 
                     inputs=state.inputs,
                     outputs=output,
                     error=None,
-                    parents={
-                        **state.parents,
-                        state.identifier: state.id
-                    }
+                    parents=state.parents
                 ))
 
             if len(new_states) > 0:
