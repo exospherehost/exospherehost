@@ -26,7 +26,7 @@ class DependentString(BaseModel):
         base = self.head
         for key in sorted(self.dependents.keys()):
             dependent = self.dependents[key]
-            if not dependent.value:
+            if dependent.value is None:
                 raise ValueError(f"Dependent value is not set for: {dependent}")
             base += dependent.value + dependent.tail
         return base
@@ -90,19 +90,15 @@ def validate_dependencies(next_state_node_template: NodeTemplate, next_state_inp
         if field_name not in next_state_node_template.inputs:
             raise ValueError(f"Field '{field_name}' not found in inputs for template '{next_state_node_template.identifier}'")
     
-    # 2) For each placeholder, verify the identifier is either current or present in parents
-    for field_name in next_state_input_model.model_fields.keys():
         dependency_string = get_dependents(next_state_node_template.inputs[field_name])
         
         for dependent in dependency_string.dependents.values():
+            
+            # 2) For each placeholder, verify the identifier is either current or present in parents
             if dependent.identifier != identifier and dependent.identifier not in parents:
                 raise KeyError(f"Identifier '{dependent.identifier}' not found in parents for template '{next_state_node_template.identifier}'")
     
-    # 3) For each dependent, verify the target output field exists on the resolved state
-    for field_name in next_state_input_model.model_fields.keys():
-        dependency_string = get_dependents(next_state_node_template.inputs[field_name])
-        
-        for dependent in dependency_string.dependents.values():
+            # 3) For each dependent, verify the target output field exists on the resolved state
             if dependent.identifier == identifier:
                 # This will be resolved to current_state later, skip validation here
                 continue
