@@ -297,3 +297,276 @@ class TestExecutedState:
         
         assert str(exc_info.value) == "Save error"
 
+    @patch('app.controller.executed_state.State')
+    @patch('app.controller.executed_state.create_next_state')
+    async def test_executed_state_state_id_none(
+        self,
+        mock_create_next_state,
+        mock_state_class,
+        mock_namespace,
+        mock_state_id,
+        mock_executed_request,
+        mock_background_tasks,
+        mock_request_id
+    ):
+        """Test when state is found but has None ID"""
+        # Arrange
+        mock_state = MagicMock()
+        mock_state.id = None
+        mock_state_class.find_one = AsyncMock(return_value=mock_state)
+
+        # Act & Assert
+        with pytest.raises(HTTPException) as exc_info:
+            await executed_state(
+                mock_namespace,
+                mock_state_id,
+                mock_executed_request,
+                mock_request_id,
+                mock_background_tasks
+            )
+        
+        assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+        assert exc_info.value.detail == "State not found"
+
+    @patch('app.controller.executed_state.State')
+    @patch('app.controller.executed_state.create_next_state')
+    async def test_executed_state_insert_many_partial_failure(
+        self,
+        mock_create_next_state,
+        mock_state_class,
+        mock_namespace,
+        mock_state_id,
+        mock_state,
+        mock_background_tasks,
+        mock_request_id
+    ):
+        """Test when insert_many only inserts some states successfully"""
+        # Arrange
+        executed_request = ExecutedRequestModel(
+            outputs=[
+                {"result": "success1"},
+                {"result": "success2"},
+                {"result": "success3"}
+            ]
+        )
+
+        mock_state_class.find_one = AsyncMock(return_value=mock_state)
+        mock_state.save = AsyncMock()
+        
+        # Mock partial insert failure - only 1 state inserted instead of 2
+        new_ids = [PydanticObjectId()]
+        mock_state_class.insert_many = AsyncMock(return_value=MagicMock(inserted_ids=new_ids))
+        mock_state_class.find = MagicMock(return_value=AsyncMock(to_list=AsyncMock(return_value=[mock_state])))
+
+        # Act & Assert
+        with pytest.raises(RuntimeError, match="Failed to insert all new states"):
+            await executed_state(
+                mock_namespace,
+                mock_state_id,
+                executed_request,
+                mock_request_id,
+                mock_background_tasks
+            )
+
+    @patch('app.controller.executed_state.State')
+    @patch('app.controller.executed_state.create_next_state')
+    async def test_executed_state_insert_many_complete_failure(
+        self,
+        mock_create_next_state,
+        mock_state_class,
+        mock_namespace,
+        mock_state_id,
+        mock_state,
+        mock_background_tasks,
+        mock_request_id
+    ):
+        """Test when insert_many fails to insert any states"""
+        # Arrange
+        executed_request = ExecutedRequestModel(
+            outputs=[
+                {"result": "success1"},
+                {"result": "success2"}
+            ]
+        )
+
+        mock_state_class.find_one = AsyncMock(return_value=mock_state)
+        mock_state.save = AsyncMock()
+        
+        # Mock complete insert failure
+        mock_state_class.insert_many = AsyncMock(return_value=MagicMock(inserted_ids=[]))
+        mock_state_class.find = MagicMock(return_value=AsyncMock(to_list=AsyncMock(return_value=[])))
+
+        # Act & Assert
+        with pytest.raises(RuntimeError, match="Failed to insert all new states"):
+            await executed_state(
+                mock_namespace,
+                mock_state_id,
+                executed_request,
+                mock_request_id,
+                mock_background_tasks
+            )
+
+    @patch('app.controller.executed_state.State')
+    @patch('app.controller.executed_state.create_next_state')
+    @patch('app.controller.executed_state.logger')
+    async def test_executed_state_logging_info_and_error(
+        self,
+        mock_logger,
+        mock_create_next_state,
+        mock_state_class,
+        mock_namespace,
+        mock_state_id,
+        mock_executed_request,
+        mock_background_tasks,
+        mock_request_id
+    ):
+        """Test that proper logging occurs during success and error scenarios"""
+        # Arrange - Success scenario
+        mock_state = MagicMock()
+        mock_state.id = PydanticObjectId()
+        mock_state.status = StateStatusEnum.QUEUED
+        mock_state.save = AsyncMock()
+        mock_state_class.find_one = AsyncMock(return_value=mock_state)
+
+        # Act - Success scenario
+        await executed_state(
+            mock_namespace,
+            mock_state_id,
+            mock_executed_request,
+            mock_request_id,
+            mock_background_tasks
+        )
+
+        # Assert - Success logging
+        mock_logger.info.assert_called_once_with(
+            f"Executed state {mock_state_id} for namespace {mock_namespace}",
+            x_exosphere_request_id=mock_request_id
+        )
+
+        # Arrange - Error scenario
+        mock_logger.reset_mock()
+        mock_state_class.find_one = AsyncMock(side_effect=Exception("Test error"))
+
+        # Act - Error scenario
+        with pytest.raises(Exception):
+            await executed_state(
+                mock_namespace,
+                mock_state_id,
+                mock_executed_request,
+                mock_request_id,
+                mock_background_tasks
+            )
+
+        # Assert - Error logging
+        mock_logger.error.assert_called_once()
+        call_args = mock_logger.error.call_args
+        assert f"Error executing state {mock_state_id} for namespace {mock_namespace}" in str(call_args)
+
+    @patch('app.controller.executed_state.State')
+    @patch('app.controller.executed_state.create_next_state')
+    async def test_executed_state_preserves_state_attributes_for_new_states(
+        self,
+        mock_create_next_state,
+        mock_state_class,
+        mock_namespace,
+        mock_state_id,
+        mock_state,
+        mock_background_tasks,
+        mock_request_id
+    ):
+        """Test that new states preserve all necessary attributes from the original state"""
+        # Arrange
+        executed_request = ExecutedRequestModel(
+            outputs=[
+                {"result": "success1"},
+                {"result": "success2"}
+            ]
+        )
+
+        # Set up specific state attributes
+        mock_state.node_name = "test_node"
+        mock_state.namespace_name = "test_namespace"
+        mock_state.identifier = "test_identifier"
+        mock_state.graph_name = "test_graph"
+        mock_state.run_id = "test_run_id"
+        mock_state.inputs = {"key": "value"}
+        mock_state.parents = {"parent1": PydanticObjectId()}
+
+        mock_state_class.find_one = AsyncMock(return_value=mock_state)
+        mock_state.save = AsyncMock()
+        
+        new_ids = [PydanticObjectId()]
+        mock_state_class.insert_many = AsyncMock(return_value=MagicMock(inserted_ids=new_ids))
+        mock_state_class.find = MagicMock(return_value=AsyncMock(to_list=AsyncMock(return_value=[mock_state])))
+
+        # Act
+        await executed_state(
+            mock_namespace,
+            mock_state_id,
+            executed_request,
+            mock_request_id,
+            mock_background_tasks
+        )
+
+        # Assert that State was called with correct parameters for new state creation
+        state_call = mock_state_class.call_args
+        assert state_call[1]['node_name'] == mock_state.node_name
+        assert state_call[1]['namespace_name'] == mock_state.namespace_name
+        assert state_call[1]['identifier'] == mock_state.identifier
+        assert state_call[1]['graph_name'] == mock_state.graph_name
+        assert state_call[1]['run_id'] == mock_state.run_id
+        assert state_call[1]['inputs'] == mock_state.inputs
+        assert state_call[1]['parents'] == mock_state.parents
+        assert state_call[1]['status'] == StateStatusEnum.EXECUTED
+        assert state_call[1]['outputs'] == {"result": "success2"}
+        assert state_call[1]['error'] is None
+
+    @patch('app.controller.executed_state.State')
+    @patch('app.controller.executed_state.create_next_state')
+    async def test_executed_state_all_status_transitions(
+        self,
+        mock_create_next_state,
+        mock_state_class,
+        mock_namespace,
+        mock_state_id,
+        mock_state,
+        mock_background_tasks,
+        mock_request_id
+    ):
+        """Test all valid status transitions in executed_state"""
+        # Test with QUEUED status (valid)
+        mock_state.status = StateStatusEnum.QUEUED
+        mock_state_class.find_one = AsyncMock(return_value=mock_state)
+        mock_state.save = AsyncMock()
+
+        executed_request = ExecutedRequestModel(outputs=[{"result": "success"}])
+        
+        result = await executed_state(
+            mock_namespace,
+            mock_state_id,
+            executed_request,
+            mock_request_id,
+            mock_background_tasks
+        )
+
+        assert result.status == StateStatusEnum.EXECUTED
+        assert mock_state.status == StateStatusEnum.EXECUTED
+
+        # Test with invalid statuses
+        for invalid_status in [StateStatusEnum.CREATED, StateStatusEnum.EXECUTED, 
+                              StateStatusEnum.SUCCESS, StateStatusEnum.ERRORED]:
+            mock_state.status = invalid_status
+            mock_state_class.find_one = AsyncMock(return_value=mock_state)
+            
+            with pytest.raises(HTTPException) as exc_info:
+                await executed_state(
+                    mock_namespace,
+                    mock_state_id,
+                    executed_request,
+                    mock_request_id,
+                    mock_background_tasks
+                )
+            
+            assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
+            assert exc_info.value.detail == "State is not queued"
+
