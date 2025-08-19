@@ -65,7 +65,7 @@ async def executed_state(namespace_name: str, state_id: PydanticObjectId, body: 
                 ).to_list()
                 
                 if len(inserted_states) != len(new_states):
-                    raise Exception(f"Failed to insert all new states. Expected {len(new_states)} states, but only {len(inserted_states)} were inserted")
+                    raise RuntimeError(f"Failed to insert all new states. Expected {len(new_states)} states, but only {len(inserted_states)} were inserted")
 
                 for inserted_state in inserted_states:
                     background_tasks.add_task(create_next_state, inserted_state)
