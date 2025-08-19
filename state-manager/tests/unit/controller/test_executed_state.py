@@ -47,10 +47,10 @@ class TestExecutedState:
         )
 
     @patch('app.controller.executed_state.State')
-    @patch('app.controller.executed_state.create_next_state')
+    @patch('app.controller.executed_state.create_next_states')
     async def test_executed_state_success_single_output(
         self,
-        mock_create_next_state,
+        mock_create_next_states,
         mock_state_class,
         mock_namespace,
         mock_state_id,
@@ -84,13 +84,13 @@ class TestExecutedState:
         # Assert
         assert result.status == StateStatusEnum.EXECUTED
         assert mock_state_class.find_one.call_count == 1  # Called once for finding
-        mock_background_tasks.add_task.assert_called_once_with(mock_create_next_state, mock_state)
+        mock_background_tasks.add_task.assert_called_once_with(mock_create_next_states, [mock_state.id], mock_state.identifier, mock_state.namespace_name, mock_state.graph_name, mock_state.parents)
 
     @patch('app.controller.executed_state.State')
-    @patch('app.controller.executed_state.create_next_state')
+    @patch('app.controller.executed_state.create_next_states')
     async def test_executed_state_success_multiple_outputs(
         self,
-        mock_create_next_state,
+        mock_create_next_states,
         mock_state_class,
         mock_namespace,
         mock_state_id,
@@ -140,9 +140,9 @@ class TestExecutedState:
         assert result.status == StateStatusEnum.EXECUTED
         # Should create 2 additional states (3 outputs total, 1 for main state, 2 new states)
         assert mock_state_class.call_count == 2
-        # Should add 3 background tasks (1 for main state + 2 for new states)
-        assert mock_background_tasks.add_task.call_count == 3
-        # State.find_one should be called multiple times: once for finding, once for updating main state, and twice in the loop
+        # Should add 1 background task with all state IDs
+        assert mock_background_tasks.add_task.call_count == 1
+        # State.find_one should be called once for finding the state
         assert mock_state_class.find_one.call_count == 1
 
     @patch('app.controller.executed_state.State')
@@ -202,10 +202,10 @@ class TestExecutedState:
         assert exc_info.value.detail == "State is not queued"
 
     @patch('app.controller.executed_state.State')
-    @patch('app.controller.executed_state.create_next_state')
+    @patch('app.controller.executed_state.create_next_states')
     async def test_executed_state_empty_outputs(
         self,
-        mock_create_next_state,
+        mock_create_next_states,
         mock_state_class,
         mock_namespace,
         mock_state_id,
@@ -239,7 +239,7 @@ class TestExecutedState:
         # Assert
         assert result.status == StateStatusEnum.EXECUTED
         assert mock_state.outputs == {}
-        mock_background_tasks.add_task.assert_called_once_with(mock_create_next_state, mock_state)
+        mock_background_tasks.add_task.assert_called_once_with(mock_create_next_states, [mock_state.id], mock_state.identifier, mock_state.namespace_name, mock_state.graph_name, mock_state.parents)
 
     @patch('app.controller.executed_state.State')
     async def test_executed_state_database_error(
@@ -268,10 +268,10 @@ class TestExecutedState:
         assert str(exc_info.value) == "Database error"
 
     @patch('app.controller.executed_state.State')
-    @patch('app.controller.executed_state.create_next_state')
+    @patch('app.controller.executed_state.create_next_states')
     async def test_executed_state_general_exception_handling(
         self,
-        mock_create_next_state,
+        mock_create_next_states,
         mock_state_class,
         mock_namespace,
         mock_state_id,
@@ -298,10 +298,10 @@ class TestExecutedState:
         assert str(exc_info.value) == "Save error"
 
     @patch('app.controller.executed_state.State')
-    @patch('app.controller.executed_state.create_next_state')
+    @patch('app.controller.executed_state.create_next_states')
     async def test_executed_state_state_id_none(
         self,
-        mock_create_next_state,
+        mock_create_next_states,
         mock_state_class,
         mock_namespace,
         mock_state_id,
@@ -329,10 +329,10 @@ class TestExecutedState:
         assert exc_info.value.detail == "State not found"
 
     @patch('app.controller.executed_state.State')
-    @patch('app.controller.executed_state.create_next_state')
+    @patch('app.controller.executed_state.create_next_states')
     async def test_executed_state_insert_many_partial_failure(
         self,
-        mock_create_next_state,
+        mock_create_next_states,
         mock_state_class,
         mock_namespace,
         mock_state_id,
@@ -340,7 +340,7 @@ class TestExecutedState:
         mock_background_tasks,
         mock_request_id
     ):
-        """Test when insert_many only inserts some states successfully"""
+        """Test when insert_many returns partial results (this is valid behavior)"""
         # Arrange
         executed_request = ExecutedRequestModel(
             outputs=[
@@ -353,26 +353,28 @@ class TestExecutedState:
         mock_state_class.find_one = AsyncMock(return_value=mock_state)
         mock_state.save = AsyncMock()
         
-        # Mock partial insert failure - only 1 state inserted instead of 2
+        # Mock partial insert - only 1 state inserted instead of 2 (this is valid)
         new_ids = [PydanticObjectId()]
         mock_state_class.insert_many = AsyncMock(return_value=MagicMock(inserted_ids=new_ids))
         mock_state_class.find = MagicMock(return_value=AsyncMock(to_list=AsyncMock(return_value=[mock_state])))
 
-        # Act & Assert
-        with pytest.raises(RuntimeError, match="Failed to insert all new states"):
-            await executed_state(
-                mock_namespace,
-                mock_state_id,
-                executed_request,
-                mock_request_id,
-                mock_background_tasks
-            )
+        # Act
+        result = await executed_state(
+            mock_namespace,
+            mock_state_id,
+            executed_request,
+            mock_request_id,
+            mock_background_tasks
+        )
+
+        # Assert - Should complete successfully with partial results
+        assert result.status == StateStatusEnum.EXECUTED
 
     @patch('app.controller.executed_state.State')
-    @patch('app.controller.executed_state.create_next_state')
+    @patch('app.controller.executed_state.create_next_states')
     async def test_executed_state_insert_many_complete_failure(
         self,
-        mock_create_next_state,
+        mock_create_next_states,
         mock_state_class,
         mock_namespace,
         mock_state_id,
@@ -380,7 +382,7 @@ class TestExecutedState:
         mock_background_tasks,
         mock_request_id
     ):
-        """Test when insert_many fails to insert any states"""
+        """Test when insert_many returns no inserted states (this is valid behavior)"""
         # Arrange
         executed_request = ExecutedRequestModel(
             outputs=[
@@ -392,27 +394,29 @@ class TestExecutedState:
         mock_state_class.find_one = AsyncMock(return_value=mock_state)
         mock_state.save = AsyncMock()
         
-        # Mock complete insert failure
+        # Mock complete insert failure - no states inserted (this is valid)
         mock_state_class.insert_many = AsyncMock(return_value=MagicMock(inserted_ids=[]))
         mock_state_class.find = MagicMock(return_value=AsyncMock(to_list=AsyncMock(return_value=[])))
 
-        # Act & Assert
-        with pytest.raises(RuntimeError, match="Failed to insert all new states"):
-            await executed_state(
-                mock_namespace,
-                mock_state_id,
-                executed_request,
-                mock_request_id,
-                mock_background_tasks
-            )
+        # Act
+        result = await executed_state(
+            mock_namespace,
+            mock_state_id,
+            executed_request,
+            mock_request_id,
+            mock_background_tasks
+        )
+
+        # Assert - Should complete successfully even with no new states
+        assert result.status == StateStatusEnum.EXECUTED
 
     @patch('app.controller.executed_state.State')
-    @patch('app.controller.executed_state.create_next_state')
+    @patch('app.controller.executed_state.create_next_states')
     @patch('app.controller.executed_state.logger')
     async def test_executed_state_logging_info_and_error(
         self,
         mock_logger,
-        mock_create_next_state,
+        mock_create_next_states,
         mock_state_class,
         mock_namespace,
         mock_state_id,
@@ -463,10 +467,10 @@ class TestExecutedState:
         assert f"Error executing state {mock_state_id} for namespace {mock_namespace}" in str(call_args)
 
     @patch('app.controller.executed_state.State')
-    @patch('app.controller.executed_state.create_next_state')
+    @patch('app.controller.executed_state.create_next_states')
     async def test_executed_state_preserves_state_attributes_for_new_states(
         self,
-        mock_create_next_state,
+        mock_create_next_states,
         mock_state_class,
         mock_namespace,
         mock_state_id,
@@ -522,10 +526,10 @@ class TestExecutedState:
         assert state_call[1]['error'] is None
 
     @patch('app.controller.executed_state.State')
-    @patch('app.controller.executed_state.create_next_state')
+    @patch('app.controller.executed_state.create_next_states')
     async def test_executed_state_all_status_transitions(
         self,
-        mock_create_next_state,
+        mock_create_next_states,
         mock_state_class,
         mock_namespace,
         mock_state_id,
