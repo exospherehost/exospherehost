@@ -27,7 +27,7 @@ class DependentString(BaseModel):
         for key in range(len(self.dependents)):
             dependent = self.dependents[key]
             if not dependent.value:
-                raise Exception(f"Dependent value is not set for: {dependent}")
+                raise ValueError(f"Dependent value is not set for: {dependent}")
             base += dependent.value + dependent.tail
         return base
 
