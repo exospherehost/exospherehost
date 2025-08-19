@@ -86,7 +86,7 @@ class GraphTemplate(BaseDatabaseModel):
         return self.validation_status == GraphTemplateValidationStatus.VALID
 
     def is_validating(self) -> bool:
-        return self.validation_status == GraphTemplateValidationStatus.ONGOING or self.validation_status == GraphTemplateValidationStatus.PENDING
+        return self.validation_status in (GraphTemplateValidationStatus.ONGOING, GraphTemplateValidationStatus.PENDING)
     
     @staticmethod
     async def get(namespace: str, graph_name: str) -> "GraphTemplate":
