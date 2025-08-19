@@ -115,5 +115,5 @@ class GraphTemplate(BaseDatabaseModel):
             if graph_template.is_validating():
                 await asyncio.sleep(polling_interval)
             else:
-                raise ValueError(f"Graph template is not validating for namespace: {namespace} and graph name: {graph_name}")
+                raise ValueError(f"Graph template is in a non-validating state: {graph_template.validation_status.value} for namespace: {namespace} and graph name: {graph_name}")
         raise ValueError(f"Graph template is not valid for namespace: {namespace} and graph name: {graph_name} after {timeout} seconds")
