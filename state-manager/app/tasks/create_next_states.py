@@ -71,7 +71,7 @@ def get_dependents(syntax_string: str) -> DependentString:
 
     for split in splits[1:]:
         if "}}" not in split:
-            raise ValueError(f"Invalid syntax string placefolder {split} for: {syntax_string} '${{' not closed")
+            raise ValueError(f"Invalid syntax string placeholder {split} for: {syntax_string} '${{' not closed")
         placeholder_content, tail = split.split("}}")
 
         parts = [p.strip() for p in placeholder_content.split(".")]
