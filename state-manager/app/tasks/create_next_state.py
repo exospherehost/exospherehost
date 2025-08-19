@@ -14,6 +14,7 @@ from json_schema_to_pydantic import create_model
 logger = LogsManager().get_logger()
 
 async def create_next_state(state: State):
+    logger.info(f"Creating next state for {state.identifier}")
     graph_template = None
 
     if state is None or state.id is None:

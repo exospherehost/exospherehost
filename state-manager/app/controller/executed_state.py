@@ -1,4 +1,5 @@
 from beanie import PydanticObjectId
+from beanie.operators import In
 from app.models.executed_models import ExecutedRequestModel, ExecutedResponseModel
 
 from fastapi import HTTPException, status, BackgroundTasks
@@ -36,11 +37,11 @@ async def executed_state(namespace_name: str, state_id: PydanticObjectId, body: 
             state.parents = {**state.parents, state.identifier: state.id}
 
             await state.save()
-
             background_tasks.add_task(create_next_state, state)
 
+            new_states = []
             for output in body.outputs[1:]:
-                new_state = State(
+                new_states.append(State(
                     node_name=state.node_name,
                     namespace_name=state.namespace_name,
                     identifier=state.identifier,
@@ -54,9 +55,20 @@ async def executed_state(namespace_name: str, state_id: PydanticObjectId, body: 
                         **state.parents,
                         state.identifier: state.id
                     }
-                )
-                await new_state.save()
-                background_tasks.add_task(create_next_state, new_state)
+                ))
+
+            if len(new_states) > 0:
+                inserted_ids = (await State.insert_many(new_states)).inserted_ids
+
+                inserted_states = await State.find(
+                    In(State.id, inserted_ids)
+                ).to_list()
+                
+                if len(inserted_states) != len(new_states):
+                    raise Exception(f"Failed to insert all new states. Expected {len(new_states)} states, but only {len(inserted_states)} were inserted")
+
+                for inserted_state in inserted_states:
+                    background_tasks.add_task(create_next_state, inserted_state)
 
         return ExecutedResponseModel(status=StateStatusEnum.EXECUTED)
 
