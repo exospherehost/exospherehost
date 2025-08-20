@@ -30,9 +30,6 @@ class GraphTemplate(BaseDatabaseModel):
             )
         ]
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def _build_node_by_identifier(self) -> None:
         self._node_by_identifier = {node.identifier: node for node in self.nodes}
 
@@ -41,7 +38,8 @@ class GraphTemplate(BaseDatabaseModel):
         if self._node_by_identifier is None:
             self._build_node_by_identifier()
 
-        return self._node_by_identifier.get(identifier) # type: ignore
+        assert self._node_by_identifier is not None
+        return self._node_by_identifier.get(identifier)
 
     @field_validator('secrets')
     @classmethod

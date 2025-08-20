@@ -124,25 +124,27 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
             await mark_success_states(state_ids)
             return
         
-        cached_registered_nodes = {}
-        cached_input_models = {}
+        cached_registered_nodes: dict[tuple[str, str], RegisteredNode] = {}
+        cached_input_models: dict[tuple[str, str], Type[BaseModel]] = {}
         new_states = []
 
         async def get_registered_node(node_template: NodeTemplate) -> RegisteredNode:
-            if node_template.node_name not in cached_registered_nodes:
+            key = (node_template.namespace, node_template.node_name)
+            if key not in cached_registered_nodes:
                 registered_node = await RegisteredNode.find_one(
                     RegisteredNode.name == node_template.node_name,
                     RegisteredNode.namespace == node_template.namespace,
                 )
                 if not registered_node:
                     raise ValueError(f"Registered node not found for node name: {node_template.node_name} and namespace: {node_template.namespace}")
-                cached_registered_nodes[node_template.node_name] = registered_node
-            return cached_registered_nodes[node_template.node_name]
+                cached_registered_nodes[key] = registered_node
+            return cached_registered_nodes[key]
         
         async def get_input_model(node_template: NodeTemplate) -> Type[BaseModel]:
-            if node_template.node_name not in cached_input_models:
-                cached_input_models[node_template.node_name] = create_model((await get_registered_node(node_template)).inputs_schema)
-            return cached_input_models[node_template.node_name]
+            key = (node_template.namespace, node_template.node_name)
+            if key not in cached_input_models:
+                cached_input_models[key] = create_model((await get_registered_node(node_template)).inputs_schema)
+            return cached_input_models[key]
 
         current_states = await State.find(
             In(State.id, state_ids)
