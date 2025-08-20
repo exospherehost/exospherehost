@@ -126,7 +126,6 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
         
         cached_registered_nodes = {}
         cached_input_models = {}
-        current_states = []
         new_states = []
 
         async def get_registered_node(node_template: NodeTemplate) -> RegisteredNode:
@@ -220,4 +219,4 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
             "status": StateStatusEnum.NEXT_CREATED_ERROR,
             "error": str(e)
         }) # type: ignore
-        raise e
+        raise
