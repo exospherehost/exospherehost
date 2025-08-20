@@ -29,12 +29,19 @@ class GraphTemplate(BaseDatabaseModel):
             )
         ]
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.node_by_identifier = None
+
+    def _build_node_by_identifier(self) -> None:
+        self.node_by_identifier = {node.identifier: node for node in self.nodes}
+
     def get_node_by_identifier(self, identifier: str) -> NodeTemplate | None:
         """Get a node by its identifier using O(1) dictionary lookup."""
-        for node in self.nodes:
-            if node.identifier == identifier:
-                return node
-        return None
+        if self.node_by_identifier is None:
+            self._build_node_by_identifier()
+
+        return self.node_by_identifier.get(identifier) # type: ignore
 
     @field_validator('secrets')
     @classmethod

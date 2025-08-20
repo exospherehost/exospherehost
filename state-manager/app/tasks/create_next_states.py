@@ -158,22 +158,23 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
             parent_states = []
         else:
             parent_states = await State.find(
-                In(State.id, parents_ids.values())
+                In(State.id, list(parents_ids.values()))
             ).to_list()
 
         parents = {}
         for parent_state in parent_states:
             parents[parent_state.identifier] = parent_state
 
-        for current_state in current_states:
-            for next_state_identifier in next_state_identifiers:
-                next_state_node_template = graph_template.get_node_by_identifier(next_state_identifier)
-                if not next_state_node_template:
-                    raise ValueError(f"Next state node template not found for identifier: {next_state_identifier}")
+       
+        for next_state_identifier in next_state_identifiers:
+            next_state_node_template = graph_template.get_node_by_identifier(next_state_identifier)
+            if not next_state_node_template:
+                raise ValueError(f"Next state node template not found for identifier: {next_state_identifier}")
                 
-                if not await check_unites_satisfied(namespace, graph_name, next_state_node_template, parents_ids):
-                    continue
-                
+            if not await check_unites_satisfied(namespace, graph_name, next_state_node_template, parents_ids):
+                continue
+
+            for current_state in current_states:
                 next_state_input_model = await get_input_model(next_state_node_template)
                 
                 # Validate dependencies before processing
@@ -186,7 +187,6 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
 
                     for key in sorted(dependency_string.dependents.keys()):
                         if dependency_string.dependents[key].identifier == identifier:
-                            # Validate current_state output field exists
                             if dependency_string.dependents[key].field not in current_state.outputs:
                                 raise AttributeError(f"Output field '{dependency_string.dependents[key].field}' not found on current state '{identifier}' for template '{next_state_node_template.identifier}'")
                             dependency_string.dependents[key].value = current_state.outputs[dependency_string.dependents[key].field]
