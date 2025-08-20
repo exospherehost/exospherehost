@@ -26,7 +26,7 @@ class DependentString(BaseModel):
         base = self.head
         for key in sorted(self.dependents.keys()):
             dependent = self.dependents[key]
-            if not dependent.value:
+            if dependent.value is None:
                 raise ValueError(f"Dependent value is not set for: {dependent}")
             base += dependent.value + dependent.tail
         return base
@@ -167,13 +167,11 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
                 
             if not await check_unites_satisfied(namespace, graph_name, next_state_node_template, parents_ids):
                 continue
+                
+            next_state_input_model = await get_input_model(next_state_node_template)
+            validate_dependencies(next_state_node_template, next_state_input_model, identifier, parents)
 
-            for current_state in current_states:
-                next_state_input_model = await get_input_model(next_state_node_template)
-                
-                # Validate dependencies before processing
-                validate_dependencies(next_state_node_template, next_state_input_model, identifier, parents)
-                
+            for current_state in current_states:                
                 next_state_input_data = {}
 
                 for field_name, _ in next_state_input_model.model_fields.items():
