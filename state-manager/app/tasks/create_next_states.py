@@ -71,12 +71,12 @@ def get_dependents(syntax_string: str) -> DependentString:
 
     for split in splits[1:]:
         if "}}" not in split:
-            raise ValueError(f"Invalid syntax string placefolder {split} for: {syntax_string} '${{' not closed")
+            raise ValueError(f"Invalid syntax string placeholder {split} for: {syntax_string} '${{' not closed")
         placeholder_content, tail = split.split("}}")
 
         parts = [p.strip() for p in placeholder_content.split(".")]
         if len(parts) != 3 or parts[1] != "outputs":
-            raise ValueError(f"Invalid syntax string placefolder {placeholder_content} for: {syntax_string}")
+            raise ValueError(f"Invalid syntax string placeholder {placeholder_content} for: {syntax_string}")
         
         dependent_string.dependents[order] = Dependent(identifier=parts[0], field=parts[2], tail=tail)
         order += 1
@@ -90,19 +90,14 @@ def validate_dependencies(next_state_node_template: NodeTemplate, next_state_inp
         if field_name not in next_state_node_template.inputs:
             raise ValueError(f"Field '{field_name}' not found in inputs for template '{next_state_node_template.identifier}'")
     
-    # 2) For each placeholder, verify the identifier is either current or present in parents
-    for field_name in next_state_input_model.model_fields.keys():
         dependency_string = get_dependents(next_state_node_template.inputs[field_name])
         
         for dependent in dependency_string.dependents.values():
+            # 2) For each placeholder, verify the identifier is either current or present in parents
             if dependent.identifier != identifier and dependent.identifier not in parents:
                 raise KeyError(f"Identifier '{dependent.identifier}' not found in parents for template '{next_state_node_template.identifier}'")
     
-    # 3) For each dependent, verify the target output field exists on the resolved state
-    for field_name in next_state_input_model.model_fields.keys():
-        dependency_string = get_dependents(next_state_node_template.inputs[field_name])
-        
-        for dependent in dependency_string.dependents.values():
+             # 3) For each dependent, verify the target output field exists on the resolved state
             if dependent.identifier == identifier:
                 # This will be resolved to current_state later, skip validation here
                 continue
