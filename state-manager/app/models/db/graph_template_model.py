@@ -3,7 +3,7 @@ import time
 import asyncio
 
 from .base import BaseDatabaseModel
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, PrivateAttr
 from typing import Optional, List
 from ..graph_template_validation_status import GraphTemplateValidationStatus
 from ..node_template_model import NodeTemplate
@@ -19,6 +19,7 @@ class GraphTemplate(BaseDatabaseModel):
     validation_status: GraphTemplateValidationStatus = Field(..., description="Validation status of the graph")
     validation_errors: Optional[List[str]] = Field(None, description="Validation errors of the graph")
     secrets: Dict[str, str] = Field(default_factory=dict, description="Secrets of the graph")
+    _node_by_identifier: Dict[str, NodeTemplate] | None = PrivateAttr(default=None)
 
     class Settings:
         indexes = [
@@ -31,17 +32,16 @@ class GraphTemplate(BaseDatabaseModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.node_by_identifier = None
 
     def _build_node_by_identifier(self) -> None:
-        self.node_by_identifier = {node.identifier: node for node in self.nodes}
+        self._node_by_identifier = {node.identifier: node for node in self.nodes}
 
     def get_node_by_identifier(self, identifier: str) -> NodeTemplate | None:
         """Get a node by its identifier using O(1) dictionary lookup."""
-        if self.node_by_identifier is None:
+        if self._node_by_identifier is None:
             self._build_node_by_identifier()
 
-        return self.node_by_identifier.get(identifier) # type: ignore
+        return self._node_by_identifier.get(identifier) # type: ignore
 
     @field_validator('secrets')
     @classmethod
