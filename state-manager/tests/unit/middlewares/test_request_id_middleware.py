@@ -1,5 +1,4 @@
 import uuid
-import time
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from starlette.requests import Request
@@ -113,8 +112,8 @@ class TestRequestIdMiddleware:
         mock_call_next = AsyncMock(return_value=mock_response)
 
         with patch('time.time', side_effect=[3000.0, 3001.0]):  # 1000ms duration
-            with patch('app.middlewares.request_id_middleware.logger') as mock_logger:
-                result = await self.middleware.dispatch(mock_request, mock_call_next)
+            with patch('app.middlewares.request_id_middleware.logger'):
+                await self.middleware.dispatch(mock_request, mock_call_next)
 
         # Assertions
         generated_uuid = mock_request.state.x_exosphere_request_id

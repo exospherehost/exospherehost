@@ -1,5 +1,4 @@
 import pytest
-import traceback
 from unittest.mock import AsyncMock, MagicMock, patch
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse

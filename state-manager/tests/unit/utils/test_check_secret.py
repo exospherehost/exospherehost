@@ -1,11 +1,11 @@
 import os
 import pytest
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
 from fastapi import HTTPException
 from fastapi.security.api_key import APIKeyHeader
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-from app.utils.check_secret import check_api_key, api_key_header, API_KEY, API_KEY_NAME
+from app.utils.check_secret import api_key_header, API_KEY_NAME
 
 
 class TestCheckApiKey:
@@ -22,7 +22,6 @@ class TestCheckApiKey:
         import importlib
         import app.utils.check_secret
         importlib.reload(app.utils.check_secret)
-        from app.utils.check_secret import check_api_key
         
         result = await check_api_key('test-secret-key')
         assert result == 'test-secret-key'

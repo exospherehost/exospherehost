@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from app.tasks import create_next_states as cns
 from app.models.node_template_model import NodeTemplate, Unites
 from app.models.state_status_enum import StateStatusEnum
-from app.models.graph_template_validation_status import GraphTemplateValidationStatus
 
 
 # ---------------------------------------------------------------------------
