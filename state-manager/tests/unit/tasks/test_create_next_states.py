@@ -121,7 +121,7 @@ async def _run_check_unites(count_value):
     with patch.object(cns, "State") as mock_state:
         mock_state.find.return_value = DummyQuery(count_value)
         result = await cns.check_unites_satisfied(
-            "ns", "graph", node_tpl, {"parent": "parent-sid"}
+            "ns", "graph", node_tpl, {"parent": "parent-sid"} # type: ignore
         )
     return result
 
@@ -155,7 +155,7 @@ async def test_mark_success_states_updates_status():
         mock_state.find.return_value = DummyQuery()
 
         # Execute.
-        await cns.mark_success_states(state_ids)
+        await cns.mark_success_states(state_ids) # type: ignore
 
     for st in created.values():
         assert st.status == StateStatusEnum.SUCCESS

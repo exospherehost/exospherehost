@@ -20,10 +20,12 @@ class TestMainApp:
         assert app.version == "0.1.0"
         
         # Check contact info
+        assert app.contact is not None
         assert app.contact["name"] == "Nivedit Jain (Founder exosphere.host)"
         assert app.contact["email"] == "nivedit@exosphere.host"
         
         # Check license info
+        assert app.license_info is not None
         assert app.license_info["name"] == "Elastic License 2.0 (ELv2)"
         assert "github.com/exospherehost/exosphere-api-server/blob/main/LICENSE" in app.license_info["url"]
 
@@ -93,8 +95,8 @@ class TestMainApp:
         
         # UnhandledExceptionsMiddleware should be added last (executed first)
         # RequestIdMiddleware should be added first (executed after UnhandledExceptionsMiddleware)
-        request_id_index = middleware_classes.index(RequestIdMiddleware)
-        unhandled_exceptions_index = middleware_classes.index(UnhandledExceptionsMiddleware)
+        request_id_index = middleware_classes.index(RequestIdMiddleware) # type: ignore
+        unhandled_exceptions_index = middleware_classes.index(UnhandledExceptionsMiddleware) # type: ignore
         
         # Since middleware is stored in reverse order, UnhandledExceptions should have lower index
         assert unhandled_exceptions_index < request_id_index
@@ -258,7 +260,7 @@ class TestAppConfiguration:
         # Should have at least the health route
         health_route_found = False
         for route in app.routes:
-            if hasattr(route, 'path') and route.path == '/health':
+            if hasattr(route, 'path') and route.path == '/health': # type: ignore
                 health_route_found = True
                 break
         

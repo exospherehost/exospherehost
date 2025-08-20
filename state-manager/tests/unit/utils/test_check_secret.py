@@ -52,7 +52,7 @@ class TestCheckApiKey:
         from app.utils.check_secret import check_api_key
         
         with pytest.raises(HTTPException) as exc_info:
-            await check_api_key(None)
+            await check_api_key(None) # type: ignore
         
         assert exc_info.value.status_code == HTTP_401_UNAUTHORIZED
         assert exc_info.value.detail == "Invalid API key"
