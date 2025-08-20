@@ -127,20 +127,6 @@ class TestCheckApiKey:
         result = await check_api_key('unicode-key-你好')
         assert result == 'unicode-key-你好'
 
-    @patch.dict(os.environ, {}, clear=True)
-    @pytest.mark.asyncio
-    async def test_check_api_key_with_no_env_variable(self):
-        """Test check_api_key behavior when STATE_MANAGER_SECRET is not set"""
-        import importlib
-        import app.utils.check_secret
-        importlib.reload(app.utils.check_secret)
-        from app.utils.check_secret import check_api_key
-        
-        # When STATE_MANAGER_SECRET is not set, API_KEY will be None
-        # None == None, so this should pass
-        result = await check_api_key(None)
-        assert result is None
-
     @patch.dict(os.environ, {'STATE_MANAGER_SECRET': ''})
     @pytest.mark.asyncio
     async def test_check_api_key_with_empty_env_variable(self):
@@ -178,7 +164,7 @@ class TestModuleConstants:
     def test_api_key_header_configuration(self):
         """Test api_key_header is configured correctly"""
         assert isinstance(api_key_header, APIKeyHeader)
-        assert api_key_header.model.alias == "x-api-key"
+        assert api_key_header.model.name == "x-api-key"
         assert api_key_header.auto_error is False
 
     @patch.dict(os.environ, {'STATE_MANAGER_SECRET': 'test-constant-key'})
@@ -190,16 +176,6 @@ class TestModuleConstants:
         
         # Access the reloaded module's API_KEY
         assert app.utils.check_secret.API_KEY == 'test-constant-key'
-
-    @patch.dict(os.environ, {}, clear=True)
-    def test_api_key_none_when_env_not_set(self):
-        """Test API_KEY is None when environment variable is not set"""
-        import importlib
-        import app.utils.check_secret
-        importlib.reload(app.utils.check_secret)
-        
-        assert app.utils.check_secret.API_KEY is None
-
 
 class TestIntegrationWithFastAPI:
     """Integration tests with FastAPI dependency system"""

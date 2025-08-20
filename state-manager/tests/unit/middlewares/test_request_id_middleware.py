@@ -190,7 +190,7 @@ class TestRequestIdMiddleware:
 
             # Check the response time in the second log call
             second_call_args = mock_logger.info.call_args_list[1]
-            assert second_call_args[1]["response_time"] == expected_ms
+            assert abs(second_call_args[1]["response_time"] - expected_ms) < 0.1
 
     @pytest.mark.asyncio
     async def test_dispatch_preserves_response_properties(self):

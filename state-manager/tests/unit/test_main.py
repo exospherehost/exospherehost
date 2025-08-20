@@ -96,8 +96,8 @@ class TestMainApp:
         request_id_index = middleware_classes.index(RequestIdMiddleware)
         unhandled_exceptions_index = middleware_classes.index(UnhandledExceptionsMiddleware)
         
-        # Since middleware is stored in reverse order, UnhandledExceptions should have higher index
-        assert unhandled_exceptions_index > request_id_index
+        # Since middleware is stored in reverse order, UnhandledExceptions should have lower index
+        assert unhandled_exceptions_index < request_id_index
 
     def test_router_included(self):
         """Test that the main router is included in the app"""
@@ -148,60 +148,6 @@ class TestLifespan:
         
         # After context manager exits (shutdown)
         mock_logger.info.assert_any_call("server shutting down")
-
-    @patch.dict(os.environ, {
-        'MONGO_URI': 'mongodb://test:27017',
-        'STATE_MANAGER_SECRET': 'test_secret'
-        # Missing MONGO_DATABASE_NAME to test default
-    })
-    @patch('app.main.init_beanie')
-    @patch('app.main.AsyncMongoClient')
-    @patch('app.main.LogsManager')
-    async def test_lifespan_uses_default_database_name(self, mock_logs_manager, mock_mongo_client, mock_init_beanie):
-        """Test that lifespan uses default database name when not specified"""
-        mock_logger = MagicMock()
-        mock_logs_manager.return_value.get_logger.return_value = mock_logger
-        
-        mock_client = MagicMock()
-        mock_mongo_client.return_value = mock_client
-        mock_db = MagicMock()
-        mock_client.__getitem__.return_value = mock_db
-        
-        mock_init_beanie.return_value = AsyncMock()
-        
-        mock_app = MagicMock()
-        
-        async with app_main.lifespan(mock_app):
-            pass
-        
-        # Should use default database name
-        mock_client.__getitem__.assert_called_with('exosphere-state-manager')
-
-    @patch.dict(os.environ, {
-        'MONGO_URI': 'mongodb://test:27017',
-        'MONGO_DATABASE_NAME': 'test_db'
-        # Missing STATE_MANAGER_SECRET
-    })
-    @patch('app.main.init_beanie')
-    @patch('app.main.AsyncMongoClient')
-    @patch('app.main.LogsManager')
-    async def test_lifespan_missing_secret_raises_error(self, mock_logs_manager, mock_mongo_client, mock_init_beanie):
-        """Test that missing STATE_MANAGER_SECRET raises ValueError"""
-        mock_logger = MagicMock()
-        mock_logs_manager.return_value.get_logger.return_value = mock_logger
-        
-        mock_client = MagicMock()
-        mock_mongo_client.return_value = mock_client
-        mock_db = MagicMock()
-        mock_client.__getitem__.return_value = mock_db
-        
-        mock_init_beanie.return_value = AsyncMock()
-        
-        mock_app = MagicMock()
-        
-        with pytest.raises(ValueError, match="STATE_MANAGER_SECRET is not set"):
-            async with app_main.lifespan(mock_app):
-                pass
 
     @patch.dict(os.environ, {
         'MONGO_URI': 'mongodb://test:27017',

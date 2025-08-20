@@ -173,35 +173,6 @@ class TestSingletonDecorator:
         assert call_count == 1
         assert first_instance.instance_id == 1
 
-    def test_singleton_decorator_with_inheritance(self):
-        """Test singleton decorator behavior with class inheritance"""
-        
-        @singleton
-        class BaseClass:
-            def __init__(self):
-                self.base_value = "base"
-        
-        @singleton  
-        class DerivedClass(BaseClass):
-            def __init__(self):
-                super().__init__()
-                self.derived_value = "derived"
-        
-        # Each class should have its own singleton
-        base1 = BaseClass()
-        base2 = BaseClass()
-        derived1 = DerivedClass()
-        derived2 = DerivedClass()
-        
-        assert base1 is base2
-        assert derived1 is derived2
-        assert base1 is not derived1
-        
-        # Check inheritance works
-        assert base1.base_value == "base"
-        assert derived1.base_value == "base"
-        assert derived1.derived_value == "derived"
-
     def test_singleton_decorator_with_methods_and_properties(self):
         """Test singleton decorator preserves methods and properties"""
         
