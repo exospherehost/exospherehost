@@ -40,24 +40,21 @@ async def mark_success_states(state_ids: list[PydanticObjectId]):
 
 
 async def check_unites_satisfied(namespace: str, graph_name: str, node_template: NodeTemplate, parents: dict[str, PydanticObjectId]) -> bool:
-    if node_template.unites is None or len(node_template.unites) == 0:
+    if node_template.unites is None:
         return True
     
-    for unit in node_template.unites:
-        unites_id = parents.get(unit.identifier)
-        if not unites_id:
-            raise ValueError(f"Unit identifier not found in parents: {unit.identifier}")
-        else:
-            pending_count = await State.find(
-                State.identifier == unit.identifier,
+    unites_id = parents.get(node_template.unites.identifier)
+    if not unites_id:
+        raise ValueError(f"Unit identifier not found in parents: {node_template.unites.identifier}")
+    else:
+        if await State.find(
                 State.namespace_name == namespace,
                 State.graph_name == graph_name,
                 NE(State.status, StateStatusEnum.SUCCESS),
                 {
-                    f"parents.{unit.identifier}": unites_id
+                    f"parents.{node_template.unites.identifier}": unites_id
                 }
-            ).count()
-            if pending_count > 0:
+            ).count() > 0:
                 return False
     return True
 
@@ -105,6 +102,41 @@ def validate_dependencies(next_state_node_template: NodeTemplate, next_state_inp
                 parent_state = parents[dependent.identifier]
                 if dependent.field not in parent_state.outputs:
                     raise AttributeError(f"Output field '{dependent.field}' not found on state '{dependent.identifier}' for template '{next_state_node_template.identifier}'")
+
+
+def generate_next_state(next_state_input_model: Type[BaseModel], next_state_node_template: NodeTemplate, identifier: str, parents: dict[str, State], current_state: State) -> State:
+    next_state_input_data = {}
+
+    for field_name, _ in next_state_input_model.model_fields.items():
+        dependency_string = get_dependents(next_state_node_template.inputs[field_name])
+
+        for key in sorted(dependency_string.dependents.keys()):
+                if dependency_string.dependents[key].identifier == identifier:
+                    if dependency_string.dependents[key].field not in current_state.outputs:
+                        raise AttributeError(f"Output field '{dependency_string.dependents[key].field}' not found on current state '{identifier}' for template '{next_state_node_template.identifier}'")
+                    dependency_string.dependents[key].value = current_state.outputs[dependency_string.dependents[key].field]
+                else:
+                    dependency_string.dependents[key].value = parents[dependency_string.dependents[key].identifier].outputs[dependency_string.dependents[key].field]
+                    
+        next_state_input_data[field_name] = dependency_string.generate_string()
+    
+    new_parents = {
+        **State.parents,
+        identifier: current_state.id
+    }
+
+    return State(
+        node_name=next_state_node_template.node_name,
+        identifier=next_state_node_template.identifier,
+        namespace_name=next_state_node_template.namespace,
+        graph_name=current_state.graph_name,
+        status=StateStatusEnum.CREATED,
+        parents=new_parents,
+        inputs=next_state_input_data,
+        outputs={},
+        run_id=current_state.run_id,
+        error=None
+    )
 
 
 async def create_next_states(state_ids: list[PydanticObjectId], identifier: str, namespace: str, graph_name: str, parents_ids: dict[str, PydanticObjectId]):
@@ -161,56 +193,45 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
         for parent_state in parent_states:
             parents[parent_state.identifier] = parent_state
 
+        pending_unites = []
        
         for next_state_identifier in next_state_identifiers:
             next_state_node_template = graph_template.get_node_by_identifier(next_state_identifier)
             if not next_state_node_template:
                 raise ValueError(f"Next state node template not found for identifier: {next_state_identifier}")
                 
-            if not await check_unites_satisfied(namespace, graph_name, next_state_node_template, parents_ids):
+            if next_state_node_template.unites is not None:
+                pending_unites.append(next_state_node_template.unites.identifier)
                 continue
                 
             next_state_input_model = await get_input_model(next_state_node_template)
             validate_dependencies(next_state_node_template, next_state_input_model, identifier, parents)
 
             for current_state in current_states:                
-                next_state_input_data = {}
-
-                for field_name, _ in next_state_input_model.model_fields.items():
-                    dependency_string = get_dependents(next_state_node_template.inputs[field_name])
-
-                    for key in sorted(dependency_string.dependents.keys()):
-                        if dependency_string.dependents[key].identifier == identifier:
-                            if dependency_string.dependents[key].field not in current_state.outputs:
-                                raise AttributeError(f"Output field '{dependency_string.dependents[key].field}' not found on current state '{identifier}' for template '{next_state_node_template.identifier}'")
-                            dependency_string.dependents[key].value = current_state.outputs[dependency_string.dependents[key].field]
-                        else:
-                            dependency_string.dependents[key].value = parents[dependency_string.dependents[key].identifier].outputs[dependency_string.dependents[key].field]
-                    
-                    next_state_input_data[field_name] = dependency_string.generate_string()
-                
-                new_parents = {
-                    **parents_ids,
-                    identifier: current_state.id
-                }
-                
-                new_states.append(
-                    State(
-                        node_name=next_state_node_template.node_name,
-                        identifier=next_state_node_template.identifier,
-                        namespace_name=next_state_node_template.namespace,
-                        graph_name=graph_name,
-                        status=StateStatusEnum.CREATED,
-                        parents=new_parents,
-                        inputs=next_state_input_data,
-                        outputs={},
-                        run_id=current_state.run_id,
-                        error=None
-                    )
-                )
+                new_states.append(generate_next_state(next_state_input_model, next_state_node_template, identifier, parents, current_state))
         
         await State.insert_many(new_states)
         await mark_success_states(state_ids)
+
+        # handle unites
+        new_unit_states = []
+        for pending_unites_identifier in pending_unites:
+            next_state_node_template = graph_template.get_node_by_identifier(pending_unites_identifier)
+            if not next_state_node_template:
+                raise ValueError(f"Next state node template not found for identifier: {pending_unites_identifier}")
+            
+            if not await check_unites_satisfied(namespace, graph_name, next_state_node_template, parents_ids):
+                continue
+
+            next_state_input_model = await get_input_model(next_state_node_template)
+            validate_dependencies(next_state_node_template, next_state_input_model, identifier, parents)
+
+            assert next_state_node_template.unites is not None
+            parent_state = parents[next_state_node_template.unites.identifier]
+
+            new_unit_states.append(generate_next_state(next_state_input_model, next_state_node_template, identifier, parents, parent_state))
+
+        await State.insert_many(new_unit_states)
     
     except Exception as e:
         await State.find(

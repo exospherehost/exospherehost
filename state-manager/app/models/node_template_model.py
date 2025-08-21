@@ -12,4 +12,4 @@ class NodeTemplate(BaseModel):
     identifier: str = Field(..., description="Identifier of the node")
     inputs: dict[str, Any] = Field(..., description="Inputs of the node")
     next_nodes: Optional[List[str]] = Field(None, description="Next nodes to execute")
-    unites: Optional[List[Unites]] = Field(None, description="Unites of the node")
+    unites: Optional[Unites] = Field(None, description="Unites of the node")

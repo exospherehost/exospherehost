@@ -224,11 +224,11 @@ async def verify_unites(graph_nodes: list[NodeTemplate], dependency_graph: dict 
         return
     
     for node in graph_nodes:
-        if node.unites is None or len(node.unites) == 0:
+        if node.unites is None:
             continue
-        for depend in node.unites:
-            if depend.identifier not in dependency_graph[node.identifier]:
-                errors.append(f"Node {node.identifier} depends on {depend.identifier} which is not a dependency of {node.identifier}")
+        
+        if node.unites.identifier not in dependency_graph[node.identifier]:
+            errors.append(f"Node {node.identifier} depends on {node.unites.identifier} which is not a dependency of {node.identifier}")
     
 
 async def verify_graph(graph_template: GraphTemplate):
