@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, patch
+from beanie import PydanticObjectId
 
 from pydantic import BaseModel
 
@@ -114,14 +115,14 @@ async def _run_check_unites(count_value):
         identifier="id",
         inputs={},
         next_nodes=[],
-        unites=[unit],
+        unites=unit,
     )
 
     # Patch *State.find()* to deliver the dummy query with desired count.
     with patch.object(cns, "State") as mock_state:
         mock_state.find.return_value = DummyQuery(count_value)
         result = await cns.check_unites_satisfied(
-            "ns", "graph", node_tpl, {"parent": "parent-sid"} # type: ignore
+            "ns", "graph", node_tpl, {"parent": PydanticObjectId()} # type: ignore
         )
     return result
 
