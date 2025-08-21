@@ -121,7 +121,7 @@ def generate_next_state(next_state_input_model: Type[BaseModel], next_state_node
         next_state_input_data[field_name] = dependency_string.generate_string()
     
     new_parents = {
-        **State.parents,
+        **current_state.parents,
         identifier: current_state.id
     }
 
@@ -201,7 +201,7 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
                 raise ValueError(f"Next state node template not found for identifier: {next_state_identifier}")
                 
             if next_state_node_template.unites is not None:
-                pending_unites.append(next_state_node_template.unites.identifier)
+                pending_unites.append(next_state_node_template)
                 continue
                 
             next_state_input_model = await get_input_model(next_state_node_template)
