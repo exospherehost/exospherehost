@@ -1,8 +1,7 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 import base64
 from app.models.db.graph_template_model import GraphTemplate
-from app.models.graph_template_validation_status import GraphTemplateValidationStatus
 
 
 class TestGraphTemplate:

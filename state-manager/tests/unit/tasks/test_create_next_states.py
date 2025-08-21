@@ -13,7 +13,6 @@ from app.tasks.create_next_states import (
 from app.models.db.state import State
 from app.models.state_status_enum import StateStatusEnum
 from app.models.node_template_model import NodeTemplate, Unites
-from app.models.db.registered_node import RegisteredNode
 from pydantic import BaseModel
 
 

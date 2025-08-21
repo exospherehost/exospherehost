@@ -8,17 +8,15 @@ from app.tasks.verify_graph import (
     verify_node_identifiers,
     verify_secrets,
     get_database_nodes,
-    verify_inputs,
     build_dependencies_graph,
     verify_topology,
     verify_unites,
     verify_graph
 )
-from app.models.db.graph_template_model import GraphTemplate, NodeTemplate
-from app.models.db.registered_node import RegisteredNode
 from app.models.graph_template_validation_status import GraphTemplateValidationStatus
+from app.models.db.graph_template_model import NodeTemplate
+from app.models.db.registered_node import RegisteredNode
 from app.models.node_template_model import Unites
-from beanie.operators import In
 
 
 class TestVerifyNodesNames:
@@ -670,7 +668,7 @@ class TestVerifyGraph:
         mock_database_nodes = [mock_database_node]
         
         with patch('app.tasks.verify_graph.get_database_nodes', return_value=mock_database_nodes), \
-             patch('app.tasks.verify_graph.verify_inputs', new_callable=AsyncMock) as mock_verify_inputs:
+             patch('app.tasks.verify_graph.verify_inputs', new_callable=AsyncMock):
             
             await verify_graph(graph_template)
             
