@@ -201,7 +201,7 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
                 raise ValueError(f"Next state node template not found for identifier: {next_state_identifier}")
                 
             if next_state_node_template.unites is not None:
-                pending_unites.append(next_state_node_template)
+                pending_unites.append(next_state_identifier)
                 continue
                 
             next_state_input_model = await get_input_model(next_state_node_template)
