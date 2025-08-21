@@ -18,7 +18,7 @@ class TestRouteStructure:
         routes = [route for route in router.routes if hasattr(route, 'path')]
         
         # Check for key route paths
-        paths = [route.path for route in routes]
+        paths = [route.path for route in routes] # type: ignore
         
         # State management routes
         assert any('/v0/namespace/{namespace_name}/states/enqueue' in path for path in paths)
@@ -47,7 +47,7 @@ class TestRouteStructure:
         # Check that all routes have appropriate tags
         for route in router.routes:
             if hasattr(route, 'tags'):
-                assert route.tags in [["state"], ["graph"], ["nodes"]]
+                assert route.tags in [["state"], ["graph"], ["nodes"]] # type: ignore
 
     def test_router_dependencies(self):
         """Test that router has API key dependency"""
@@ -55,8 +55,8 @@ class TestRouteStructure:
         for route in router.routes:
             if hasattr(route, 'dependencies'):
                 # At least some routes should have dependencies for API key validation
-                if route.dependencies:
-                    assert len(route.dependencies) > 0
+                if route.dependencies: # type: ignore
+                    assert len(route.dependencies) > 0 # type: ignore
 
 
 class TestModelValidation:
@@ -84,7 +84,7 @@ class TestModelValidation:
                 }
             ]
         }
-        model = TriggerGraphRequestModel(**valid_data)
+        model = TriggerGraphRequestModel(**valid_data) # type: ignore
         assert len(model.states) == 1
         assert model.states[0].identifier == "node1"
         assert model.states[0].inputs == {"input1": "value1"}
