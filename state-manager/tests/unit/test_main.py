@@ -267,7 +267,7 @@ class TestAppConfiguration:
         # which covers the missing line 78: app.include_router(router)
         assert len(app_main.app.routes) > 1  # More than just the health endpoint
         # Check that routes from the router are present
-        router_routes = [route for route in app_main.app.routes if hasattr(route, 'path') and '/v0/namespace/' in str(route.path)]
+        router_routes = [route for route in app_main.app.routes if hasattr(route, 'path') and '/v0/namespace/' in str(route.path)] # type: ignore
         assert len(router_routes) > 0
 
     def test_app_router_integration(self):
@@ -278,7 +278,7 @@ class TestAppConfiguration:
         
         # Check that the router prefix is present in the app routes
         router_prefix_present = any(
-            hasattr(route, 'path') and '/v0/namespace/' in str(route.path)
+            hasattr(route, 'path') and '/v0/namespace/' in str(route.path) # type: ignore
             for route in app_routes
         )
         assert router_prefix_present, "Router routes should be included in the app"

@@ -352,7 +352,7 @@ class TestVerifySecrets:
         
         # Mock RegisteredNode instances
         mock_node1 = cast(RegisteredNode, MagicMock())
-        mock_node1.secrets = None
+        mock_node1.secrets = None  # type: ignore
         
         database_nodes = [mock_node1]
         errors = []
@@ -370,7 +370,7 @@ class TestVerifySecrets:
         
         # Mock RegisteredNode instances
         mock_node1 = cast(RegisteredNode, MagicMock())
-        mock_node1.secrets = None
+        mock_node1.secrets = None  # type: ignore
         
         mock_node2 = cast(RegisteredNode, MagicMock())
         mock_node2.secrets = ["secret1"]
