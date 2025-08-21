@@ -104,16 +104,16 @@ def validate_dependencies(next_state_node_template: NodeTemplate, next_state_inp
                     raise AttributeError(f"Output field '{dependent.field}' not found on state '{dependent.identifier}' for template '{next_state_node_template.identifier}'")
 
 
-def generate_next_state(next_state_input_model: Type[BaseModel], next_state_node_template: NodeTemplate, identifier: str, parents: dict[str, State], current_state: State) -> State:
+def generate_next_state(next_state_input_model: Type[BaseModel], next_state_node_template: NodeTemplate, parents: dict[str, State], current_state: State) -> State:
     next_state_input_data = {}
 
     for field_name, _ in next_state_input_model.model_fields.items():
         dependency_string = get_dependents(next_state_node_template.inputs[field_name])
 
         for key in sorted(dependency_string.dependents.keys()):
-                if dependency_string.dependents[key].identifier == identifier:
+                if dependency_string.dependents[key].identifier == current_state.identifier:
                     if dependency_string.dependents[key].field not in current_state.outputs:
-                        raise AttributeError(f"Output field '{dependency_string.dependents[key].field}' not found on current state '{identifier}' for template '{next_state_node_template.identifier}'")
+                        raise AttributeError(f"Output field '{dependency_string.dependents[key].field}' not found on current state '{current_state.identifier}' for template '{next_state_node_template.identifier}'")
                     dependency_string.dependents[key].value = current_state.outputs[dependency_string.dependents[key].field]
                 else:
                     dependency_string.dependents[key].value = parents[dependency_string.dependents[key].identifier].outputs[dependency_string.dependents[key].field]
@@ -122,7 +122,7 @@ def generate_next_state(next_state_input_model: Type[BaseModel], next_state_node
     
     new_parents = {
         **current_state.parents,
-        identifier: current_state.id
+        current_state.identifier: current_state.id
     }
 
     return State(
@@ -208,9 +208,10 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
             validate_dependencies(next_state_node_template, next_state_input_model, identifier, parents)
 
             for current_state in current_states:                
-                new_states.append(generate_next_state(next_state_input_model, next_state_node_template, identifier, parents, current_state))
+                new_states.append(generate_next_state(next_state_input_model, next_state_node_template, parents, current_state))
         
-        await State.insert_many(new_states)
+        if len(new_states) > 0:
+            await State.insert_many(new_states)
         await mark_success_states(state_ids)
 
         # handle unites
@@ -229,9 +230,10 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
             assert next_state_node_template.unites is not None
             parent_state = parents[next_state_node_template.unites.identifier]
 
-            new_unit_states.append(generate_next_state(next_state_input_model, next_state_node_template, identifier, parents, parent_state))
+            new_unit_states.append(generate_next_state(next_state_input_model, next_state_node_template, parents, parent_state))
 
-        await State.insert_many(new_unit_states)
+        if len(new_unit_states) > 0:
+            await State.insert_many(new_unit_states)
     
     except Exception as e:
         await State.find(
