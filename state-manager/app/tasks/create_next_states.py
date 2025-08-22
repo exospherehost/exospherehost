@@ -1,3 +1,4 @@
+import asyncio
 from beanie import PydanticObjectId
 from beanie.operators import In, NE
 from app.singletons.logs_manager import LogsManager
@@ -57,6 +58,18 @@ async def check_unites_satisfied(namespace: str, graph_name: str, node_template:
             ).count() > 0:
                 return False
     return True
+
+
+async def check_state_exists(state: State) -> bool:
+    if await State.find(
+        State.namespace_name == state.namespace_name,
+        State.graph_name == state.graph_name,
+        State.run_id == state.run_id,
+        State.parents == state.parents
+    ).count() > 0:
+        return True
+    return False
+
 
 def get_dependents(syntax_string: str) -> DependentString:
     splits = syntax_string.split("${{")
@@ -232,9 +245,17 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
 
             new_unit_states.append(generate_next_state(next_state_input_model, next_state_node_template, parents, parent_state))
 
-        if len(new_unit_states) > 0:
-            await State.insert_many(new_unit_states)
-    
+        existence_checks = [check_state_exists(state) for state in new_unit_states]
+        existence_results = await asyncio.gather(*existence_checks)
+        
+        not_inserted_new_states = []
+        for state, exists in zip(new_unit_states, existence_results):
+            if not exists:
+                not_inserted_new_states.append(state)
+        
+        if len(not_inserted_new_states) > 0:
+            await State.insert_many(not_inserted_new_states)
+
     except Exception as e:
         await State.find(
             In(State.id, state_ids)
