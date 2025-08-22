@@ -60,15 +60,15 @@ async def check_unites_satisfied(namespace: str, graph_name: str, node_template:
     return True
 
 
-async def check_state_exists(state: State) -> bool:
+async def check_state_exists(state: State) -> State | None:
     if await State.find(
         State.namespace_name == state.namespace_name,
         State.graph_name == state.graph_name,
         State.run_id == state.run_id,
         State.parents == state.parents
     ).count() > 0:
-        return True
-    return False
+        return None
+    return state
 
 
 def get_dependents(syntax_string: str) -> DependentString:
@@ -249,8 +249,8 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
         existence_results = await asyncio.gather(*existence_checks)
         
         not_inserted_new_states = []
-        for state, exists in zip(new_unit_states, existence_results):
-            if not exists:
+        for state in existence_results:
+            if state:
                 not_inserted_new_states.append(state)
         
         if len(not_inserted_new_states) > 0:
