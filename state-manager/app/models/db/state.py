@@ -3,7 +3,8 @@ from .base import BaseDatabaseModel
 from ..state_status_enum import StateStatusEnum
 from pydantic import Field
 from beanie import Insert, PydanticObjectId, Replace, Save, before_event
-from typing import Any, Optional
+from pymongo.results import InsertManyResult
+from typing import Any, Optional, List
 import hashlib
 import json
 
@@ -21,6 +22,7 @@ class State(BaseDatabaseModel):
     parents: dict[str, PydanticObjectId] = Field(default_factory=dict, description="Parents of the state")
     does_unites: bool = Field(default=False, description="Whether this state unites other states")
     state_fingerprint: str = Field(default="", description="Fingerprint of the state")
+    
     @before_event([Insert, Replace, Save])
     def _generate_fingerprint(self):
         if not self.does_unites:
@@ -42,6 +44,17 @@ class State(BaseDatabaseModel):
             ensure_ascii=True,         # normalized non-ASCII escapes
         ).encode("utf-8")
         self.state_fingerprint = hashlib.sha256(payload).hexdigest()    
+    
+    @classmethod
+    async def insert_many(cls, documents: list["State"]) -> InsertManyResult:
+        """Override insert_many to ensure fingerprints are generated before insertion."""
+        # Generate fingerprints for states that need them
+        for state in documents:
+            if state.does_unites:
+                state._generate_fingerprint()
+        
+        # Call the parent class insert_many method
+        return await super().insert_many(documents) # type: ignore
         
     class Settings:
         indexes = [
