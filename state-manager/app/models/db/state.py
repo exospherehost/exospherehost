@@ -24,6 +24,10 @@ class State(BaseDatabaseModel):
 
     @before_event([Insert, Replace, Save])
     def _generate_fingerprint(self):
+        if not self.does_unites:
+            self.state_fingerprint = ""
+            return
+        
         data = {
             "node_name": self.node_name,
             "namespace_name": self.namespace_name,
@@ -38,7 +42,7 @@ class State(BaseDatabaseModel):
         indexes = [
             IndexModel(
                 [
-                    ("_fingerprint", 1)
+                    ("state_fingerprint", 1)
                 ],
                 unique=True,
                 partialFilterExpression={
