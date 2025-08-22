@@ -1,7 +1,6 @@
 import pytest
 from datetime import datetime
 from app.models.db.base import BaseDatabaseModel
-from unittest.mock import patch, MagicMock
 
 
 class TestBaseDatabaseModel:

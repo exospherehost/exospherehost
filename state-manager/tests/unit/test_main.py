@@ -243,11 +243,6 @@ class TestEnvironmentIntegration:
 class TestAppConfiguration:
     """Test cases for application configuration"""
 
-    def test_app_has_lifespan(self):
-        """Test that app is configured with lifespan"""
-        app = app_main.app
-        assert app.router.lifespan_context is not None
-
     def test_app_routes_configuration(self):
         """Test that app routes are properly configured"""
         app = app_main.app

@@ -9,7 +9,6 @@ from app.tasks.create_next_states import (
     validate_dependencies,
     Dependent,
     DependentString,
-    generate_next_state,
     create_next_states
 )
 from app.models.db.state import State
@@ -665,7 +664,6 @@ class TestCreateNextStates:
         from app.tasks.create_next_states import create_next_states
         from app.models.db.graph_template_model import GraphTemplate
         from app.models.node_template_model import NodeTemplate
-        from app.models.db.registered_node import RegisteredNode
         
         # Mock State class to handle id attribute
         mock_state_class.id = "mocked_id_field"
@@ -778,8 +776,6 @@ class TestCreateNextStates:
         self, mock_state_class, mock_mark_success, mock_insert_many, mock_find, mock_get_valid, mock_state_ids
     ):
         """Test create_next_states exception handling"""
-        from app.tasks.create_next_states import create_next_states
-        from app.models.state_status_enum import StateStatusEnum
         
         # Mock State class to handle id attribute
         mock_state_class.id = "mocked_id_field"
@@ -814,9 +810,7 @@ class TestCreateNextStates:
         from app.models.db.graph_template_model import GraphTemplate
         from app.models.node_template_model import NodeTemplate, Unites
         from app.models.db.registered_node import RegisteredNode
-        from app.models.db.state import State
-        from beanie import PydanticObjectId
-        
+       
         # Mock State class to handle id attribute
         mock_state_class.id = "mocked_id_field"
         
