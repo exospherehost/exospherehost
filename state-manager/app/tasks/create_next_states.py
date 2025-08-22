@@ -61,12 +61,14 @@ async def check_unites_satisfied(namespace: str, graph_name: str, node_template:
 
 
 async def check_state_exists(state: State) -> State | None:
-    if await State.find(
+    if await State.find_one(
         State.namespace_name == state.namespace_name,
+        State.node_name == state.node_name,
+        State.identifier == state.identifier,
         State.graph_name == state.graph_name,
         State.run_id == state.run_id,
         State.parents == state.parents
-    ).count() > 0:
+    ) is not None:
         return None
     return state
 
