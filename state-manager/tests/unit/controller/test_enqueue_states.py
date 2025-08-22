@@ -47,18 +47,10 @@ class TestEnqueueStates:
     ):
         """Test successful enqueuing of states"""
         # Arrange
-        # Mock State.find().limit().to_list() chain
-        mock_query = MagicMock()
-        mock_query.limit = MagicMock(return_value=mock_query)
-        mock_query.to_list = AsyncMock(return_value=[mock_state])
-        
-        # Mock State.find().set() chain for updating states
-        mock_update_query = MagicMock()
-        mock_update_query.set = AsyncMock()
-        
-        # Configure State.find to return different mocks based on call
-        mock_state_class.find = MagicMock()
-        mock_state_class.find.side_effect = [mock_query, mock_update_query]
+        # Mock State.get_pymongo_collection().find_one_and_update()
+        mock_collection = MagicMock()
+        mock_collection.find_one_and_update = AsyncMock(return_value=mock_state)
+        mock_state_class.get_pymongo_collection = MagicMock(return_value=mock_collection)
 
         # Act
         result = await enqueue_states(
@@ -68,19 +60,29 @@ class TestEnqueueStates:
         )
 
         # Assert
-        assert result.count == 1
+        assert result.count == 10  # batch_size=10, so 10 states should be returned
         assert result.namespace == mock_namespace
         assert result.status == StateStatusEnum.QUEUED
-        assert len(result.states) == 1
+        assert len(result.states) == 10
         assert result.states[0].state_id == str(mock_state.id)
         assert result.states[0].node_name == "node1"
         assert result.states[0].identifier == "test_identifier"
         assert result.states[0].inputs == {"key": "value"}
 
-        # Verify the find query was called correctly
-        assert mock_state_class.find.call_count == 2  # Called twice: once for finding, once for updating
-        mock_query.limit.assert_called_once_with(10)
-        mock_update_query.set.assert_called_once()
+        # Verify the find_one_and_update was called correctly
+        assert mock_collection.find_one_and_update.call_count == 10  # Called batch_size times
+        mock_collection.find_one_and_update.assert_called_with(
+            {
+                "namespace_name": mock_namespace,
+                "status": StateStatusEnum.CREATED,
+                "node_name": {
+                    "$in": ["node1", "node2"]
+                }
+            },
+            {
+                "$set": {"status": StateStatusEnum.QUEUED}
+            }
+        )
 
     @patch('app.controller.enqueue_states.State')
     async def test_enqueue_states_no_states_found(
@@ -92,12 +94,10 @@ class TestEnqueueStates:
     ):
         """Test when no states are found to enqueue"""
         # Arrange
-        mock_query = MagicMock()
-        mock_query.limit = MagicMock(return_value=mock_query)
-        mock_query.to_list = AsyncMock(return_value=[])
-        
-        # When no states are found, the second State.find() call won't happen
-        mock_state_class.find = MagicMock(return_value=mock_query)
+        # Mock State.get_pymongo_collection().find_one_and_update() returning None
+        mock_collection = MagicMock()
+        mock_collection.find_one_and_update = AsyncMock(return_value=None)
+        mock_state_class.get_pymongo_collection = MagicMock(return_value=mock_collection)
 
         # Act
         result = await enqueue_states(
@@ -136,17 +136,10 @@ class TestEnqueueStates:
         state2.inputs = {"input2": "value2"}
         state2.created_at = datetime.now()
 
-        mock_query = MagicMock()
-        mock_query.limit = MagicMock(return_value=mock_query)
-        mock_query.to_list = AsyncMock(return_value=[state1, state2])
-        
-        # Mock State.find().set() chain for updating states
-        mock_update_query = MagicMock()
-        mock_update_query.set = AsyncMock()
-        
-        # Configure State.find to return different mocks based on call
-        mock_state_class.find = MagicMock()
-        mock_state_class.find.side_effect = [mock_query, mock_update_query]
+        # Mock State.get_pymongo_collection().find_one_and_update() to return different states
+        mock_collection = MagicMock()
+        mock_collection.find_one_and_update = AsyncMock(side_effect=[state1, state2, None, None, None, None, None, None, None, None])
+        mock_state_class.get_pymongo_collection = MagicMock(return_value=mock_collection)
 
         # Act
         result = await enqueue_states(
@@ -171,17 +164,23 @@ class TestEnqueueStates:
     ):
         """Test handling of database errors"""
         # Arrange
-        mock_state_class.find = MagicMock(side_effect=Exception("Database error"))
+        # Mock State.get_pymongo_collection().find_one_and_update() to raise an exception
+        mock_collection = MagicMock()
+        mock_collection.find_one_and_update = AsyncMock(side_effect=Exception("Database error"))
+        mock_state_class.get_pymongo_collection = MagicMock(return_value=mock_collection)
 
-        # Act & Assert
-        with pytest.raises(Exception) as exc_info:
-            await enqueue_states(
-                mock_namespace,
-                mock_enqueue_request,
-                mock_request_id
-            )
-        
-        assert str(exc_info.value) == "Database error"
+        # Act
+        result = await enqueue_states(
+            mock_namespace,
+            mock_enqueue_request,
+            mock_request_id
+        )
+
+        # Assert - the function should handle exceptions gracefully and return empty result
+        assert result.count == 0
+        assert result.namespace == mock_namespace
+        assert result.status == StateStatusEnum.QUEUED
+        assert len(result.states) == 0
 
     @patch('app.controller.enqueue_states.State')
     async def test_enqueue_states_with_different_batch_size(
@@ -197,12 +196,10 @@ class TestEnqueueStates:
             batch_size=5
         )
 
-        mock_query = MagicMock()
-        mock_query.limit = MagicMock(return_value=mock_query)
-        mock_query.to_list = AsyncMock(return_value=[])
-        
-        # When no states are found, the second State.find() call won't happen
-        mock_state_class.find = MagicMock(return_value=mock_query)
+        # Mock State.get_pymongo_collection().find_one_and_update() returning None
+        mock_collection = MagicMock()
+        mock_collection.find_one_and_update = AsyncMock(return_value=None)
+        mock_state_class.get_pymongo_collection = MagicMock(return_value=mock_collection)
 
         # Act
         result = await enqueue_states(
@@ -213,4 +210,4 @@ class TestEnqueueStates:
 
         # Assert
         assert result.count == 0
-        mock_query.limit.assert_called_once_with(5)
+        assert mock_collection.find_one_and_update.call_count == 5  # Called batch_size times
