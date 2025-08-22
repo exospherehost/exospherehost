@@ -50,10 +50,8 @@ class State(BaseDatabaseModel):
         """Override insert_many to ensure fingerprints are generated before insertion."""
         # Generate fingerprints for states that need them
         for state in documents:
-            if state.does_unites:
-                state._generate_fingerprint()
+            state._generate_fingerprint()
         
-        # Call the parent class insert_many method
         return await super().insert_many(documents) # type: ignore
         
     class Settings:
