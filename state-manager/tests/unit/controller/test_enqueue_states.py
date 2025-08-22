@@ -36,10 +36,10 @@ class TestEnqueueStates:
         state.created_at = datetime.now()
         return state
 
-    @patch('app.controller.enqueue_states.State')
+    @patch('app.controller.enqueue_states.find_state')
     async def test_enqueue_states_success(
         self,
-        mock_state_class,
+        mock_find_state,
         mock_namespace,
         mock_enqueue_request,
         mock_state,
@@ -47,10 +47,8 @@ class TestEnqueueStates:
     ):
         """Test successful enqueuing of states"""
         # Arrange
-        # Mock State.get_pymongo_collection().find_one_and_update()
-        mock_collection = MagicMock()
-        mock_collection.find_one_and_update = AsyncMock(return_value=mock_state)
-        mock_state_class.get_pymongo_collection = MagicMock(return_value=mock_collection)
+        # Mock find_state to return the mock_state for all calls
+        mock_find_state.return_value = mock_state
 
         # Act
         result = await enqueue_states(
@@ -69,35 +67,22 @@ class TestEnqueueStates:
         assert result.states[0].identifier == "test_identifier"
         assert result.states[0].inputs == {"key": "value"}
 
-        # Verify the find_one_and_update was called correctly
-        assert mock_collection.find_one_and_update.call_count == 10  # Called batch_size times
-        mock_collection.find_one_and_update.assert_called_with(
-            {
-                "namespace_name": mock_namespace,
-                "status": StateStatusEnum.CREATED,
-                "node_name": {
-                    "$in": ["node1", "node2"]
-                }
-            },
-            {
-                "$set": {"status": StateStatusEnum.QUEUED}
-            }
-        )
+        # Verify find_state was called correctly
+        assert mock_find_state.call_count == 10  # Called batch_size times
+        mock_find_state.assert_called_with(mock_namespace, ["node1", "node2"])
 
-    @patch('app.controller.enqueue_states.State')
+    @patch('app.controller.enqueue_states.find_state')
     async def test_enqueue_states_no_states_found(
         self,
-        mock_state_class,
+        mock_find_state,
         mock_namespace,
         mock_enqueue_request,
         mock_request_id
     ):
         """Test when no states are found to enqueue"""
         # Arrange
-        # Mock State.get_pymongo_collection().find_one_and_update() returning None
-        mock_collection = MagicMock()
-        mock_collection.find_one_and_update = AsyncMock(return_value=None)
-        mock_state_class.get_pymongo_collection = MagicMock(return_value=mock_collection)
+        # Mock find_state to return None for all calls
+        mock_find_state.return_value = None
 
         # Act
         result = await enqueue_states(
@@ -112,10 +97,10 @@ class TestEnqueueStates:
         assert result.status == StateStatusEnum.QUEUED
         assert len(result.states) == 0
 
-    @patch('app.controller.enqueue_states.State')
+    @patch('app.controller.enqueue_states.find_state')
     async def test_enqueue_states_multiple_states(
         self,
-        mock_state_class,
+        mock_find_state,
         mock_namespace,
         mock_enqueue_request,
         mock_request_id
@@ -136,10 +121,8 @@ class TestEnqueueStates:
         state2.inputs = {"input2": "value2"}
         state2.created_at = datetime.now()
 
-        # Mock State.get_pymongo_collection().find_one_and_update() to return different states
-        mock_collection = MagicMock()
-        mock_collection.find_one_and_update = AsyncMock(side_effect=[state1, state2, None, None, None, None, None, None, None, None])
-        mock_state_class.get_pymongo_collection = MagicMock(return_value=mock_collection)
+        # Mock find_state to return different states
+        mock_find_state.side_effect = [state1, state2, None, None, None, None, None, None, None, None]
 
         # Act
         result = await enqueue_states(
@@ -154,20 +137,18 @@ class TestEnqueueStates:
         assert result.states[0].node_name == "node1"
         assert result.states[1].node_name == "node2"
 
-    @patch('app.controller.enqueue_states.State')
+    @patch('app.controller.enqueue_states.find_state')
     async def test_enqueue_states_database_error(
         self,
-        mock_state_class,
+        mock_find_state,
         mock_namespace,
         mock_enqueue_request,
         mock_request_id
     ):
         """Test handling of database errors"""
         # Arrange
-        # Mock State.get_pymongo_collection().find_one_and_update() to raise an exception
-        mock_collection = MagicMock()
-        mock_collection.find_one_and_update = AsyncMock(side_effect=Exception("Database error"))
-        mock_state_class.get_pymongo_collection = MagicMock(return_value=mock_collection)
+        # Mock find_state to raise an exception
+        mock_find_state.side_effect = Exception("Database error")
 
         # Act
         result = await enqueue_states(
@@ -182,10 +163,10 @@ class TestEnqueueStates:
         assert result.status == StateStatusEnum.QUEUED
         assert len(result.states) == 0
 
-    @patch('app.controller.enqueue_states.State')
+    @patch('app.controller.enqueue_states.find_state')
     async def test_enqueue_states_with_different_batch_size(
         self,
-        mock_state_class,
+        mock_find_state,
         mock_namespace,
         mock_request_id
     ):
@@ -196,10 +177,8 @@ class TestEnqueueStates:
             batch_size=5
         )
 
-        # Mock State.get_pymongo_collection().find_one_and_update() returning None
-        mock_collection = MagicMock()
-        mock_collection.find_one_and_update = AsyncMock(return_value=None)
-        mock_state_class.get_pymongo_collection = MagicMock(return_value=mock_collection)
+        # Mock find_state to return None
+        mock_find_state.return_value = None
 
         # Act
         result = await enqueue_states(
@@ -210,4 +189,4 @@ class TestEnqueueStates:
 
         # Assert
         assert result.count == 0
-        assert mock_collection.find_one_and_update.call_count == 5  # Called batch_size times
+        assert mock_find_state.call_count == 5  # Called batch_size times

@@ -11,7 +11,7 @@ logger = LogsManager().get_logger()
 
 
 async def find_state(namespace_name: str, nodes: list[str]) -> State | None:
-    return await State.get_pymongo_collection().find_one_and_update(
+    data = await State.get_pymongo_collection().find_one_and_update(
         {
             "namespace_name": namespace_name,
             "status": StateStatusEnum.CREATED,
@@ -23,6 +23,7 @@ async def find_state(namespace_name: str, nodes: list[str]) -> State | None:
             "$set": {"status": StateStatusEnum.QUEUED}
         }
     )
+    return State(**data) if data else None
 
 async def enqueue_states(namespace_name: str, body: EnqueueRequestModel, x_exosphere_request_id: str) -> EnqueueResponseModel:
     
