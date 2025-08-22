@@ -4,7 +4,7 @@ from ..state_status_enum import StateStatusEnum
 from pydantic import Field
 from beanie import Insert, PydanticObjectId, Replace, Save, before_event
 from pymongo.results import InsertManyResult
-from typing import Any, Optional, List
+from typing import Any, Optional
 import hashlib
 import json
 
