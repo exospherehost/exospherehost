@@ -20,7 +20,7 @@ class State(BaseDatabaseModel):
     error: Optional[str] = Field(None, description="Error message")
     parents: dict[str, PydanticObjectId] = Field(default_factory=dict, description="Parents of the state")
     does_unites: bool = Field(default=False, description="Whether the state is unites others")
-    _fingerprint: str = Field(default="", description="Fingerprint of the state")
+    state_fingerprint: str = Field(default="", description="Fingerprint of the state")
 
     @before_event([Insert, Replace, Save])
     def _generate_fingerprint(self):
@@ -32,12 +32,8 @@ class State(BaseDatabaseModel):
             "run_id": self.run_id,
             "parents": {key: str(value) for key, value in sorted(self.parents.items(), key=lambda x: x[0])}
         }
-        self._fingerprint = hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
+        self.state_fingerprint = hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
 
-    @property
-    def fingerprint(self):
-        return self._fingerprint
-    
     class Settings:
         indexes = [
             IndexModel(
