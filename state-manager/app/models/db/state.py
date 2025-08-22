@@ -32,7 +32,7 @@ class State(BaseDatabaseModel):
             "run_id": self.run_id,
             "parents": {key: str(value) for key, value in self.parents.items()}
         }
-        self._fingerprint = hashlib.sha256(json.dumps(data).encode()).hexdigest()
+        self._fingerprint = hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
 
     @property
     def fingerprint(self):
