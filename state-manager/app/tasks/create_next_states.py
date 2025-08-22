@@ -136,6 +136,7 @@ def generate_next_state(next_state_input_model: Type[BaseModel], next_state_node
         parents=new_parents,
         inputs=next_state_input_data,
         outputs={},
+        does_unites=next_state_node_template.unites is not None,
         run_id=current_state.run_id,
         error=None
     )
