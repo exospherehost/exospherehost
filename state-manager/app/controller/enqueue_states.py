@@ -1,4 +1,4 @@
-from beanie.operators import In
+import asyncio
 
 from ..models.enqueue_request import EnqueueRequestModel
 from ..models.enqueue_response import EnqueueResponseModel, StateModel
@@ -10,27 +10,37 @@ from app.singletons.logs_manager import LogsManager
 logger = LogsManager().get_logger()
 
 
+async def find_state(namespace_name: str, nodes: list[str]) -> State | None:
+    return await State.get_pymongo_collection().find_one_and_update(
+        {
+            "namespace_name": namespace_name,
+            "status": StateStatusEnum.CREATED,
+            "node_name": {
+                "$in": nodes
+            }
+        },
+        {
+            "$set": {"status": StateStatusEnum.QUEUED}
+        }
+    )
+
 async def enqueue_states(namespace_name: str, body: EnqueueRequestModel, x_exosphere_request_id: str) -> EnqueueResponseModel:
     
     try:
         logger.info(f"Enqueuing states for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
 
-        states = await State.find(
-            State.namespace_name == namespace_name,
-            State.status == StateStatusEnum.CREATED,
-            In(State.node_name, body.nodes)
-        ).limit(
-            body.batch_size
-        ).to_list()
-
-        if states:
-            await State.find(
-                In(State.id, [state.id for state in states])
-            ).set(
-                {
-                    "status": StateStatusEnum.QUEUED,
-                }
-            ) # type: ignore
+        # Create tasks for parallel execution
+        tasks = [find_state(namespace_name, body.nodes) for _ in range(body.batch_size)]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Filter out None results and exceptions
+        states = []
+        for result in results:
+            if isinstance(result, Exception):
+                logger.error(f"Error finding state: {result}", x_exosphere_request_id=x_exosphere_request_id)
+                continue
+            if result is not None:
+                states.append(result)
 
         response = EnqueueResponseModel(
             count=len(states),
