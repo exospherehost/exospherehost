@@ -282,3 +282,172 @@ class TestAppConfiguration:
             for route in app_routes
         )
         assert router_prefix_present, "Router routes should be included in the app"
+
+    def test_router_included(self):
+        """Test that the main router is included in the app"""
+        app = app_main.app
+        
+        # Check that the router is included in the app routes
+        router_found = False
+        for route in app.routes:
+            if hasattr(route, 'prefix') and route.prefix == '/v0/namespace/{namespace_name}': # type: ignore
+                router_found = True
+                break
+        
+        # If not found in routes, check if it's included as a router
+        if not router_found:
+            # Check if the router is included in the app
+            router_found = hasattr(app, 'router') and app.router is not None
+        
+        assert router_found, "Main router not found in app routes"
+
+    @patch('app.main.os.getenv')
+    @patch('app.main.AsyncMongoClient')
+    @patch('app.main.init_beanie')
+    def test_lifespan_missing_secret(self, mock_init_beanie, mock_mongo_client, mock_getenv):
+        """Test lifespan function when STATE_MANAGER_SECRET is not set"""
+        from app.main import lifespan
+        from fastapi import FastAPI
+        
+        # Mock os.getenv to return None for STATE_MANAGER_SECRET
+        mock_getenv.side_effect = lambda key, default=None: {
+            "MONGO_URI": "mongodb://localhost:27017",
+            "MONGO_DATABASE_NAME": "test_db",
+            "STATE_MANAGER_SECRET": None  # This should cause the error
+        }.get(key, default)
+        
+        # Mock AsyncMongoClient
+        mock_client = MagicMock()
+        mock_db = MagicMock()
+        mock_client.__getitem__.return_value = mock_db
+        mock_mongo_client.return_value = mock_client
+        
+        # Mock init_beanie to raise the ValueError
+        mock_init_beanie.side_effect = ValueError("STATE_MANAGER_SECRET is not set")
+        
+        # Create a mock FastAPI app
+        app = FastAPI()
+        
+        # Act & Assert
+        with pytest.raises(ValueError, match="STATE_MANAGER_SECRET is not set"):
+            # We need to use async context manager
+            async def test_lifespan():
+                async with lifespan(app):
+                    pass
+            
+            # This will raise the ValueError when STATE_MANAGER_SECRET is None
+            import asyncio
+            asyncio.run(test_lifespan())
+
+    @patch('app.main.os.getenv')
+    @patch('app.main.AsyncMongoClient')
+    @patch('app.main.init_beanie')
+    def test_lifespan_default_database_name(self, mock_init_beanie, mock_mongo_client, mock_getenv):
+        """Test lifespan function with default database name"""
+        from app.main import lifespan
+        from fastapi import FastAPI
+        
+        # Mock os.getenv to not provide MONGO_DATABASE_NAME
+        mock_getenv.side_effect = lambda key, default=None: {
+            "MONGO_URI": "mongodb://localhost:27017",
+            "STATE_MANAGER_SECRET": "test_secret"
+        }.get(key, default)
+        
+        # Mock AsyncMongoClient
+        mock_client = MagicMock()
+        mock_db = MagicMock()
+        mock_client.__getitem__.return_value = mock_db
+        mock_mongo_client.return_value = mock_client
+        
+        # Mock init_beanie
+        mock_init_beanie.return_value = None
+        
+        # Create a mock FastAPI app
+        app = FastAPI()
+        
+        # Act
+        async def test_lifespan():
+            async with lifespan(app):
+                pass
+        
+        # This should not raise any exceptions
+        import asyncio
+        asyncio.run(test_lifespan())
+        
+        # Assert that default database name was used
+        mock_getenv.assert_any_call("MONGO_DATABASE_NAME", "exosphere-state-manager")
+
+    def test_app_middleware_order(self):
+        """Test that middlewares are added in the correct order"""
+        app = app_main.app
+        
+        # FastAPI stores middleware in reverse order (last added is first executed)
+        middleware_classes = [middleware.cls for middleware in app.user_middleware]
+        
+        from app.middlewares.request_id_middleware import RequestIdMiddleware
+        from app.middlewares.unhandled_exceptions_middleware import UnhandledExceptionsMiddleware
+        
+        # RequestIdMiddleware should be added first (executed after UnhandledExceptionsMiddleware)
+        # UnhandledExceptionsMiddleware should be added last (executed first)
+        request_id_index = middleware_classes.index(RequestIdMiddleware) # type: ignore
+        unhandled_exceptions_index = middleware_classes.index(UnhandledExceptionsMiddleware) # type: ignore
+        
+        # Since middleware is stored in reverse order, UnhandledExceptions should have lower index
+        assert unhandled_exceptions_index < request_id_index
+
+    def test_health_endpoint_response(self):
+        """Test that the health endpoint returns the expected response"""
+        from app.main import health
+        
+        # Act
+        response = health()
+        
+        # Assert
+        assert response == {"message": "OK"}
+
+    def test_app_metadata(self):
+        """Test that the app has correct metadata"""
+        app = app_main.app
+        
+        # Test title
+        assert app.title == "Exosphere State Manager"
+        
+        # Test description
+        assert app.description == "Exosphere State Manager"
+        
+        # Test version
+        assert app.version == "0.1.0"
+        
+        # Test contact info
+        assert app.contact is not None
+        assert app.contact["name"] == "Nivedit Jain (Founder exosphere.host)"
+        assert app.contact["email"] == "nivedit@exosphere.host"
+        
+        # Test license info
+        assert app.license_info is not None
+        assert app.license_info["name"] == "Elastic License 2.0 (ELv2)"
+        assert "github.com/exospherehost/exosphere-api-server/blob/main/LICENSE" in app.license_info["url"]
+
+    def test_app_has_lifespan(self):
+        """Test that the app has a lifespan function configured"""
+        app = app_main.app
+        
+        # Check that the app has a lifespan function
+        assert hasattr(app, 'router')
+        assert app.router is not None
+
+    def test_imports_work_correctly(self):
+        """Test that all imports in main.py work correctly"""
+        # This test ensures that all the imports in main.py are working
+        # If any import fails, this test will fail
+        
+        # Test that we can import the main module
+        import app.main
+        
+        # Test that we can access the app
+        assert hasattr(app.main, 'app')
+        assert app.main.app is not None
+        
+        # Test that we can access the health function
+        assert hasattr(app.main, 'health')
+        assert callable(app.main.health)

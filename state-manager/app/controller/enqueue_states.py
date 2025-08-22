@@ -6,6 +6,7 @@ from ..models.db.state import State
 from ..models.state_status_enum import StateStatusEnum
 
 from app.singletons.logs_manager import LogsManager
+from pymongo import ReturnDocument
 
 logger = LogsManager().get_logger()
 
@@ -21,7 +22,8 @@ async def find_state(namespace_name: str, nodes: list[str]) -> State | None:
         },
         {
             "$set": {"status": StateStatusEnum.QUEUED}
-        }
+        },
+        return_document=ReturnDocument.AFTER
     )
     return State(**data) if data else None
 
