@@ -1,5 +1,5 @@
-import asyncio
 from beanie import PydanticObjectId
+from pymongo.errors import DuplicateKeyError
 from beanie.operators import In, NE
 from app.singletons.logs_manager import LogsManager
 from app.models.db.graph_template_model import GraphTemplate
@@ -58,19 +58,6 @@ async def check_unites_satisfied(namespace: str, graph_name: str, node_template:
             ).count() > 0:
                 return False
     return True
-
-
-async def check_state_exists(state: State) -> State | None:
-    if await State.find_one(
-        State.namespace_name == state.namespace_name,
-        State.node_name == state.node_name,
-        State.identifier == state.identifier,
-        State.graph_name == state.graph_name,
-        State.run_id == state.run_id,
-        State.parents == state.parents
-    ) is not None:
-        return None
-    return state
 
 
 def get_dependents(syntax_string: str) -> DependentString:
@@ -246,17 +233,12 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
             parent_state = parents[next_state_node_template.unites.identifier]
 
             new_unit_states.append(generate_next_state(next_state_input_model, next_state_node_template, parents, parent_state))
-
-        existence_checks = [check_state_exists(state) for state in new_unit_states]
-        existence_results = await asyncio.gather(*existence_checks)
         
-        not_inserted_new_states = []
-        for state in existence_results:
-            if state:
-                not_inserted_new_states.append(state)
-        
-        if len(not_inserted_new_states) > 0:
-            await State.insert_many(not_inserted_new_states)
+        try:
+            if len(new_unit_states) > 0:
+                await State.insert_many(new_unit_states)
+        except DuplicateKeyError:
+            logger.error(f"Duplicate key error for new unit states: {new_unit_states}")
 
     except Exception as e:
         await State.find(

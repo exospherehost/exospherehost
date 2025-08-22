@@ -1,8 +1,11 @@
+from pymongo import IndexModel
 from .base import BaseDatabaseModel
 from ..state_status_enum import StateStatusEnum
 from pydantic import Field
-from beanie import PydanticObjectId
+from beanie import Insert, PydanticObjectId, Replace, Save, before_event
 from typing import Any, Optional
+import hashlib
+import json
 
 
 class State(BaseDatabaseModel):
@@ -16,3 +19,34 @@ class State(BaseDatabaseModel):
     outputs: dict[str, Any] = Field(..., description="Outputs of the state")
     error: Optional[str] = Field(None, description="Error message")
     parents: dict[str, PydanticObjectId] = Field(default_factory=dict, description="Parents of the state")
+    does_unites: bool = Field(default=False, description="Whether the state is unites others")
+    _fingerprint: str = Field(default="", description="Fingerprint of the state")
+
+    @before_event([Insert, Replace, Save])
+    def _generate_fingerprint(self):
+        data = {
+            "node_name": self.node_name,
+            "namespace_name": self.namespace_name,
+            "identifier": self.identifier,
+            "graph_name": self.graph_name,
+            "run_id": self.run_id,
+            "parents": {key: str(value) for key, value in self.parents.items()}
+        }
+        self._fingerprint = hashlib.sha256(json.dumps(data).encode()).hexdigest()
+
+    @property
+    def fingerprint(self):
+        return self._fingerprint
+    
+    class Settings:
+        indexes = [
+            IndexModel(
+                [
+                    ("_fingerprint", 1)
+                ],
+                unique=True,
+                partialFilterExpression={
+                    "does_unites": True
+                }
+            )
+        ]
