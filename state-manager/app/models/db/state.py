@@ -19,9 +19,8 @@ class State(BaseDatabaseModel):
     outputs: dict[str, Any] = Field(..., description="Outputs of the state")
     error: Optional[str] = Field(None, description="Error message")
     parents: dict[str, PydanticObjectId] = Field(default_factory=dict, description="Parents of the state")
-    does_unites: bool = Field(default=False, description="Whether the state is unites others")
+    does_unites: bool = Field(default=False, description="Whether this state unites other states")
     state_fingerprint: str = Field(default="", description="Fingerprint of the state")
-
     @before_event([Insert, Replace, Save])
     def _generate_fingerprint(self):
         if not self.does_unites:
@@ -34,10 +33,16 @@ class State(BaseDatabaseModel):
             "identifier": self.identifier,
             "graph_name": self.graph_name,
             "run_id": self.run_id,
-            "parents": {key: str(value) for key, value in sorted(self.parents.items(), key=lambda x: x[0])}
+            "parents": {k: str(v) for k, v in self.parents.items()},
         }
-        self.state_fingerprint = hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
-
+        payload = json.dumps(
+            data,
+            sort_keys=True,            # canonical key ordering at all levels
+            separators=(",", ":"),     # no whitespace variance
+            ensure_ascii=True,         # normalized non-ASCII escapes
+        ).encode("utf-8")
+        self.state_fingerprint = hashlib.sha256(payload).hexdigest()    
+        
     class Settings:
         indexes = [
             IndexModel(
@@ -45,6 +50,7 @@ class State(BaseDatabaseModel):
                     ("state_fingerprint", 1)
                 ],
                 unique=True,
+                name="uniq_state_fingerprint_unites",
                 partialFilterExpression={
                     "does_unites": True
                 }

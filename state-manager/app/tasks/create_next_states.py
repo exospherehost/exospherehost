@@ -239,8 +239,12 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
             if len(new_unit_states) > 0:
                 await State.insert_many(new_unit_states)
         except DuplicateKeyError:
-            logger.warning(f"Caught an expected duplicate key error for new unit states, likely due to a race condition: {new_unit_states}")
-
+            logger.warning(
+                f"Caught duplicate key error for new unit states in namespace={namespace}, "
+                f"graph={graph_name}, likely due to a race condition. "
+                f"Attempted to insert {len(new_unit_states)} states"
+            )
+            
     except Exception as e:
         await State.find(
             In(State.id, state_ids)
