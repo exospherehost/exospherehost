@@ -30,7 +30,7 @@ class State(BaseDatabaseModel):
             "identifier": self.identifier,
             "graph_name": self.graph_name,
             "run_id": self.run_id,
-            "parents": {key: str(value) for key, value in self.parents.items()}
+            "parents": {key: str(value) for key, value in sorted(self.parents.items(), key=lambda x: x[0])}
         }
         self._fingerprint = hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
 
