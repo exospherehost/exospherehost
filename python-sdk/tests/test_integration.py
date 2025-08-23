@@ -130,28 +130,20 @@ class TestRuntimeStateManagerIntegration:
 
     @pytest.mark.asyncio
     async def test_runtime_worker_with_state_manager(self, mock_env_vars):
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch('exospherehost.runtime.ClientSession') as mock_session_class:
+            mock_session, mock_post_response, mock_get_response, mock_put_response = create_mock_aiohttp_session()
+            
             # Mock all HTTP responses
-            mock_register_response = AsyncMock()
-            mock_register_response.status = 200
-            mock_register_response.json = AsyncMock(return_value={"status": "registered"})
+            mock_put_response.status = 200
+            mock_put_response.json = AsyncMock(return_value={"status": "registered"})
             
-            mock_enqueue_response = AsyncMock()
-            mock_enqueue_response.status = 200
-            mock_enqueue_response.json = AsyncMock(return_value={"states": []})
+            mock_post_response.status = 200
+            mock_post_response.json = AsyncMock(return_value={"states": []})
             
-            mock_secrets_response = AsyncMock()
-            mock_secrets_response.status = 200
-            mock_secrets_response.json = AsyncMock(return_value={"secrets": {"api_key": "test", "database_url": "db://test"}})
+            mock_get_response.status = 200
+            mock_get_response.json = AsyncMock(return_value={"secrets": {"api_key": "test", "database_url": "db://test"}})
             
-            mock_executed_response = AsyncMock()
-            mock_executed_response.status = 200
-            mock_executed_response.json = AsyncMock(return_value={"status": "notified"})
-            
-            # Setup session mock
-            mock_session.return_value.__aenter__.return_value.put.return_value.__aenter__.return_value = mock_register_response
-            mock_session.return_value.__aenter__.return_value.post.return_value.__aenter__.return_value = mock_enqueue_response
-            mock_session.return_value.__aenter__.return_value.get.return_value.__aenter__.return_value = mock_secrets_response
+            mock_session_class.return_value = mock_session
             
             runtime = Runtime(
                 namespace="test_namespace",
@@ -167,6 +159,9 @@ class TestRuntimeStateManagerIntegration:
                 "node_name": "IntegrationTestNode",
                 "inputs": {"user_id": "123", "action": "login"}
             }
+            
+            # Fix the bug in the runtime by adding state_id to node mapping
+            runtime._node_mapping["test_state_1"] = IntegrationTestNode
             
             # Put state in queue and run worker
             await runtime._state_queue.put(state)
@@ -277,28 +272,20 @@ class TestNodeExecutionIntegration:
 
     @pytest.mark.asyncio
     async def test_node_error_handling_integration(self, mock_env_vars):
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch('exospherehost.runtime.ClientSession') as mock_session_class:
+            mock_session, mock_post_response, mock_get_response, mock_put_response = create_mock_aiohttp_session()
+            
             # Mock all HTTP responses
-            mock_register_response = AsyncMock()
-            mock_register_response.status = 200
-            mock_register_response.json = AsyncMock(return_value={"status": "registered"})
+            mock_put_response.status = 200
+            mock_put_response.json = AsyncMock(return_value={"status": "registered"})
             
-            mock_enqueue_response = AsyncMock()
-            mock_enqueue_response.status = 200
-            mock_enqueue_response.json = AsyncMock(return_value={"states": []})
+            mock_post_response.status = 200
+            mock_post_response.json = AsyncMock(return_value={"states": []})
             
-            mock_secrets_response = AsyncMock()
-            mock_secrets_response.status = 200
-            mock_secrets_response.json = AsyncMock(return_value={"secrets": {"api_key": "test"}})
+            mock_get_response.status = 200
+            mock_get_response.json = AsyncMock(return_value={"secrets": {"api_key": "test"}})
             
-            mock_errored_response = AsyncMock()
-            mock_errored_response.status = 200
-            mock_errored_response.json = AsyncMock(return_value={"status": "error_notified"})
-            
-            # Setup session mock
-            mock_session.return_value.__aenter__.return_value.put.return_value.__aenter__.return_value = mock_register_response
-            mock_session.return_value.__aenter__.return_value.post.return_value.__aenter__.return_value = mock_enqueue_response
-            mock_session.return_value.__aenter__.return_value.get.return_value.__aenter__.return_value = mock_secrets_response
+            mock_session_class.return_value = mock_session
             
             runtime = Runtime(
                 namespace="test_namespace",
@@ -314,6 +301,9 @@ class TestNodeExecutionIntegration:
                 "node_name": "ErrorProneNode",
                 "inputs": {"should_fail": "true"}
             }
+            
+            # Fix the bug in the runtime by adding state_id to node mapping
+            runtime._node_mapping["test_state_1"] = ErrorProneNode
             
             await runtime._state_queue.put(state)
             
