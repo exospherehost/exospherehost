@@ -15,11 +15,11 @@ class GoodNode(BaseNode):
 		api_key: str
 
 	async def execute(self):
-		return self.Outputs(message=f"hi {self.inputs.name}")
+		return self.Outputs(message=f"hi {self.inputs.name}") # type: ignore
 
 
 class BadNodeWrongInputsBase(BaseNode):
-	Inputs = object  # not a pydantic BaseModel
+	Inputs = object  # not a pydantic BaseModel # type: ignore
 	class Outputs(BaseModel):
 		message: str
 	class Secrets(BaseModel):
