@@ -1,5 +1,7 @@
 import asyncio
 import os
+import multiprocessing
+
 from asyncio import Queue, sleep
 from typing import List, Dict
 
@@ -47,13 +49,13 @@ class Runtime:
         runtime.start()
     """
 
-    def __init__(self, namespace: str, name: str, nodes: List[type[BaseNode]], state_manager_uri: str | None = None, key: str | None = None, batch_size: int = 16, workers: int = 4, state_manage_version: str = "v0", poll_interval: int = 1):
+    def __init__(self, namespace: str, name: str, nodes: List[type[BaseNode]], state_manager_uri: str | None = None, key: str | None = None, batch_size: int = 16, thread_count: int = 4, state_manage_version: str = "v0", poll_interval: int = 1):
         self._name = name
         self._namespace = namespace
         self._key = key
         self._batch_size = batch_size
         self._state_queue = Queue(maxsize=2*batch_size)
-        self._workers = workers
+        self._thread_count = thread_count
         self._nodes = nodes
         self._node_names = [node.__name__ for node in nodes]
         self._state_manager_uri = state_manager_uri
@@ -86,8 +88,8 @@ class Runtime:
         """
         if self._batch_size < 1:
             raise ValueError("Batch size should be at least 1")
-        if self._workers < 1:
-            raise ValueError("Workers should be at least 1")
+        if self._thread_count < 1:
+            raise ValueError("Thread count should be at least 1")
         if self._state_manager_uri is None:
             raise ValueError("State manager URI is not set")
         if self._key is None:
@@ -306,7 +308,7 @@ class Runtime:
         if len(errors) > 0:
             raise ValueError("Following errors while validating nodes: " + "\n".join(errors))
         
-    async def _worker(self):
+    async def _worker_thread(self):
         """
         Worker task that processes states from the queue.
 
@@ -319,7 +321,7 @@ class Runtime:
             try:
                 node = self._node_mapping[state["node_name"]]
                 secrets = await self._get_secrets(state["state_id"])
-                outputs = await node()._execute(node.Inputs(**state["inputs"]), node.Secrets(**secrets["secrets"]))
+                outputs = await node()._execute(node.Inputs(**state["inputs"]), node.Secrets(**secrets["secrets"])) # type: ignore
 
                 if outputs is None:
                     outputs = []
@@ -346,7 +348,7 @@ class Runtime:
         await self._register()
         
         poller = asyncio.create_task(self._enqueue())
-        worker_tasks = [asyncio.create_task(self._worker()) for _ in range(self._workers)]
+        worker_tasks = [asyncio.create_task(self._worker_thread()) for _ in range(self._thread_count)]
 
         await asyncio.gather(poller, *worker_tasks)
 
