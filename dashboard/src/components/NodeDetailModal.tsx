@@ -4,17 +4,29 @@ import React from 'react';
 import { NodeRegistration } from '@/types/state-manager';
 import { X, Code, Eye, EyeOff, Key } from 'lucide-react';
 
+interface SchemaProperty {
+  type: string;
+  description?: string;
+  enum?: string[];
+}
+
+interface Schema {
+  type?: string;
+  properties?: Record<string, SchemaProperty>;
+  required?: string[];
+}
+
 interface NodeDetailModalProps {
   node: NodeRegistration | null;
   isOpen: boolean;
   onClose: () => void;
 }
 
-const SchemaRenderer: React.FC<{ schema: any; title: string }> = ({ schema, title }) => {
+const SchemaRenderer: React.FC<{ schema: Schema; title: string }> = ({ schema, title }) => {
   const [isExpanded, setIsExpanded] = React.useState(true);
 
-  const renderSchemaProperties = (properties: any, required: string[] = []) => {
-    return Object.entries(properties).map(([key, value]: [string, any]) => (
+  const renderSchemaProperties = (properties: Record<string, SchemaProperty>, required: string[] = []) => {
+    return Object.entries(properties).map(([key, value]: [string, SchemaProperty]) => (
       <div key={key} className="border-l-2 border-gray-200 pl-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">

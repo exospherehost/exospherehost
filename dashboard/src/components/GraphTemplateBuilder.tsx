@@ -220,7 +220,7 @@ export const GraphTemplateBuilder: React.FC<GraphTemplateBuilderProps> = ({
             {nodes.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 <Settings className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p>No nodes added yet. Click "Add Node" to get started.</p>
+                <p>No nodes added yet. Click &quot;Add Node&quot; to get started.</p>
               </div>
             )}
           </div>
