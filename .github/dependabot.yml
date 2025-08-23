@@ -17,6 +17,10 @@ updates:
     directory: "/landing-page/" # Location of package manifests
     schedule:
       interval: "daily"
+  - package-ecosystem: "npm" # See documentation for possible values
+    directory: "/dashboard/" # Location of package manifests
+    schedule:
+      interval: "daily"
   - package-ecosystem: "uv" # See documentation for possible values
     directory: "/python-sdk/" # Location of package manifests
     schedule:
