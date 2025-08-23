@@ -33,7 +33,7 @@ def _setup_default_logging():
     # Setup basic configuration with clean formatting
     logging.basicConfig(
         level=log_level,
-        format='%(asctime)s | %(levelname)s | %(message)s',
+        format='%(asctime)s | %(levelname)s | %(name)s | %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     
@@ -107,10 +107,10 @@ class Runtime:
         Set configuration from environment variables if not provided.
         """
         if self._state_manager_uri is None:
-            logger.info("State manager URI not provided, using environment variable EXOSPHERE_STATE_MANAGER_URI")
+            logger.debug("State manager URI not provided, falling back to environment variable EXOSPHERE_STATE_MANAGER_URI")
             self._state_manager_uri = os.environ.get("EXOSPHERE_STATE_MANAGER_URI")
         if self._key is None:
-            logger.info("API key not provided, using environment variable EXOSPHERE_API_KEY")
+            logger.debug("API key not provided, falling back to environment variable EXOSPHERE_API_KEY")
             self._key = os.environ.get("EXOSPHERE_API_KEY")
 
     def _validate_runtime(self):
@@ -233,8 +233,9 @@ class Runtime:
                     logger.info(f"Enqueued states: {len(data.get('states', []))}")
             except Exception as e:
                 logger.error(f"Error enqueuing states: {e}")
-                raise
-                
+                await sleep(self._poll_interval * 2)
+                continue
+
             await sleep(self._poll_interval)
 
     async def _notify_executed(self, state_id: str, outputs: List[BaseNode.Outputs]):
@@ -256,7 +257,6 @@ class Runtime:
                 if response.status != 200:
                     logger.error(f"Failed to notify executed state {state_id}: {res}")
 
-                logger.info(f"Notified executed state {state_id} with outputs: {outputs} for node {self._node_mapping[state_id].__name__}")
       
     async def _notify_errored(self, state_id: str, error: str):
         """
@@ -277,7 +277,6 @@ class Runtime:
                 if response.status != 200:
                     logger.error(f"Failed to notify errored state {state_id}: {res}")
 
-                logger.info(f"Notified errored state {state_id} with error: {error} for node {self._node_mapping[state_id].__name__}")
 
     async def _get_secrets(self, state_id: str) -> Dict[str, str]:
         """
@@ -364,6 +363,7 @@ class Runtime:
 
         while True:
             state = await self._state_queue.get()
+            node = None
 
             try:
                 node = self._node_mapping[state["node_name"]]
@@ -382,12 +382,14 @@ class Runtime:
                     outputs = [outputs]
 
                 await self._notify_executed(state["state_id"], outputs)
+                logger.info(f"Notified executed state {state['state_id']} for node {node.__name__ if node else "unknown"}")
                 
             except Exception as e:
-                logger.error(f"Error executing state {state['state_id']} for node {node.__name__}: {e}")
+                logger.error(f"Error executing state {state['state_id']} for node {node.__name__ if node else "unknown"}: {e}")
                 logger.error(traceback.format_exc())
 
                 await self._notify_errored(state["state_id"], str(e))
+                logger.info(f"Notified errored state {state['state_id']} for node {node.__name__ if node else "unknown"}")
 
             self._state_queue.task_done() # type: ignore
 
