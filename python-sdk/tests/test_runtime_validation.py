@@ -15,11 +15,11 @@ class GoodNode(BaseNode):
 		api_key: str
 
 	async def execute(self):
-		return self.Outputs(message=f"hi {self.inputs.name}")
+		return self.Outputs(message=f"hi {self.inputs.name}") # type: ignore
 
 
 class BadNodeWrongInputsBase(BaseNode):
-	Inputs = object  # not a pydantic BaseModel
+	Inputs = object  # not a pydantic BaseModel # type: ignore
 	class Outputs(BaseModel):
 		message: str
 	class Secrets(BaseModel):
@@ -62,7 +62,7 @@ def test_runtime_invalid_params_raises(monkeypatch):
 	with pytest.raises(ValueError):
 		Runtime(namespace="ns", name="rt", nodes=[GoodNode], batch_size=0)
 	with pytest.raises(ValueError):
-		Runtime(namespace="ns", name="rt", nodes=[GoodNode], workers=0)
+		Runtime(namespace="ns", name="rt", nodes=[GoodNode], thread_count=0)
 
 
 def test_node_validation_errors(monkeypatch):

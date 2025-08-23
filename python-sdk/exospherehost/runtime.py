@@ -36,7 +36,7 @@ class Runtime:
         key (str | None, optional): API key for authentication.
             If not provided, will use the EXOSPHERE_API_KEY environment variable.
         batch_size (int, optional): Number of states to fetch per poll. Defaults to 16.
-        workers (int, optional): Number of concurrent worker tasks. Defaults to 4.
+        thread_count (int, optional): Number of concurrent worker threads. Defaults to 4.
         state_manage_version (str, optional): State manager API version. Defaults to "v0".
         poll_interval (int, optional): Seconds between polling for new states. Defaults to 1.
 
@@ -83,7 +83,7 @@ class Runtime:
         Validate runtime configuration.
 
         Raises:
-            ValueError: If batch_size or workers is less than 1, or if required
+            ValueError: If batch_size or thread_count is less than 1, or if required
                 configuration (state_manager_uri, key) is not provided.
         """
         if self._batch_size < 1:
@@ -310,7 +310,7 @@ class Runtime:
         
     async def _worker_thread(self):
         """
-        Worker task that processes states from the queue.
+        Worker thread that processes states from the queue.
 
         Continuously fetches states from the queue, executes the corresponding node,
         and notifies the state manager of the result.
@@ -340,7 +340,7 @@ class Runtime:
         """
         Start the runtime event loop.
 
-        Registers nodes, starts the polling and worker tasks, and runs until stopped.
+        Registers nodes, starts the polling and worker threads, and runs until stopped.
 
         Raises:
             RuntimeError: If the runtime is not connected (no nodes registered).
@@ -348,9 +348,9 @@ class Runtime:
         await self._register()
         
         poller = asyncio.create_task(self._enqueue())
-        worker_tasks = [asyncio.create_task(self._worker_thread()) for _ in range(self._thread_count)]
+        worker_threads = [asyncio.create_task(self._worker_thread()) for _ in range(self._thread_count)]
 
-        await asyncio.gather(poller, *worker_tasks)
+        await asyncio.gather(poller, *worker_threads)
 
     def start(self):
         """
