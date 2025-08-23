@@ -1,12 +1,8 @@
-name: Build & publish to PyPI
+name: Publish Python SDK on Release
 
 on:
-  push: 
-    branches:
-      - main
-    paths:
-      - "python-sdk/exospherehost/_version.py"
-      - ".github/workflows/publish-python-sdk.yml"
+  release:
+    types: [published]
 
 permissions:
   contents: read
@@ -77,18 +73,54 @@ jobs:
      
       - run: uv sync --locked --dev
 
-      - name: Check version for beta indicator
+      - name: Update version to release tag
+        run: |
+          # Extract version from tag (remove 'v' or 'V' prefix if present)
+          RELEASE_VERSION="${{ github.ref_name }}"
+          
+          # Handle empty or invalid tags
+          if [[ -z "$RELEASE_VERSION" ]]; then
+            echo "ERROR: Release tag is empty"
+            exit 1
+          fi
+          
+          # Remove 'v' or 'V' prefix (case insensitive)
+          if [[ $RELEASE_VERSION =~ ^[vV] ]]; then
+            RELEASE_VERSION="${RELEASE_VERSION#?}"  # Remove first character
+          fi
+          
+          # Validate the extracted version is not empty
+          if [[ -z "$RELEASE_VERSION" ]]; then
+            echo "ERROR: Invalid tag format - version part is empty"
+            exit 1
+          fi
+          
+          # Update the version file
+          echo "version = \"$RELEASE_VERSION\"" > exospherehost/_version.py
+          
+          echo "Updated version to $RELEASE_VERSION for release"
+
+      - name: Verify version format
         run: |
           python -c "
           import sys
           sys.path.append('.')
           from exospherehost._version import version
-          if 'b' not in version:
-              print(f'ERROR: Version {version} does not contain beta indicator (b). Major releases are only allowed through GitHub releases.')
+          import re
+          
+          # Check if version matches semantic versioning pattern
+          if not re.match(r'^\d+\.\d+\.\d+$', version):
+              print(f'ERROR: Version {version} does not match semantic versioning pattern (x.y.z)')
               sys.exit(1)
-          print(f'Version {version} is valid for PyPI publishing (contains beta indicator)')
+          
+          # Ensure it's not a beta version (should not contain 'b')
+          if 'b' in version:
+              print(f'ERROR: Release version {version} contains beta indicator. Release versions should not be beta.')
+              sys.exit(1)
+          
+          print(f'Version {version} is valid for release publishing')
           "
 
       - run: uv build
 
-      - run: uv publish
+      - run: uv publish 
