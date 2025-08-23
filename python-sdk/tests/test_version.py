@@ -1,4 +1,3 @@
-import pytest
 from exospherehost._version import version
 
 

@@ -1,6 +1,5 @@
 import pytest
 import asyncio
-import os
 import logging
 from unittest.mock import AsyncMock, patch, MagicMock
 from pydantic import BaseModel
@@ -53,7 +52,7 @@ class MockTestNode(BaseNode):
         api_key: str
 
     async def execute(self):
-        return self.Outputs(message=f"Hello {self.inputs.name}")
+        return self.Outputs(message=f"Hello {self.inputs.name}") # type: ignore
 
 
 class MockTestNodeWithListOutput(BaseNode):
@@ -67,7 +66,7 @@ class MockTestNodeWithListOutput(BaseNode):
         api_key: str
 
     async def execute(self):
-        count = int(self.inputs.count)
+        count = int(self.inputs.count) # type: ignore
         return [self.Outputs(numbers=str(i)) for i in range(count)]
 
 
@@ -82,7 +81,7 @@ class MockTestNodeWithError(BaseNode):
         api_key: str
 
     async def execute(self):
-        if self.inputs.should_fail == "true":
+        if self.inputs.should_fail == "true": # type: ignore
             raise ValueError("Test error")
         return self.Outputs(result="success")
 
@@ -438,7 +437,7 @@ class TestRuntimeNotification:
             runtime._node_mapping["test_state_1"] = MockTestNode
             outputs = [MockTestNode.Outputs(message="test output")]
             
-            await runtime._notify_executed("test_state_1", outputs)
+            await runtime._notify_executed("test_state_1", outputs) # type: ignore
             
             # Verify the call was made
             mock_session.post.assert_called_once()
@@ -459,7 +458,7 @@ class TestRuntimeNotification:
             outputs = [MockTestNode.Outputs(message="test output")]
             
             # Should not raise exception, just log error
-            await runtime._notify_executed("test_state_1", outputs)
+            await runtime._notify_executed("test_state_1", outputs) # type: ignore
 
     @pytest.mark.asyncio
     async def test_notify_errored_success(self, runtime_config):
@@ -565,7 +564,7 @@ class TestRuntimeStart:
             mock_enqueue.return_value = None
             mock_worker.return_value = None
             
-            runtime = Runtime(**runtime_config)
+            Runtime(**runtime_config)
             
             # This should not raise an exception
             # Note: In a real scenario, this would run the event loop

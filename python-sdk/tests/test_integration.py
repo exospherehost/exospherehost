@@ -1,6 +1,5 @@
 import pytest
 import asyncio
-import os
 from unittest.mock import AsyncMock, patch, MagicMock
 from pydantic import BaseModel
 from exospherehost import Runtime, BaseNode, StateManager, TriggerState
@@ -56,7 +55,7 @@ class IntegrationTestNode(BaseNode):
     async def execute(self):
         return self.Outputs(
             status="completed",
-            message=f"Processed {self.inputs.action} for user {self.inputs.user_id}"
+            message=f"Processed {self.inputs.action} for user {self.inputs.user_id}" # type: ignore
         )
 
 
@@ -71,7 +70,7 @@ class MultiOutputNode(BaseNode):
         api_key: str
 
     async def execute(self):
-        count = int(self.inputs.count)
+        count = int(self.inputs.count) # type: ignore
         return [self.Outputs(result=f"item_{i}") for i in range(count)]
 
 
@@ -86,7 +85,7 @@ class ErrorProneNode(BaseNode):
         api_key: str
 
     async def execute(self):
-        if self.inputs.should_fail == "true":
+        if self.inputs.should_fail == "true": # type: ignore
             raise RuntimeError("Integration test error")
         return self.Outputs(result="success")
 
@@ -216,7 +215,7 @@ class TestStateManagerGraphIntegration:
             ]
             secrets = {"api_key": "test_key", "database_url": "db://test"}
             
-            result = await sm.upsert_graph("test_graph", graph_nodes, secrets, validation_timeout=10, polling_interval=0.1)
+            result = await sm.upsert_graph("test_graph", graph_nodes, secrets, validation_timeout=10, polling_interval=0.1) # type: ignore
             assert result["validation_status"] == "VALID"
             
             # Test graph triggering

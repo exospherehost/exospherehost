@@ -42,7 +42,7 @@ def test_base_node_class_import():
     
     # Test that BaseNode is abstract
     with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-        BaseNode()
+        BaseNode() # type: ignore
     
     # Test that it has the expected attributes
     assert hasattr(BaseNode, 'execute')
@@ -100,14 +100,10 @@ def test_package_version_attribute():
 
 def test_import_without_side_effects():
     """Test that importing the package doesn't cause side effects."""
-    import sys
     import logging
     
     # Store initial state
     initial_handlers = len(logging.getLogger().handlers)
-    
-    # Import the package
-    import exospherehost
     
     # Check that logging handlers weren't added unexpectedly
     # (The package might add handlers during import, which is expected)

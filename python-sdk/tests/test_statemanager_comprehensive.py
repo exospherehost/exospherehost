@@ -1,6 +1,5 @@
 import pytest
 import asyncio
-import os
 from unittest.mock import AsyncMock, patch, MagicMock
 from exospherehost.statemanager import StateManager, TriggerState
 
@@ -324,7 +323,7 @@ class TestStateManagerUpsertGraph:
             secrets = {"secret1": "value1"}
             
             with pytest.raises(Exception, match="Graph validation check timed out after 1 seconds"):
-                await sm.upsert_graph("test_graph", graph_nodes, secrets, validation_timeout=1, polling_interval=0.1)
+                await sm.upsert_graph("test_graph", graph_nodes, secrets, validation_timeout=1, polling_interval=0.1) # type: ignore
 
     @pytest.mark.asyncio
     async def test_upsert_graph_validation_failed(self, state_manager_config):
@@ -356,7 +355,7 @@ class TestStateManagerUpsertGraph:
             secrets = {"secret1": "value1"}
             
             with pytest.raises(Exception, match="Graph validation failed: INVALID and errors: \\[\"Node 'node1' not found\"\\]"):
-                await sm.upsert_graph("test_graph", graph_nodes, secrets, validation_timeout=10, polling_interval=0.1)
+                await sm.upsert_graph("test_graph", graph_nodes, secrets, validation_timeout=10, polling_interval=0.1) # type: ignore
 
     @pytest.mark.asyncio
     async def test_upsert_graph_custom_timeout_and_polling(self, state_manager_config):

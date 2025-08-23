@@ -1,6 +1,5 @@
 import pytest
 import asyncio
-from unittest.mock import patch, MagicMock
 from pydantic import BaseModel
 from exospherehost.node.BaseNode import BaseNode
 
@@ -20,8 +19,8 @@ class ValidNode(BaseNode):
 
     async def execute(self):
         return self.Outputs(
-            message=f"Hello {self.inputs.name}",
-            result=f"Count: {self.inputs.count}"
+            message=f"Hello {self.inputs.name}", # type: ignore
+            result=f"Count: {self.inputs.count}" # type: ignore
         )
 
 
@@ -36,7 +35,7 @@ class NodeWithListOutput(BaseNode):
         api_key: str
 
     async def execute(self):
-        count = int(self.inputs.items)
+        count = int(self.inputs.items) # type: ignore
         return [self.Outputs(processed=str(i)) for i in range(count)]
 
 
@@ -65,7 +64,7 @@ class NodeWithError(BaseNode):
         api_key: str
 
     async def execute(self):
-        if self.inputs.should_fail == "true":
+        if self.inputs.should_fail == "true": # type: ignore
             raise ValueError("Test error")
         return self.Outputs(result="success")
 
@@ -83,7 +82,7 @@ class NodeWithComplexSecrets(BaseNode):
         encryption_key: str
 
     async def execute(self):
-        return self.Outputs(status=f"Operation {self.inputs.operation} completed")
+        return self.Outputs(status=f"Operation {self.inputs.operation} completed") # type: ignore
 
 
 class TestBaseNodeInitialization:
@@ -127,7 +126,7 @@ class TestBaseNodeExecute:
         inputs = ValidNode.Inputs(name="test_user", count="5")
         secrets = ValidNode.Secrets(api_key="test_key", token="test_token")
         
-        result = await node._execute(inputs, secrets)
+        result = await node._execute(inputs, secrets) # type: ignore
         
         assert isinstance(result, ValidNode.Outputs)
         assert result.message == "Hello test_user"
@@ -141,14 +140,14 @@ class TestBaseNodeExecute:
         inputs = NodeWithListOutput.Inputs(items="3")
         secrets = NodeWithListOutput.Secrets(api_key="test_key")
         
-        result = await node._execute(inputs, secrets)
+        result = await node._execute(inputs, secrets) # type: ignore
         
         assert isinstance(result, list)
         assert len(result) == 3
         assert all(isinstance(output, NodeWithListOutput.Outputs) for output in result)
-        assert result[0].processed == "0"
-        assert result[1].processed == "1"
-        assert result[2].processed == "2"
+        assert result[0].processed == "0" # type: ignore
+        assert result[1].processed == "1" # type: ignore
+        assert result[2].processed == "2" # type: ignore
 
     @pytest.mark.asyncio
     async def test_node_with_none_output(self):
@@ -156,7 +155,7 @@ class TestBaseNodeExecute:
         inputs = NodeWithNoneOutput.Inputs(name="test")
         secrets = NodeWithNoneOutput.Secrets(api_key="test_key")
         
-        result = await node._execute(inputs, secrets)
+        result = await node._execute(inputs, secrets) # type: ignore
         
         assert result is None
         assert node.inputs == inputs
@@ -169,7 +168,7 @@ class TestBaseNodeExecute:
         secrets = NodeWithError.Secrets(api_key="test_key")
         
         with pytest.raises(ValueError, match="Test error"):
-            await node._execute(inputs, secrets)
+            await node._execute(inputs, secrets) # type: ignore
 
     @pytest.mark.asyncio
     async def test_node_with_complex_secrets(self):
@@ -181,7 +180,7 @@ class TestBaseNodeExecute:
             encryption_key="encryption_key"
         )
         
-        result = await node._execute(inputs, secrets)
+        result = await node._execute(inputs, secrets) # type: ignore
         
         assert isinstance(result, NodeWithComplexSecrets.Outputs)
         assert result.status == "Operation backup completed"
@@ -195,10 +194,10 @@ class TestBaseNodeEdgeCases:
         inputs = ValidNode.Inputs(name="", count="0")
         secrets = ValidNode.Secrets(api_key="", token="")
         
-        result = await node._execute(inputs, secrets)
+        result = await node._execute(inputs, secrets) # type: ignore
         
-        assert result.message == "Hello "
-        assert result.result == "Count: 0"
+        assert result.message == "Hello " # type: ignore
+        assert result.result == "Count: 0" # type: ignore
 
     @pytest.mark.asyncio
     async def test_node_with_special_characters(self):
@@ -206,10 +205,10 @@ class TestBaseNodeEdgeCases:
         inputs = ValidNode.Inputs(name="test@user.com", count="42")
         secrets = ValidNode.Secrets(api_key="key!@#$%", token="token&*()")
         
-        result = await node._execute(inputs, secrets)
+        result = await node._execute(inputs, secrets) # type: ignore
         
-        assert result.message == "Hello test@user.com"
-        assert result.result == "Count: 42"
+        assert result.message == "Hello test@user.com" # type: ignore
+        assert result.result == "Count: 42" # type: ignore
 
     @pytest.mark.asyncio
     async def test_node_with_unicode_characters(self):
@@ -217,10 +216,10 @@ class TestBaseNodeEdgeCases:
         inputs = ValidNode.Inputs(name="José", count="100")
         secrets = ValidNode.Secrets(api_key="🔑", token="🎫")
         
-        result = await node._execute(inputs, secrets)
+        result = await node._execute(inputs, secrets) # type: ignore
         
-        assert result.message == "Hello José"
-        assert result.result == "Count: 100"
+        assert result.message == "Hello José" # type: ignore
+        assert result.result == "Count: 100" # type: ignore
 
 
 class TestBaseNodeErrorHandling:
@@ -237,7 +236,7 @@ class TestBaseNodeErrorHandling:
                 api_key: str
 
             async def execute(self):
-                if self.inputs.trigger == "custom":
+                if self.inputs.trigger == "custom": # type: ignore
                     raise RuntimeError("Custom runtime error")
                 return self.Outputs(result="ok")
 
@@ -246,7 +245,7 @@ class TestBaseNodeErrorHandling:
         secrets = NodeWithCustomError.Secrets(api_key="test")
         
         with pytest.raises(RuntimeError, match="Custom runtime error"):
-            await node._execute(inputs, secrets)
+            await node._execute(inputs, secrets) # type: ignore
 
     @pytest.mark.asyncio
     async def test_node_raises_attribute_error(self):
@@ -262,21 +261,21 @@ class TestBaseNodeErrorHandling:
 
             async def execute(self):
                 # This will raise AttributeError
-                return self.Outputs(result=self.inputs.nonexistent_field)
+                return self.Outputs(result=self.inputs.nonexistent_field) # type: ignore
 
         node = NodeWithAttributeError()
         inputs = NodeWithAttributeError.Inputs(name="test")
         secrets = NodeWithAttributeError.Secrets(api_key="test")
         
         with pytest.raises(AttributeError):
-            await node._execute(inputs, secrets)
+            await node._execute(inputs, secrets) # type: ignore
 
 
 class TestBaseNodeAbstractMethods:
     def test_base_node_execute_is_abstract(self):
         # BaseNode should not be instantiable directly
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            BaseNode()
+            BaseNode() # type: ignore
 
     def test_concrete_node_implements_execute(self):
         # ValidNode should implement execute
@@ -290,17 +289,17 @@ class TestBaseNodeModelValidation:
     def test_inputs_validation(self):
         # Test that invalid inputs raise validation error
         with pytest.raises(Exception):  # Pydantic validation error
-            ValidNode.Inputs(name=123, count="5")  # name should be str
+            ValidNode.Inputs(name=123, count="5") # type: ignore
 
     def test_outputs_validation(self):
         # Test that invalid outputs raise validation error
         with pytest.raises(Exception):  # Pydantic validation error
-            ValidNode.Outputs(message=123, result="test")  # message should be str
+            ValidNode.Outputs(message=123, result="test") # type: ignore
 
     def test_secrets_validation(self):
         # Test that invalid secrets raise validation error
         with pytest.raises(Exception):  # Pydantic validation error
-            ValidNode.Secrets(api_key=123, token="test")  # api_key should be str
+            ValidNode.Secrets(api_key=123, token="test") # type: ignore
 
 
 class TestBaseNodeConcurrency:
@@ -312,7 +311,7 @@ class TestBaseNodeConcurrency:
         
         # Run multiple concurrent executions
         tasks = [
-            node._execute(inputs, secrets) for _ in range(5)
+            node._execute(inputs, secrets) for _ in range(5) # type: ignore
         ]
         
         results = await asyncio.gather(*tasks)
@@ -335,7 +334,7 @@ class TestBaseNodeConcurrency:
                 api_key: str
 
             async def execute(self):
-                delay = float(self.inputs.delay)
+                delay = float(self.inputs.delay) # type: ignore
                 await asyncio.sleep(delay)
                 return self.Outputs(result=f"Completed after {delay}s")
 
@@ -343,9 +342,9 @@ class TestBaseNodeConcurrency:
         inputs = AsyncNode.Inputs(delay="0.1")
         secrets = AsyncNode.Secrets(api_key="test")
         
-        result = await node._execute(inputs, secrets)
+        result = await node._execute(inputs, secrets) # type: ignore
         
-        assert result.result == "Completed after 0.1s"
+        assert result.result == "Completed after 0.1s" # type: ignore
 
 
 class TestBaseNodeIntegration:
@@ -365,11 +364,11 @@ class TestBaseNodeIntegration:
             encryption_key="enc2"
         )
         
-        result1 = await node1._execute(inputs1, secrets1)
-        result2 = await node2._execute(inputs2, secrets2)
+        result1 = await node1._execute(inputs1, secrets1) # type: ignore
+        result2 = await node2._execute(inputs2, secrets2) # type: ignore
         
-        assert result1.message == "Hello user1"
-        assert result2.status == "Operation process completed"
+        assert result1.message == "Hello user1" # type: ignore
+        assert result2.status == "Operation process completed" # type: ignore
 
     @pytest.mark.asyncio
     async def test_node_with_different_output_types(self):
@@ -387,9 +386,9 @@ class TestBaseNodeIntegration:
         inputs3 = NodeWithNoneOutput.Inputs(name="test")
         secrets3 = NodeWithNoneOutput.Secrets(api_key="key")
         
-        result1 = await node1._execute(inputs1, secrets1)
-        result2 = await node2._execute(inputs2, secrets2)
-        result3 = await node3._execute(inputs3, secrets3)
+        result1 = await node1._execute(inputs1, secrets1) # type: ignore
+        result2 = await node2._execute(inputs2, secrets2) # type: ignore
+        result3 = await node3._execute(inputs3, secrets3) # type: ignore
         
         assert isinstance(result1, ValidNode.Outputs)
         assert isinstance(result2, list)
