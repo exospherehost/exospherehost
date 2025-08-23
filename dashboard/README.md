@@ -75,7 +75,7 @@ npm install
 3. Set up environment variables (optional):
 ```bash
 # Create .env.local file
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL=http://localhost:8000
 ```
 
 4. Start the development server:
@@ -84,6 +84,44 @@ npm run dev
 ```
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+### Docker Deployment
+
+You can also run the dashboard using Docker. The container is configurable through environment variables.
+
+#### Using Docker Compose
+
+1. Create a `.env` file in the dashboard directory:
+```bash
+# Configure the State Manager URL
+NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL=http://your-state-manager-url:8000
+```
+
+2. Run with Docker Compose:
+```bash
+docker-compose up -d
+```
+
+#### Using Docker directly
+
+1. Build the image:
+```bash
+docker build -t exosphere-dashboard .
+```
+
+2. Run the container with custom configuration:
+```bash
+docker run -d \
+  -p 3000:3000 \
+  -e NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL=http://your-state-manager-url:8000 \
+  exosphere-dashboard
+```
+
+#### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL` | `http://localhost:8000` | URL of the State Manager backend API |
 
 ### Configuration
 
