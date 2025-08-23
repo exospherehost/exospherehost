@@ -24,13 +24,13 @@ RUN chown app:app .next
 COPY --from=builder --chown=app:app /app/.next/standalone ./
 COPY --from=builder --chown=app:app /app/.next/static ./.next/static
 COPY --from=builder --chown=app:app /app/public ./public
-USER nextjs
+USER app
 
 EXPOSE 3000
 
-ENV PORT 3000
+ENV PORT=3000
 # set hostname to localhost
-ENV HOSTNAME 0.0.0.0
+ENV HOSTNAME=0.0.0.0
 
 # Expose environment variable for runtime configuration
 # Users can override this by setting NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL
