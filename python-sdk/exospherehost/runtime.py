@@ -293,7 +293,11 @@ class Runtime:
                     logger.error(f"Failed to get secrets for state {state_id}: {res}")
                     return {}
                 
-                return res
+                if "secrets" in res:
+                    return res["secrets"]
+                else:
+                    logger.error(f"'secrets' not found in response for state {state_id}")
+                    return {}
 
     def _validate_nodes(self):
         """
@@ -352,6 +356,12 @@ class Runtime:
         if len(errors) > 0:
             raise ValueError("Following errors while validating nodes: " + "\n".join(errors))
         
+    def _need_secrets(self, node: type[BaseNode]) -> bool:
+        """
+        Check if the node needs secrets.
+        """
+        return len(node.Secrets.model_fields.keys()) > 0
+        
     async def _worker(self, idx: int):
         """
         Worker task that processes states from the queue.
@@ -369,10 +379,12 @@ class Runtime:
                 node = self._node_mapping[state["node_name"]]
                 logger.info(f"Executing state {state['state_id']} for node {node.__name__}")
 
-                secrets = await self._get_secrets(state["state_id"])
-                logger.info(f"Got secrets for state {state['state_id']} for node {node.__name__}")
+                secrets = {}
+                if self._need_secrets(node):
+                    secrets = await self._get_secrets(state["state_id"])
+                    logger.info(f"Got secrets for state {state['state_id']} for node {node.__name__}")
 
-                outputs = await node()._execute(node.Inputs(**state["inputs"]), node.Secrets(**secrets["secrets"])) # type: ignore
+                outputs = await node()._execute(node.Inputs(**state["inputs"]), node.Secrets(**secrets))
                 logger.info(f"Got outputs for state {state['state_id']} for node {node.__name__}")
                 
                 if outputs is None:
