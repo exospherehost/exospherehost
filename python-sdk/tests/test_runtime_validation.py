@@ -1,4 +1,5 @@
 import pytest
+import warnings
 from pydantic import BaseModel
 from exospherehost.runtime import Runtime
 from exospherehost.node.BaseNode import BaseNode
@@ -81,7 +82,9 @@ def test_node_validation_errors(monkeypatch):
 def test_duplicate_node_names_raise(monkeypatch):
 	monkeypatch.setenv("EXOSPHERE_STATE_MANAGER_URI", "http://sm")
 	monkeypatch.setenv("EXOSPHERE_API_KEY", "k")
-	class AnotherGood(BaseNode):
+	
+	# Create two classes with the same name using a different approach
+	class GoodNode1(BaseNode):
 		class Inputs(BaseModel):
 			name: str
 		class Outputs(BaseModel):
@@ -90,6 +93,22 @@ def test_duplicate_node_names_raise(monkeypatch):
 			api_key: str
 		async def execute(self):
 			return self.Outputs(message="ok")
-	AnotherGood.__name__ = "GoodNode"  # force duplicate name
-	with pytest.raises(ValueError):
-		Runtime(namespace="ns", name="rt", nodes=[GoodNode, AnotherGood])
+	
+	class GoodNode2(BaseNode):
+		class Inputs(BaseModel):
+			name: str
+		class Outputs(BaseModel):
+			message: str
+		class Secrets(BaseModel):
+			api_key: str
+		async def execute(self):
+			return self.Outputs(message="ok")
+	
+	# Use the same name for both classes
+	GoodNode2.__name__ = "GoodNode1"
+	
+	# Suppress the RuntimeWarning about unawaited coroutines
+	with warnings.catch_warnings():
+		warnings.filterwarnings("ignore", message=".*coroutine.*was never awaited.*", category=RuntimeWarning)
+		with pytest.raises(ValueError):
+			Runtime(namespace="ns", name="rt", nodes=[GoodNode1, GoodNode2])
