@@ -282,7 +282,7 @@ class TestRuntimeWorker:
         with patch('exospherehost.runtime.Runtime._get_secrets') as mock_get_secrets, \
              patch('exospherehost.runtime.Runtime._notify_executed') as mock_notify_executed:
             
-            mock_get_secrets.return_value = {"secrets": {"api_key": "test_key"}}
+            mock_get_secrets.return_value = {"api_key": "test_key"}
             mock_notify_executed.return_value = None
             
             runtime = Runtime(**runtime_config)
@@ -327,7 +327,7 @@ class TestRuntimeWorker:
         with patch('exospherehost.runtime.Runtime._get_secrets') as mock_get_secrets, \
              patch('exospherehost.runtime.Runtime._notify_executed') as mock_notify_executed:
             
-            mock_get_secrets.return_value = {"secrets": {"api_key": "test_key"}}
+            mock_get_secrets.return_value = {"api_key": "test_key"}
             mock_notify_executed.return_value = None
             
             runtime = Runtime(**runtime_config)
@@ -362,7 +362,7 @@ class TestRuntimeWorker:
         with patch('exospherehost.runtime.Runtime._get_secrets') as mock_get_secrets, \
              patch('exospherehost.runtime.Runtime._notify_executed') as mock_notify_executed:
             
-            mock_get_secrets.return_value = {"secrets": {"api_key": "test_key"}}
+            mock_get_secrets.return_value = {"api_key": "test_key"}
             mock_notify_executed.return_value = None
             
             runtime = Runtime(**runtime_config)
@@ -394,7 +394,7 @@ class TestRuntimeWorker:
         with patch('exospherehost.runtime.Runtime._get_secrets') as mock_get_secrets, \
              patch('exospherehost.runtime.Runtime._notify_errored') as mock_notify_errored:
             
-            mock_get_secrets.return_value = {"secrets": {"api_key": "test_key"}}
+            mock_get_secrets.return_value = {"api_key": "test_key"}
             mock_notify_errored.return_value = None
             
             runtime = Runtime(**runtime_config)
@@ -511,7 +511,7 @@ class TestRuntimeSecrets:
             runtime = Runtime(**runtime_config)
             result = await runtime._get_secrets("test_state_1")
             
-            assert result == {"secrets": {"api_key": "secret_key"}}
+            assert result == {"api_key": "secret_key"}
 
     @pytest.mark.asyncio
     async def test_get_secrets_failure(self, runtime_config):
