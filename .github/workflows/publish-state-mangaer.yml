@@ -44,7 +44,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw, value=latest
+            type=raw, value=beta-latest
             type=sha, value=${{ env.SHA_TAG }}
 
       - name: Build and push
