@@ -50,8 +50,7 @@ jobs:
           echo "waiting 2 minutes for the A record to be updated"
           sleep 1200
 
-          kubectl apply -f ./api-server-ingress.yaml
-          kubectl apply -f ./landing-page-ingress.yaml
+          kubectl apply -f ./ingress/.
 
           helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
 

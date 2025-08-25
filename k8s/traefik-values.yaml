@@ -5,6 +5,9 @@ deployment:
 
 additionalArguments:
   - "--entrypoints.web.address=:8081"
+  - "--entrypoints.web.http.redirections.entrypoint.to=:443"
+  - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+  - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
   - "--entrypoints.websecure.address=:8443"
 
 ports:
@@ -19,7 +22,7 @@ ports:
 
 ingressRoute:
   dashboard:
-    enabled: false        # turn on later if you want the UI
+    enabled: false
 
 certificatesResolvers:
   letsencrypt:
@@ -27,4 +30,4 @@ certificatesResolvers:
       email: "nivedit@exosphere.host"
       storage: /data/acme.json
       httpChallenge:
-        entryPoint: web   # solve the challenge on :80
+        entryPoint: web

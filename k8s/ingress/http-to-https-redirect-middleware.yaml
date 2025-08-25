@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: http-to-https-redirect
+spec:
+  redirectScheme:
+    scheme: https
+    port: "443"
+    permanent: true 
