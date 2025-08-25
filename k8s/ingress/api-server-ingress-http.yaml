@@ -2,7 +2,7 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: exosphere-api-server
+  name: exosphere-api-server-http
 spec:
   entryPoints:
     - web
