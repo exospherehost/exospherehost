@@ -1,3 +1,5 @@
+import asyncio
+
 from app.models.db.graph_template_model import GraphTemplate, NodeTemplate
 from app.models.graph_template_validation_status import GraphTemplateValidationStatus
 from app.models.db.registered_node import RegisteredNode
@@ -7,17 +9,22 @@ from json_schema_to_pydantic import create_model
 
 logger = LogsManager().get_logger()
 
-async def verify_nodes_names(nodes: list[NodeTemplate], errors: list[str]):
+async def verify_nodes_names(nodes: list[NodeTemplate]) -> list[str]:
+    errors = []
     for node in nodes:
         if node.node_name is None or node.node_name == "":
-            errors.append(f"Node {node.identifier} has no name")
+            errors.append(f"Node {node.identifier} has no name")    
+    return errors
 
-async def verify_nodes_namespace(nodes: list[NodeTemplate], graph_namespace: str, errors: list[str]):
+async def verify_nodes_namespace(nodes: list[NodeTemplate], graph_namespace: str) -> list[str]:
+    errors = []
     for node in nodes:
         if node.namespace != graph_namespace and node.namespace != "exospherehost":
             errors.append(f"Node {node.identifier} has invalid namespace '{node.namespace}'. Must match graph namespace '{graph_namespace}' or use universal namespace 'exospherehost'")
+    return errors
 
-async def verify_node_exists(nodes: list[NodeTemplate], database_nodes: list[RegisteredNode], errors: list[str]):
+async def verify_node_exists(nodes: list[NodeTemplate], database_nodes: list[RegisteredNode]) -> list[str]:
+    errors = []
     template_nodes_set = set([(node.node_name, node.namespace) for node in nodes])
     database_nodes_set = set([(node.name, node.namespace) for node in database_nodes])
 
@@ -25,8 +32,10 @@ async def verify_node_exists(nodes: list[NodeTemplate], database_nodes: list[Reg
     
     for node in nodes_not_found:
         errors.append(f"Node {node[0]} in namespace {node[1]} does not exist.")
+    return errors
 
-async def verify_node_identifiers(nodes: list[NodeTemplate], errors: list[str]):
+async def verify_node_identifiers(nodes: list[NodeTemplate]) -> list[str]:
+    errors = []
     identifier_to_nodes = {}
 
     # First pass: collect all nodes by identifier
@@ -54,7 +63,10 @@ async def verify_node_identifiers(nodes: list[NodeTemplate], errors: list[str]):
             if next_node not in valid_identifiers:
                 errors.append(f"Node {node.node_name} in namespace {node.namespace} has a next node {next_node} that does not exist in the graph")
 
-async def verify_secrets(graph_template: GraphTemplate, database_nodes: list[RegisteredNode], errors: list[str]):
+    return errors
+
+async def verify_secrets(graph_template: GraphTemplate, database_nodes: list[RegisteredNode]) -> list[str]:
+    errors = []
     required_secrets_set = set()
 
     for node in database_nodes:
@@ -71,9 +83,10 @@ async def verify_secrets(graph_template: GraphTemplate, database_nodes: list[Reg
     
     for secret_name in missing_secrets_set:
         errors.append(f"Secret {secret_name} is required but not present in the graph template")
- 
+    
+    return errors
 
-async def get_database_nodes(nodes: list[NodeTemplate], graph_namespace: str):
+async def get_database_nodes(nodes: list[NodeTemplate], graph_namespace: str) -> list[RegisteredNode]:
     graph_namespace_node_names = [
         node.node_name for node in nodes if node.namespace == graph_namespace
     ]
@@ -91,7 +104,8 @@ async def get_database_nodes(nodes: list[NodeTemplate], graph_namespace: str):
     return graph_namespace_database_nodes + exospherehost_database_nodes
 
 
-async def verify_inputs(graph_nodes: list[NodeTemplate], database_nodes: list[RegisteredNode], dependency_graph: dict[str, list[str]], errors: list[str]):
+async def verify_inputs(graph_nodes: list[NodeTemplate], database_nodes: list[RegisteredNode], dependency_graph: dict[str, list[str]]) -> list[str]:
+    errors = []
     look_up_table = {}
     for node in graph_nodes:
         look_up_table[node.identifier] = {"graph_node": node}
@@ -146,8 +160,10 @@ async def verify_inputs(graph_nodes: list[NodeTemplate], database_nodes: list[Re
                 
         except Exception as e:
             errors.append(f"Error creating input model for node {node.identifier}: {str(e)}")
+    
+    return errors
 
-async def build_dependencies_graph(graph_nodes: list[NodeTemplate]):
+async def build_dependencies_graph(graph_nodes: list[NodeTemplate]) -> dict[str, set[str]]:
     dependency_graph = {}
     for node in graph_nodes:
         dependency_graph[node.identifier] = set()
@@ -230,21 +246,25 @@ async def verify_unites(graph_nodes: list[NodeTemplate], dependency_graph: dict 
         if node.unites.identifier not in dependency_graph[node.identifier]:
             errors.append(f"Node {node.identifier} depends on {node.unites.identifier} which is not a dependency of {node.identifier}")
     
-
 async def verify_graph(graph_template: GraphTemplate):
     try:
         errors = []
         database_nodes = await get_database_nodes(graph_template.nodes, graph_template.namespace)
 
-        await verify_nodes_names(graph_template.nodes, errors)
-        await verify_nodes_namespace(graph_template.nodes, graph_template.namespace, errors)
-        await verify_node_exists(graph_template.nodes, database_nodes, errors)
-        await verify_node_identifiers(graph_template.nodes, errors)
-        await verify_secrets(graph_template, database_nodes, errors)
+        basic_verify_tasks = [
+            verify_nodes_names(graph_template.nodes),
+            verify_nodes_namespace(graph_template.nodes, graph_template.namespace),
+            verify_node_exists(graph_template.nodes, database_nodes),
+            verify_node_identifiers(graph_template.nodes),
+            verify_secrets(graph_template, database_nodes)
+        ]
+        errors.extend(await asyncio.gather(*basic_verify_tasks))
+
         dependency_graph = await verify_topology(graph_template.nodes, errors)
 
         if dependency_graph is not None and len(errors) == 0:        
-            await verify_inputs(graph_template.nodes, database_nodes, dependency_graph, errors)
+            inputs_errors = await verify_inputs(graph_template.nodes, database_nodes, dependency_graph)
+            errors.extend(inputs_errors)
 
         await verify_unites(graph_template.nodes, dependency_graph, errors)
 
