@@ -1,5 +1,6 @@
 from pydantic import Field, BaseModel, field_validator
 from typing import Any, Optional, List
+from .dependent_string import DependentString
 
 
 class Unites(BaseModel):
@@ -58,3 +59,9 @@ class NodeTemplate(BaseModel):
             if v.identifier == "" or v.identifier is None:
                 raise ValueError("Unites identifier cannot be empty")
         return v
+    
+    def get_dependent_strings(self) -> list[DependentString]:
+        dependent_strings = []
+        for input_value in self.inputs.values():
+            dependent_strings.append(DependentString.create_dependent_string(input_value))
+        return dependent_strings
