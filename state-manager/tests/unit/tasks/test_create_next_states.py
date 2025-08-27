@@ -289,7 +289,7 @@ class TestValidateDependencies:
         }
         
         # Should not raise any exception
-        validate_dependencies(node_template, TestInputModel, "test_id", parents)
+        validate_dependencies(node_template, TestInputModel, "test_id", parents) # type: ignore
 
     def test_validate_dependencies_field_not_in_inputs(self):
         """Test when model field is not in node template inputs"""
@@ -351,7 +351,7 @@ class TestValidateDependencies:
         }
         
         with pytest.raises(AttributeError, match="Output field 'missing_field' not found on state"):
-            validate_dependencies(node_template, TestInputModel, "test_id", parents)
+            validate_dependencies(node_template, TestInputModel, "test_id", parents) # type: ignore
 
 
 class TestCreateNextStates:
