@@ -34,9 +34,9 @@ jobs:
           python-version: '3.12'
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v2
+        uses: astral-sh/setup-uv@v6
         with:
-          cache: true
+          enable-cache: true
 
       - name: Install dev dependencies with uv
         working-directory: state-manager
