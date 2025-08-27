@@ -1,10 +1,9 @@
 import asyncio
 
-from app.models.db.graph_template_model import GraphTemplate, NodeTemplate
+from app.models.db.graph_template_model import GraphTemplate
 from app.models.graph_template_validation_status import GraphTemplateValidationStatus
 from app.models.db.registered_node import RegisteredNode
 from app.singletons.logs_manager import LogsManager
-from beanie.operators import In
 from json_schema_to_pydantic import create_model
 
 logger = LogsManager().get_logger()

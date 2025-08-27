@@ -44,7 +44,7 @@ class DependentString(BaseModel):
         return dependent_string
 
     def _build_mapping_key_to_dependent(self):
-        if self._mapping_key_to_dependent is not None:
+        if self._mapping_key_to_dependent != {}:
             return
         
         for dependent in self.dependents.values():
