@@ -2,13 +2,13 @@ import base64
 import time
 import asyncio
 
-from .base import BaseDatabaseModel
+from pymongo import IndexModel
 from pydantic import Field, field_validator, PrivateAttr, model_validator
-from typing import Optional, List, Self
+from typing import Optional, List, Self, Dict
+
+from .base import BaseDatabaseModel
 from ..graph_template_validation_status import GraphTemplateValidationStatus
 from ..node_template_model import NodeTemplate
-from pymongo import IndexModel
-from typing import Dict
 from app.utils.encrypter import get_encrypter
 
 
