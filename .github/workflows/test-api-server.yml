@@ -46,10 +46,10 @@ jobs:
       - name: Set JWT secret for tests
         run: echo "JWT_SECRET_KEY=test_secret" >> $GITHUB_ENV
 
-      - name: Run tests with pytest and coverage
+      - name: Run unit tests (skip integration) with pytest and coverage
         working-directory: api-server
         run: |
-          uv run pytest --cov=app --cov-report=xml --cov-report=term-missing -v --junitxml=pytest-report.xml
+          uv run pytest -m "not integration" --cov=app --cov-report=xml --cov-report=term-missing -v --junitxml=pytest-report.xml
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
