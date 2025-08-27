@@ -19,6 +19,7 @@ class GraphTemplate(BaseDatabaseModel):
     validation_status: GraphTemplateValidationStatus = Field(..., description="Validation status of the graph")
     validation_errors: Optional[List[str]] = Field(None, description="Validation errors of the graph")
     secrets: Dict[str, str] = Field(default_factory=dict, description="Secrets of the graph")
+
     _node_by_identifier: Dict[str, NodeTemplate] | None = PrivateAttr(default=None)
     _parents_by_identifier: Dict[str, set[str]] | None = PrivateAttr(default=None)
     _root_node: NodeTemplate | None = PrivateAttr(default=None)
@@ -86,21 +87,6 @@ class GraphTemplate(BaseDatabaseModel):
     
         except Exception as e:
             raise ValueError(f"Error building dependency graph: {e}")
-        
-    def get_node_by_identifier(self, identifier: str) -> NodeTemplate | None:
-        """Get a node by its identifier using O(1) dictionary lookup."""
-        if self._node_by_identifier is None:
-            self._build_node_by_identifier()
-
-        assert self._node_by_identifier is not None
-        return self._node_by_identifier.get(identifier)
-    
-    def get_parents_by_identifier(self, identifier: str) -> set[str]:
-        if self._parents_by_identifier is None:
-            self._build_parents_by_identifier()
-        
-        assert self._parents_by_identifier is not None
-        return self._parents_by_identifier[identifier]
 
     @field_validator('name')
     @classmethod
@@ -130,50 +116,6 @@ class GraphTemplate(BaseDatabaseModel):
             
         return v
     
-    @model_validator(mode='after')
-    def validate_nodes(self) -> Self:
-        for node in self.nodes:
-            if node.namespace != self.namespace:
-                raise ValueError(f"Node namespace {node.namespace} does not match graph namespace {self.namespace}")
-        return self
-    
-    @model_validator(mode='after')
-    def validate_graph_is_connected(self) -> Self:
-        errors = []
-        root_node_identifier = self.get_root_node().identifier
-        for node in self.nodes:
-            if root_node_identifier not in self.get_parents_by_identifier(node.identifier):
-                errors.append(f"Node {node.identifier} is not connected to the root node")
-        if errors:
-            raise ValueError("\n".join(errors))
-        return self
-    
-    @model_validator(mode='after')
-    def validate_graph_is_acyclic(self) -> Self:
-        errors = []
-        for node in self.nodes:
-            if node.identifier in self.get_parents_by_identifier(node.identifier):
-                errors.append(f"Node {node.identifier} is not acyclic")
-        if errors:
-            raise ValueError("\n".join(errors))
-        return self
-    
-    @model_validator(mode='after')
-    def verify_unites_identifiers_exist(self) -> Self:
-        errors = []
-        identifiers = set()
-        for node in self.nodes:
-            identifiers.add(node.identifier)
-        for node in self.nodes:
-            if node.unites is not None:
-                if node.unites.identifier not in identifiers:
-                    errors.append(f"Node {node.identifier} has a unit {node.unites.identifier} that does not exist")
-                if node.unites.identifier == node.identifier:
-                    errors.append(f"Node {node.identifier} has a unit {node.unites.identifier} that is the same as the node itself")
-        if errors:
-            raise ValueError("\n".join(errors))
-        return self
-
     @field_validator('nodes')
     @classmethod
     def validate_unique_identifiers(cls, v: List[NodeTemplate]) -> List[NodeTemplate]:
@@ -218,6 +160,50 @@ class GraphTemplate(BaseDatabaseModel):
                 raise ValueError("Decoded value is too short to contain valid nonce")
         except Exception:
             raise ValueError("Value is not valid URL-safe base64 encoded")
+    
+    @model_validator(mode='after')
+    def validate_nodes(self) -> Self:
+        for node in self.nodes:
+            if node.namespace != self.namespace:
+                raise ValueError(f"Node namespace {node.namespace} does not match graph namespace {self.namespace}")
+        return self
+    
+    @model_validator(mode='after')
+    def validate_graph_is_connected(self) -> Self:
+        errors = []
+        root_node_identifier = self.get_root_node().identifier
+        for node in self.nodes:
+            if root_node_identifier not in self.get_parents_by_identifier(node.identifier):
+                errors.append(f"Node {node.identifier} is not connected to the root node")
+        if errors:
+            raise ValueError("\n".join(errors))
+        return self
+    
+    @model_validator(mode='after')
+    def validate_graph_is_acyclic(self) -> Self:
+        errors = []
+        for node in self.nodes:
+            if node.identifier in self.get_parents_by_identifier(node.identifier):
+                errors.append(f"Node {node.identifier} is not acyclic")
+        if errors:
+            raise ValueError("\n".join(errors))
+        return self
+    
+    @model_validator(mode='after')
+    def verify_unites_identifiers_exist(self) -> Self:
+        errors = []
+        identifiers = set()
+        for node in self.nodes:
+            identifiers.add(node.identifier)
+        for node in self.nodes:
+            if node.unites is not None:
+                if node.unites.identifier not in identifiers:
+                    errors.append(f"Node {node.identifier} has a unit {node.unites.identifier} that does not exist")
+                if node.unites.identifier == node.identifier:
+                    errors.append(f"Node {node.identifier} has a unit {node.unites.identifier} that is the same as the node itself")
+        if errors:
+            raise ValueError("\n".join(errors))
+        return self
         
     def set_secrets(self, secrets: Dict[str, str]) -> "GraphTemplate":
         self.secrets = {secret_name: get_encrypter().encrypt(secret_value) for secret_name, secret_value in secrets.items()}
@@ -246,6 +232,21 @@ class GraphTemplate(BaseDatabaseModel):
 
     def is_validating(self) -> bool:
         return self.validation_status in (GraphTemplateValidationStatus.ONGOING, GraphTemplateValidationStatus.PENDING)
+    
+    def get_node_by_identifier(self, identifier: str) -> NodeTemplate | None:
+        """Get a node by its identifier using O(1) dictionary lookup."""
+        if self._node_by_identifier is None:
+            self._build_node_by_identifier()
+
+        assert self._node_by_identifier is not None
+        return self._node_by_identifier.get(identifier)
+    
+    def get_parents_by_identifier(self, identifier: str) -> set[str]:
+        if self._parents_by_identifier is None:
+            self._build_parents_by_identifier()
+        
+        assert self._parents_by_identifier is not None
+        return self._parents_by_identifier[identifier]
     
     @staticmethod
     async def get(namespace: str, graph_name: str) -> "GraphTemplate":
