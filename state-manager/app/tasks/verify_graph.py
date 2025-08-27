@@ -9,20 +9,6 @@ from json_schema_to_pydantic import create_model
 
 logger = LogsManager().get_logger()
 
-async def verify_nodes_names(nodes: list[NodeTemplate]) -> list[str]:
-    errors = []
-    for node in nodes:
-        if node.node_name is None or node.node_name == "":
-            errors.append(f"Node {node.identifier} has no name")    
-    return errors
-
-async def verify_nodes_namespace(nodes: list[NodeTemplate], graph_namespace: str) -> list[str]:
-    errors = []
-    for node in nodes:
-        if node.namespace != graph_namespace and node.namespace != "exospherehost":
-            errors.append(f"Node {node.identifier} has invalid namespace '{node.namespace}'. Must match graph namespace '{graph_namespace}' or use universal namespace 'exospherehost'")
-    return errors
-
 async def verify_node_exists(nodes: list[NodeTemplate], database_nodes: list[RegisteredNode]) -> list[str]:
     errors = []
     template_nodes_set = set([(node.node_name, node.namespace) for node in nodes])
@@ -33,8 +19,6 @@ async def verify_node_exists(nodes: list[NodeTemplate], database_nodes: list[Reg
     for node in nodes_not_found:
         errors.append(f"Node {node[0]} in namespace {node[1]} does not exist.")
     return errors
-
-async def verify_node_identifiers(nodes: list[NodeTemplate]) -> list[str]:
     errors = []
     identifier_to_nodes = {}
 
@@ -252,10 +236,7 @@ async def verify_graph(graph_template: GraphTemplate):
         database_nodes = await get_database_nodes(graph_template.nodes, graph_template.namespace)
 
         basic_verify_tasks = [
-            verify_nodes_names(graph_template.nodes),
-            verify_nodes_namespace(graph_template.nodes, graph_template.namespace),
             verify_node_exists(graph_template.nodes, database_nodes),
-            verify_node_identifiers(graph_template.nodes),
             verify_secrets(graph_template, database_nodes)
         ]
         errors.extend(await asyncio.gather(*basic_verify_tasks))

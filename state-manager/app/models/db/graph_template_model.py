@@ -3,8 +3,8 @@ import time
 import asyncio
 
 from .base import BaseDatabaseModel
-from pydantic import Field, field_validator, PrivateAttr
-from typing import Optional, List
+from pydantic import Field, field_validator, PrivateAttr, model_validator
+from typing import Optional, List, Self
 from ..graph_template_validation_status import GraphTemplateValidationStatus
 from ..node_template_model import NodeTemplate
 from pymongo import IndexModel
@@ -41,6 +41,20 @@ class GraphTemplate(BaseDatabaseModel):
         assert self._node_by_identifier is not None
         return self._node_by_identifier.get(identifier)
 
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        if v == "" or v is None:
+            raise ValueError("Name cannot be empty")
+        return v
+    
+    @field_validator('namespace')
+    @classmethod
+    def validate_namespace(cls, v: str) -> str:
+        if v == "" or v is None:
+            raise ValueError("Namespace cannot be empty")
+        return v
+
     @field_validator('secrets')
     @classmethod
     def validate_secrets(cls, v: Dict[str, str]) -> Dict[str, str]:
@@ -53,6 +67,43 @@ class GraphTemplate(BaseDatabaseModel):
                 raise ValueError("Secret value must be a string")
             cls._validate_secret_value(secret_value)
             
+        return v
+    
+    @model_validator(mode='after')
+    def validate_nodes(self) -> Self:
+        for node in self.nodes:
+            if node.namespace != self.namespace:
+                raise ValueError(f"Node namespace {node.namespace} does not match graph namespace {self.namespace}")
+        return self
+    
+    @field_validator('nodes')
+    @classmethod
+    def validate_unique_identifiers(cls, v: List[NodeTemplate]) -> List[NodeTemplate]:
+        identifiers = set()
+        errors = []
+        for node in v:
+            if node.identifier in identifiers:
+                errors.append(f"Node identifier {node.identifier} is not unique")
+            identifiers.add(node.identifier)
+        if errors:
+            raise ValueError("\n".join(errors))
+        return v
+    
+    @field_validator('nodes')
+    @classmethod
+    def validate_next_nodes_identifiers_exist(cls, v: List[NodeTemplate]) -> List[NodeTemplate]:
+        identifiers = set()
+        for node in v:
+            identifiers.add(node.identifier)
+
+        errors = []    
+        for node in v:
+            if node.next_nodes:
+                for next_node in node.next_nodes:
+                    if next_node not in identifiers:
+                        errors.append(f"Node identifier {next_node} does not exist in the graph")
+        if errors:
+            raise ValueError("\n".join(errors))
         return v
     
     @classmethod
@@ -70,7 +121,6 @@ class GraphTemplate(BaseDatabaseModel):
         except Exception:
             raise ValueError("Value is not valid URL-safe base64 encoded")
         
-
     def set_secrets(self, secrets: Dict[str, str]) -> "GraphTemplate":
         self.secrets = {secret_name: get_encrypter().encrypt(secret_value) for secret_name, secret_value in secrets.items()}
         return self
