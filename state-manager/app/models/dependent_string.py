@@ -27,19 +27,17 @@ class DependentString(BaseModel):
             return DependentString(head=syntax_string, dependents={})
 
         dependent_string = DependentString(head=splits[0], dependents={})
-        order = 0
 
-        for split in splits[1:]:
+        for order, split in enumerate(splits[1:]):
             if "}}" not in split:
                 raise ValueError(f"Invalid syntax string placeholder {split} for: {syntax_string} '${{' not closed")
-            placeholder_content, tail = split.split("}}")
+            placeholder_content, tail = split.split("}}", 1)
 
             parts = [p.strip() for p in placeholder_content.split(".")]
             if len(parts) != 3 or parts[1] != "outputs":
                 raise ValueError(f"Invalid syntax string placeholder {placeholder_content} for: {syntax_string}")
             
             dependent_string.dependents[order] = Dependent(identifier=parts[0], field=parts[2], tail=tail)
-            order += 1
 
         return dependent_string
 

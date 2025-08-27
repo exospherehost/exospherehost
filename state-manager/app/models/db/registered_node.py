@@ -32,11 +32,13 @@ class RegisteredNode(BaseDatabaseModel):
     
     @staticmethod
     async def list_nodes_by_templates(templates: list[NodeTemplate]) -> list["RegisteredNode"]:
+        if len(templates) == 0:
+            return []
+        
         query = {
             "$or": [
                 {"name": node.node_name, "namespace": node.namespace}
                 for node in templates
             ]
         }
-        nodes = await RegisteredNode.find(query).to_list()
-        return [node for node in nodes if node is not None]
+        return await RegisteredNode.find(query).to_list()

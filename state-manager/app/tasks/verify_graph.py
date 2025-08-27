@@ -43,22 +43,22 @@ async def verify_secrets(graph_template: GraphTemplate, registered_nodes: list[R
 async def verify_inputs(graph_template: GraphTemplate, registered_nodes: list[RegisteredNode]) -> list[str]:
     errors = []
     look_up_table = {
-        (node.node_name, node.namespace): node
-        for node in registered_nodes
+        (rn.node_name, rn.namespace): rn
+        for rn in registered_nodes
     }
 
     for node in graph_template.nodes:
         if node.inputs is None:
             continue
         
-        if (node.node_name, node.namespace) not in look_up_table:
+        registered_node = look_up_table.get((node.node_name, node.namespace))
+        if registered_node is None:
             errors.append(f"Node {node.node_name} in namespace {node.namespace} does not exist")
             continue
         
-        registered_node = look_up_table[(node.node_name, node.namespace)]
-        registerd_node_input_model = create_model(registered_node.inputs_schema)
+        registered_node_input_model  = create_model(registered_node.inputs_schema)
 
-        for input_name, input_info in registerd_node_input_model.model_fields.items():
+        for input_name, input_info in registered_node_input_model.model_fields.items():
             if input_info.annotation is not str:
                 errors.append(f"Input {input_name} in node {node.node_name} in namespace {node.namespace} is not a string")
                 continue
@@ -75,7 +75,7 @@ async def verify_inputs(graph_template: GraphTemplate, registered_nodes: list[Re
                 temp_node = graph_template.get_node_by_identifier(identifier)
                 assert temp_node is not None
 
-                registered_node = look_up_table[(temp_node.node_name, temp_node.namespace)]
+                registered_node = look_up_table.get((temp_node.node_name, temp_node.namespace))
                 if registered_node is None:
                     errors.append(f"Node {temp_node.node_name} in namespace {temp_node.namespace} does not exist")
                     continue
@@ -100,7 +100,16 @@ async def verify_graph(graph_template: GraphTemplate):
             verify_secrets(graph_template, registered_nodes),
             verify_inputs(graph_template, registered_nodes)
         ]
-        errors.extend(await asyncio.gather(*basic_verify_tasks))
+        resultant_errors = await asyncio.gather(*basic_verify_tasks)
+
+        for error in resultant_errors:
+            errors.extend(error)
+        
+        if len(errors) > 0:
+            graph_template.validation_status = GraphTemplateValidationStatus.INVALID
+            graph_template.validation_errors = errors
+            await graph_template.save()
+            return
         
         graph_template.validation_status = GraphTemplateValidationStatus.VALID
         graph_template.validation_errors = None

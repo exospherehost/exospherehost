@@ -22,16 +22,9 @@ class NodeTemplate(BaseModel):
             raise ValueError("Node name cannot be empty")
         return v
     
-    @field_validator('node_name')
-    @classmethod
-    def validate_node_name_unique(cls, v: str) -> str:
-        if v == "" or v is None:
-            raise ValueError("Node name cannot be empty")
-        return v
-    
     @field_validator('identifier')
     @classmethod
-    def validate_identifier_unique(cls, v: str) -> str:
+    def validate_identifier(cls, v: str) -> str:
         if v == "" or v is None:
             raise ValueError("Node identifier cannot be empty")
         return v
@@ -43,10 +36,15 @@ class NodeTemplate(BaseModel):
         errors = []
         if v is not None:
             for next_node_identifier in v:
+                
                 if next_node_identifier == "" or next_node_identifier is None:
                     errors.append("Next node identifier cannot be empty")
-                elif next_node_identifier in identifiers:
+                    continue
+
+                if next_node_identifier in identifiers:
                     errors.append(f"Next node identifier {next_node_identifier} is not unique")
+                    continue
+
                 identifiers.add(next_node_identifier)
         if errors:
             raise ValueError("\n".join(errors))
@@ -63,5 +61,7 @@ class NodeTemplate(BaseModel):
     def get_dependent_strings(self) -> list[DependentString]:
         dependent_strings = []
         for input_value in self.inputs.values():
+            if not isinstance(input_value, str):
+                raise ValueError(f"Input {input_value} is not a string")
             dependent_strings.append(DependentString.create_dependent_string(input_value))
         return dependent_strings

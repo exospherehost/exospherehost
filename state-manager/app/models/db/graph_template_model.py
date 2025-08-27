@@ -41,14 +41,12 @@ class GraphTemplate(BaseDatabaseModel):
         in_degree = {node.identifier: 0 for node in self.nodes}
 
         for node in self.nodes:
-            if node.next_nodes is None:
-                continue
-            for next_node in node.next_nodes:
-                in_degree[next_node] += 1
+            if node.next_nodes is not None:
+                for next_node in node.next_nodes:
+                    in_degree[next_node] += 1
 
-            if node.unites is None:
-                continue
-            in_degree[node.identifier] += 1
+            if node.unites is not None:
+                in_degree[node.identifier] += 1
         
         zero_in_degree_nodes = [node for node in self.nodes if in_degree[node.identifier] == 0]
         if len(zero_in_degree_nodes) != 1:
@@ -58,21 +56,23 @@ class GraphTemplate(BaseDatabaseModel):
     def _build_parents_by_identifier(self) -> None:
         try:
             root_node_identifier = self.get_root_node().identifier
-            self._parents_by_identifier = {
-                node.identifier: set() for node in self.nodes
-            }
 
-            visited = set()
+            visited = {}
+
+            self._parents_by_identifier = {}
+            for node in self.nodes:
+                self._parents_by_identifier[node.identifier] = set()
+                visited[node.identifier] = False
 
             def dfs(node_identifier: str, parents: set[str]) -> None:
                 assert self._parents_by_identifier is not None
 
                 self._parents_by_identifier[node_identifier] = parents | self._parents_by_identifier[node_identifier]
 
-                if node_identifier in visited:
+                if visited[node_identifier]:
                     return
                 
-                visited.add(node_identifier)
+                visited[node_identifier] = True
 
                 node = self.get_node_by_identifier(node_identifier)
                 if node is None:
@@ -80,7 +80,7 @@ class GraphTemplate(BaseDatabaseModel):
                 if node.next_nodes is None:
                     return
                 if node.unites is not None:
-                    self._parents_by_identifier[node.unites.identifier].add(node_identifier)
+                    self._parents_by_identifier[node_identifier].add(node.unites.identifier)
                 for next_node_identifier in node.next_nodes:
                     dfs(next_node_identifier, parents | {node_identifier})
                 
@@ -163,17 +163,12 @@ class GraphTemplate(BaseDatabaseModel):
             raise ValueError("Value is not valid URL-safe base64 encoded")
     
     @model_validator(mode='after')
-    def validate_nodes(self) -> Self:
-        for node in self.nodes:
-            if node.namespace != self.namespace:
-                raise ValueError(f"Node namespace {node.namespace} does not match graph namespace {self.namespace}")
-        return self
-    
-    @model_validator(mode='after')
     def validate_graph_is_connected(self) -> Self:
         errors = []
         root_node_identifier = self.get_root_node().identifier
         for node in self.nodes:
+            if node.identifier == root_node_identifier:
+                continue
             if root_node_identifier not in self.get_parents_by_identifier(node.identifier):
                 errors.append(f"Node {node.identifier} is not connected to the root node")
         if errors:
@@ -213,6 +208,10 @@ class GraphTemplate(BaseDatabaseModel):
         for node in self.nodes:
             for input_value in node.inputs.values():
                 try:
+                    if not isinstance(input_value, str):
+                        errors.append(f"Input {input_value} is not a string")
+                        continue
+
                     dependent_string = DependentString.create_dependent_string(input_value)
                     dependent_identifiers = set([identifier for identifier, _ in dependent_string.get_identifier_field()])
 
@@ -272,7 +271,7 @@ class GraphTemplate(BaseDatabaseModel):
             self._build_parents_by_identifier()
         
         assert self._parents_by_identifier is not None
-        return self._parents_by_identifier[identifier]
+        return self._parents_by_identifier.get(identifier, set())
     
     @staticmethod
     async def get(namespace: str, graph_name: str) -> "GraphTemplate":
