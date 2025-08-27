@@ -147,89 +147,6 @@ async def verify_inputs(graph_nodes: list[NodeTemplate], database_nodes: list[Re
     
     return errors
 
-async def build_dependencies_graph(graph_nodes: list[NodeTemplate]) -> dict[str, set[str]]:
-    dependency_graph = {}
-    for node in graph_nodes:
-        dependency_graph[node.identifier] = set()
-        if node.next_nodes is None:
-            continue
-        for next_node in node.next_nodes:
-            dependency_graph[next_node].add(node.identifier)
-            dependency_graph[next_node] = dependency_graph[next_node] | dependency_graph[node.identifier]
-    return dependency_graph
-
-async def verify_topology(graph_nodes: list[NodeTemplate], errors: list[str]):
-    # verify that the graph is a tree
-    # verify that the graph is connected
-    dependencies = {}
-    identifier_to_node = {}
-    visited = {}
-    dependency_graph = {}
-
-    for node in graph_nodes:
-        if node.identifier in dependencies.keys():
-            errors.append(f"Multiple identifier {node.identifier} incorrect topology")
-            return
-        dependencies[node.identifier] = set()
-        identifier_to_node[node.identifier] = node
-        visited[node.identifier] = False
-    
-    # verify that there exists only one root node
-    for node in graph_nodes:
-        if node.next_nodes is None:
-            continue
-        for next_node in node.next_nodes:
-            dependencies[next_node].add(node.identifier)
-
-    # verify that there exists only one root node
-    root_nodes = [node for node in graph_nodes if len(dependencies[node.identifier]) == 0]
-    if len(root_nodes) != 1:
-        errors.append(f"Graph has {len(root_nodes)} root nodes, expected 1")
-        return
-    
-    
-    # verify that the graph is a tree using recursive DFS and store the dependency graph
-    def dfs_visit(current_node: str, parent_node: str | None = None, current_path: list[str] = []):
-
-        if visited[current_node]:
-            if parent_node is not None:
-                errors.append(f"Graph is not a tree at {parent_node} -> {current_node}")
-            return
-        
-        visited[current_node] = True
-        dependency_graph[current_node] = current_path.copy()       
-
-        if identifier_to_node[current_node].next_nodes is None:
-            return
-        
-        current_path.append(current_node)
-            
-        for next_node in identifier_to_node[current_node].next_nodes:
-            dfs_visit(next_node, current_node, current_path)
-
-        current_path.pop()        
-    
-    # Start DFS from root node
-    dfs_visit(root_nodes[0].identifier)
-    
-    # Check connectivity
-    for identifier, visited_value in visited.items():
-        if not visited_value:
-            errors.append(f"Graph is not connected at {identifier}")
-    
-    return dependency_graph
-
-async def verify_unites(graph_nodes: list[NodeTemplate], dependency_graph: dict | None, errors: list[str]):
-    if dependency_graph is None:
-        return
-    
-    for node in graph_nodes:
-        if node.unites is None:
-            continue
-        
-        if node.unites.identifier not in dependency_graph[node.identifier]:
-            errors.append(f"Node {node.identifier} depends on {node.unites.identifier} which is not a dependency of {node.identifier}")
-    
 async def verify_graph(graph_template: GraphTemplate):
     try:
         errors = []
@@ -241,19 +158,15 @@ async def verify_graph(graph_template: GraphTemplate):
         ]
         errors.extend(await asyncio.gather(*basic_verify_tasks))
 
-        dependency_graph = await verify_topology(graph_template.nodes, errors)
+        # if dependency_graph is not None and len(errors) == 0:        
+        #     inputs_errors = await verify_inputs(graph_template.nodes, database_nodes, dependency_graph)
+        #     errors.extend(inputs_errors)
 
-        if dependency_graph is not None and len(errors) == 0:        
-            inputs_errors = await verify_inputs(graph_template.nodes, database_nodes, dependency_graph)
-            errors.extend(inputs_errors)
-
-        await verify_unites(graph_template.nodes, dependency_graph, errors)
-
-        if errors or dependency_graph is None:
-            graph_template.validation_status = GraphTemplateValidationStatus.INVALID
-            graph_template.validation_errors = errors
-            await graph_template.save()
-            return
+        # if errors or dependency_graph is None:
+        #     graph_template.validation_status = GraphTemplateValidationStatus.INVALID
+        #     graph_template.validation_errors = errors
+        #     await graph_template.save()
+        #     return
         
         graph_template.validation_status = GraphTemplateValidationStatus.VALID
         graph_template.validation_errors = None
