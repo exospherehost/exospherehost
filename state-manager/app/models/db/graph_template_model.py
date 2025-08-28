@@ -1,4 +1,5 @@
 import base64
+import copy
 import time
 import asyncio
 
@@ -76,19 +77,20 @@ class GraphTemplate(BaseDatabaseModel):
                 
                 visited[node_identifier] = True
 
-                parents_for_children = parents | {node_identifier}
-
                 node = self.get_node_by_identifier(node_identifier)
-                
+
                 if node is None:
                     return
+
+                if node.unites is None:
+                    parents_for_children = parents | {node_identifier}
+                else:
+                    parents = self._parents_by_identifier[node.unites.identifier]
+                    self._parents_by_identifier[node.identifier] = parents | {node.unites.identifier}
+                    parents_for_children = parents | {node.unites.identifier}
                 
                 if node.next_nodes is None:
                     return
-                
-                if node.unites is not None:
-                    self._parents_by_identifier[node_identifier].add(node.unites.identifier)
-                    parents_for_children.add(node.unites.identifier)
 
                 for next_node_identifier in node.next_nodes:
                     dfs(next_node_identifier, parents_for_children)
