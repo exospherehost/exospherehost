@@ -8,8 +8,8 @@ from pathlib import Path
 from asgi_lifespan import LifespanManager
 
 # Add the project root to Python path to ensure proper imports
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
+# project_root = Path(__file__).parent.parent.parent.parent
+# sys.path.insert(0, str(project_root))
 
 
 @pytest.fixture(scope="session")
