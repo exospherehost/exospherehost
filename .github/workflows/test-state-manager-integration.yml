@@ -1,21 +1,17 @@
-name: Release State Manager Image
+name: State Manager Integration Tests
 
 on:
   push:
     branches: [main]
     paths:
       - 'state-manager/**'
-  release:
-    types: [published]
-  workflow_dispatch:
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/exosphere-state-manager
-  SHA_TAG: ${{ github.sha }}
+  pull_request:
+    branches: [main]
+    paths:
+      - 'state-manager/**'
 
 jobs:
-  test:
+  integration-test:
     runs-on: ubuntu-latest
     services:
       mongodb:
@@ -72,12 +68,7 @@ jobs:
           timeout 60 bash -c 'until mongosh --host localhost:27017 --username admin --password password --authenticationDatabase admin --eval "db.runCommand(\"ping\")" > /dev/null 2>&1; do sleep 2; done'
           echo "MongoDB is ready!"
 
-      - name: Run unit tests
-        working-directory: state-manager
-        run: |
-          uv run pytest tests/unit/ --cov=app --cov-report=xml --cov-report=term-missing -v --junitxml=unit-pytest-report.xml
-
-      - name: Run integration tests
+      - name: Run integration tests with pytest and coverage
         working-directory: state-manager
         env:
           MONGO_URI: mongodb://admin:password@localhost:27017
@@ -85,9 +76,27 @@ jobs:
           STATE_MANAGER_SECRET: test-secret-key
           ENVIRONMENT: testing
         run: |
-          uv run pytest tests/integration/ --cov=app --cov-append --cov-report=xml --cov-report=term-missing -v --junitxml=integration-pytest-report.xml
+          uv run pytest tests/integration/ --cov=app --cov-report=xml --cov-report=term-missing -v --junitxml=integration-pytest-report.xml
 
-      - name: Run full test suite with coverage
+      - name: Upload integration test coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: exospherehost/exospherehost
+          files: state-manager/coverage.xml
+          flags: state-manager-integration
+          name: state-manager-integration-coverage-report
+          fail_ci_if_error: true
+
+      - name: Upload integration test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: state-manager-integration-test-results
+          path: state-manager/integration-pytest-report.xml
+          retention-days: 30
+
+      - name: Run full test suite with coverage (unit + integration)
         working-directory: state-manager
         env:
           MONGO_URI: mongodb://admin:password@localhost:27017
@@ -97,75 +106,28 @@ jobs:
         run: |
           uv run pytest tests/ --cov=app --cov-report=xml --cov-report=term-missing --cov-report=html -v --junitxml=full-pytest-report.xml
 
-      - name: Upload coverage reports to Codecov
+      - name: Upload full test coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: exospherehost/exospherehost
           files: state-manager/coverage.xml
-          flags: state-manager-release
-          name: state-manager-release-coverage-report
+          flags: state-manager-full
+          name: state-manager-full-coverage-report
           fail_ci_if_error: true
 
-      - name: Upload test results
+      - name: Upload full test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: state-manager-release-test-results
-          path: |
-            state-manager/unit-pytest-report.xml
-            state-manager/integration-pytest-report.xml
-            state-manager/full-pytest-report.xml
+          name: state-manager-full-test-results
+          path: state-manager/full-pytest-report.xml
           retention-days: 30
 
       - name: Upload coverage HTML report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: state-manager-release-coverage-html
+          name: state-manager-coverage-html
           path: state-manager/htmlcov/
-          retention-days: 30
-
-  publish-image:
-    runs-on: ubuntu-latest
-    needs: test
-
-    permissions:
-      contents: read
-      packages: write
-    
-    outputs:
-      tags: ${{ steps.meta.outputs.tags }}
-      json: ${{ steps.meta.outputs.json }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Generate tags & labels
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=sha,format=short
-
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: ./state-manager
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          retention-days: 30 

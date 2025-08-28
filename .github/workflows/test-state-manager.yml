@@ -11,18 +11,8 @@ on:
       - 'state-manager/**'
 
 jobs:
-  test:
+  unit-test:
     runs-on: ubuntu-latest
-    services:
-      mongodb:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand(\"ping\")'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - name: Checkout code
@@ -46,22 +36,30 @@ jobs:
       - name: Run unit tests with pytest and coverage
         working-directory: state-manager
         run: |
-          uv run pytest tests/unit/ --cov=app --cov-report=xml --cov-report=term-missing -v --junitxml=pytest-report.xml
+          uv run pytest tests/unit/ --cov=app --cov-report=xml --cov-report=term-missing --cov-report=html -v --junitxml=unit-pytest-report.xml
 
-      - name: Upload coverage reports to Codecov
+      - name: Upload unit test coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: exospherehost/exospherehost
           files: state-manager/coverage.xml
-          flags: state-manager-unittests
-          name: state-manager-coverage-report
+          flags: state-manager-unit
+          name: state-manager-unit-coverage-report
           fail_ci_if_error: true
 
-      - name: Upload test results
+      - name: Upload unit test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: state-manager-test-results
-          path: state-manager/pytest-report.xml
+          name: state-manager-unit-test-results
+          path: state-manager/unit-pytest-report.xml
+          retention-days: 30
+
+      - name: Upload unit test coverage HTML
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: state-manager-unit-coverage-html
+          path: state-manager/htmlcov/
           retention-days: 30
