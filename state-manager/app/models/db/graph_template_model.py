@@ -18,7 +18,7 @@ class GraphTemplate(BaseDatabaseModel):
     namespace: str = Field(..., description="Namespace of the graph")
     nodes: List[NodeTemplate] = Field(..., description="Nodes of the graph")
     validation_status: GraphTemplateValidationStatus = Field(..., description="Validation status of the graph")
-    validation_errors: Optional[List[str]] = Field(None, description="Validation errors of the graph")
+    validation_errors: List[str] = Field(default_factory=list, description="Validation errors of the graph")
     secrets: Dict[str, str] = Field(default_factory=dict, description="Secrets of the graph")
 
     _node_by_identifier: Dict[str, NodeTemplate] | None = PrivateAttr(default=None)
