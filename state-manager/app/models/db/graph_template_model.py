@@ -1,4 +1,5 @@
 import base64
+from collections import deque
 import copy
 import time
 import asyncio
@@ -60,7 +61,8 @@ class GraphTemplate(BaseDatabaseModel):
         try:
             root_node_identifier = self.get_root_node().identifier
 
-            visited = {}
+            visited = {node.identifier: False for node in self.nodes}
+            awaiting_parent: dict[str, list[str]] = {}
 
             self._parents_by_identifier = {}
             for node in self.nodes:
@@ -84,18 +86,31 @@ class GraphTemplate(BaseDatabaseModel):
 
                 if node.unites is None:
                     parents_for_children = parents | {node_identifier}
-                else:
+                elif visited[node.unites.identifier]:
                     parents = self._parents_by_identifier[node.unites.identifier]
                     self._parents_by_identifier[node.identifier] = parents | {node.unites.identifier}
                     parents_for_children = parents | {node.unites.identifier}
+                else:
+                    if node.unites.identifier not in awaiting_parent:
+                        awaiting_parent[node.unites.identifier] = []
+                    awaiting_parent[node.unites.identifier].append(node_identifier)
+                    return
                 
                 if node.next_nodes is None:
                     return
 
                 for next_node_identifier in node.next_nodes:
                     dfs(next_node_identifier, parents_for_children)
-                
+
+                if node_identifier in awaiting_parent:
+                    for parent_identifier in awaiting_parent[node_identifier]:
+                        dfs(parent_identifier, parents_for_children)
+                    del awaiting_parent[node_identifier]
+
             dfs(root_node_identifier, set())
+
+            if len(awaiting_parent.keys()) > 0:
+                raise ValueError(f"Graph is not a valid tree: {awaiting_parent}")
     
         except Exception as e:
             raise ValueError(f"Error building dependency graph: {e}")
