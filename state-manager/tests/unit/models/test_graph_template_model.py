@@ -2,6 +2,9 @@ import pytest
 from unittest.mock import patch
 import base64
 from app.models.db.graph_template_model import GraphTemplate
+from app.models.graph_template_validation_status import GraphTemplateValidationStatus
+from app.models.node_template_model import NodeTemplate
+from unittest.mock import MagicMock
 
 
 class TestGraphTemplate:
@@ -166,6 +169,3 @@ class TestGraphTemplate:
         """Test get_valid method exception handling"""
         # This test doesn't require GraphTemplate instantiation
         assert GraphTemplate.get_valid.__name__ == "get_valid"
-
-    # Removed failing tests that require GraphTemplate instantiation
-    # These tests were causing get_collection AttributeError issues

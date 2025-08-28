@@ -52,7 +52,7 @@ class TestFullWorkflowIntegration:
     @pytest.fixture
     def test_api_key(self) -> str:
         """Get the test API key from environment."""
-        return "TEST_API_KEY"
+        return os.getenv("STATE_MANAGER_SECRET", "exosphere@123")
     
     @pytest.fixture
     def test_graph_name(self) -> str:
