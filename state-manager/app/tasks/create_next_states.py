@@ -126,10 +126,7 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
         async def get_registered_node(node_template: NodeTemplate) -> RegisteredNode:
             key = (node_template.namespace, node_template.node_name)
             if key not in cached_registered_nodes:
-                registered_node = await RegisteredNode.find_one(
-                    RegisteredNode.name == node_template.node_name,
-                    RegisteredNode.namespace == node_template.namespace,
-                )
+                registered_node = await RegisteredNode.get_by_name_and_namespace(node_template.node_name, node_template.namespace)
                 if not registered_node:
                     raise ValueError(f"Registered node not found for node name: {node_template.node_name} and namespace: {node_template.namespace}")
                 cached_registered_nodes[key] = registered_node

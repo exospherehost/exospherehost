@@ -43,7 +43,7 @@ async def verify_secrets(graph_template: GraphTemplate, registered_nodes: list[R
 async def verify_inputs(graph_template: GraphTemplate, registered_nodes: list[RegisteredNode]) -> list[str]:
     errors = []
     look_up_table = {
-        (rn.node_name, rn.namespace): rn
+        (rn.name, rn.namespace): rn
         for rn in registered_nodes
     }
 
@@ -73,7 +73,9 @@ async def verify_inputs(graph_template: GraphTemplate, registered_nodes: list[Re
             for identifier, field in identifier_field_pairs:
 
                 temp_node = graph_template.get_node_by_identifier(identifier)
-                assert temp_node is not None
+                if temp_node is None:
+                    errors.append(f"Node {identifier} does not exist in the graph template")
+                    continue
 
                 registered_node = look_up_table.get((temp_node.node_name, temp_node.namespace))
                 if registered_node is None:

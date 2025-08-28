@@ -12,7 +12,7 @@ class RegisteredNode(BaseDatabaseModel):
     runtime_namespace: str = Field(..., description="Namespace of the runtime that registered this node")
     inputs_schema: dict[str, Any] = Field(..., description="JSON schema for node inputs")
     outputs_schema: dict[str, Any] = Field(..., description="JSON schema for node outputs") 
-    secrets: list[str] = Field(..., description="List of secrets that the node uses")
+    secrets: list[str] = Field(default_factory=list, description="List of secrets that the node uses")
 
     class Settings:
         indexes = [

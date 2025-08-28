@@ -46,6 +46,8 @@ class GraphTemplate(BaseDatabaseModel):
                     in_degree[next_node] += 1
 
             if node.unites is not None:
+                # If the node has a unit, it should have an in-degree of 1
+                # As unites.node.identifier acts as the parent of the node
                 in_degree[node.identifier] += 1
         
         zero_in_degree_nodes = [node for node in self.nodes if in_degree[node.identifier] == 0]
@@ -74,15 +76,22 @@ class GraphTemplate(BaseDatabaseModel):
                 
                 visited[node_identifier] = True
 
+                parents_for_children = parents | {node_identifier}
+
                 node = self.get_node_by_identifier(node_identifier)
+                
                 if node is None:
                     return
+                
                 if node.next_nodes is None:
                     return
+                
                 if node.unites is not None:
                     self._parents_by_identifier[node_identifier].add(node.unites.identifier)
+                    parents_for_children.add(node.unites.identifier)
+
                 for next_node_identifier in node.next_nodes:
-                    dfs(next_node_identifier, parents | {node_identifier})
+                    dfs(next_node_identifier, parents_for_children)
                 
             dfs(root_node_identifier, set())
     
