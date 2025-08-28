@@ -494,7 +494,7 @@ class TestCreateNextStates:
             
             with patch('app.tasks.create_next_states.State', mock_state_class):
                 with patch('app.tasks.create_next_states.RegisteredNode') as mock_registered_node:
-                    mock_registered_node.find_one = AsyncMock(return_value=None)
+                    mock_registered_node.get_by_name_and_namespace = AsyncMock(return_value=None)
                     
                     with pytest.raises(ValueError, match="Registered node not found"):
                         await create_next_states(state_ids, "test_id", "test_namespace", "test_graph", {})
@@ -528,7 +528,7 @@ class TestCreateNextStates:
             with patch('app.tasks.create_next_states.RegisteredNode') as mock_registered_node:
                 mock_registered_node_instance = MagicMock()
                 mock_registered_node_instance.inputs_schema = {"input1": {"type": "string"}}
-                mock_registered_node.find_one = AsyncMock(return_value=mock_registered_node_instance)
+                mock_registered_node.get_by_name_and_namespace = AsyncMock(return_value=mock_registered_node_instance)
                 
                 # Create a mock class that has the id attribute for the State mock
                 mock_state_class = MagicMock()
