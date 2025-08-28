@@ -64,14 +64,13 @@ class GraphTemplate(BaseDatabaseModel):
             visited = {node.identifier: False for node in self.nodes}
             awaiting_parent: dict[str, list[str]] = {}
 
-            self._parents_by_identifier = {}
+            self._parents_by_identifier: dict[str, set[str]] = {}
+
             for node in self.nodes:
                 self._parents_by_identifier[node.identifier] = set()
                 visited[node.identifier] = False
 
             def dfs(node_identifier: str, parents: set[str]) -> None:
-                assert self._parents_by_identifier is not None
-
                 self._parents_by_identifier[node_identifier] = parents | self._parents_by_identifier[node_identifier]
 
                 if visited[node_identifier]:
@@ -242,12 +241,8 @@ class GraphTemplate(BaseDatabaseModel):
                     dependent_identifiers = set([identifier for identifier, _ in dependent_string.get_identifier_field()])
 
                     for identifier in dependent_identifiers:
-                        if node.unites is not None:
-                            if identifier not in self.get_parents_by_identifier(node.unites.identifier):
-                                errors.append(f"Input {input_value} depends on {identifier} but {identifier} is not a parent of unites {node.unites.identifier}")
-                        else:
-                            if identifier not in self.get_parents_by_identifier(node.identifier):
-                                errors.append(f"Input {input_value} depends on {identifier} but {identifier} is not a parent of {node.identifier}")
+                        if identifier not in self.get_parents_by_identifier(node.identifier):
+                            errors.append(f"Input {input_value} depends on {identifier} but {identifier} is not a parent of {node.identifier}")
 
                 except Exception as e:
                     errors.append(f"Error creating dependent string for input {input_value}: {e}")
