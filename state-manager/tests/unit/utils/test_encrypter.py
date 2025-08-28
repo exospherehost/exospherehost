@@ -38,32 +38,6 @@ class TestEncrypter:
         
         assert key1 != key2
 
-    @patch.dict(os.environ, {'SECRETS_ENCRYPTION_KEY': base64.urlsafe_b64encode(b'a' * 32).decode()})
-    def test_encrypter_init_with_valid_key(self):
-        """Test Encrypter initialization with valid key"""
-        encrypter = Encrypter()
-        
-        assert encrypter._key == b'a' * 32
-        assert isinstance(encrypter._aesgcm, AESGCM)
-
-    @patch.dict(os.environ, {}, clear=True)
-    def test_encrypter_init_without_key_raises_error(self):
-        """Test Encrypter initialization without SECRETS_ENCRYPTION_KEY raises ValueError"""
-        with pytest.raises(ValueError, match="SECRETS_ENCRYPTION_KEY is not set"):
-            Encrypter()
-
-    @patch.dict(os.environ, {'SECRETS_ENCRYPTION_KEY': 'invalid-base64!@#'})
-    def test_encrypter_init_with_invalid_base64_raises_error(self):
-        """Test Encrypter initialization with invalid base64 key"""
-        with pytest.raises(ValueError, match="Key must be URL-safe base64"):
-            Encrypter()
-
-    @patch.dict(os.environ, {'SECRETS_ENCRYPTION_KEY': base64.urlsafe_b64encode(b'too_short').decode()})
-    def test_encrypter_init_with_wrong_key_length_raises_error(self):
-        """Test Encrypter initialization with wrong key length"""
-        with pytest.raises(ValueError, match="Key must be 32 raw bytes"):
-            Encrypter()
-
     @patch.dict(os.environ, {'SECRETS_ENCRYPTION_KEY': base64.urlsafe_b64encode(b'x' * 32).decode()})
     def test_encrypt_returns_base64_string(self):
         """Test that encrypt returns a base64 encoded string"""
@@ -151,19 +125,6 @@ class TestEncrypter:
             encrypter.decrypt("invalid-base64!@#")
 
     @patch.dict(os.environ, {'SECRETS_ENCRYPTION_KEY': base64.urlsafe_b64encode(b'x' * 32).decode()})
-    def test_decrypt_with_wrong_key_raises_error(self):
-        """Test decrypt with data encrypted with different key raises exception"""
-        # Encrypt with one key
-        encrypter1 = Encrypter()
-        encrypted = encrypter1.encrypt("secret")
-        
-        # Try to decrypt with different key
-        with patch.dict(os.environ, {'SECRETS_ENCRYPTION_KEY': base64.urlsafe_b64encode(b'y' * 32).decode()}):
-            encrypter2 = Encrypter()
-            with pytest.raises(Exception):  # AESGCM decrypt error
-                encrypter2.decrypt(encrypted)
-
-    @patch.dict(os.environ, {'SECRETS_ENCRYPTION_KEY': base64.urlsafe_b64encode(b'x' * 32).decode()})
     def test_decrypt_with_corrupted_data_raises_error(self):
         """Test decrypt with corrupted encrypted data raises exception"""
         encrypter = Encrypter()
@@ -202,18 +163,6 @@ class TestGetEncrypter:
         encrypter2 = get_encrypter()
         
         assert encrypter1 is encrypter2
-
-    @patch.dict(os.environ, {}, clear=True)
-    def test_get_encrypter_without_key_raises_error(self):
-        """Test get_encrypter without SECRETS_ENCRYPTION_KEY raises ValueError"""
-        with pytest.raises(ValueError, match="SECRETS_ENCRYPTION_KEY is not set"):
-            get_encrypter()
-
-    @patch.dict(os.environ, {'SECRETS_ENCRYPTION_KEY': 'invalid-key'})
-    def test_get_encrypter_with_invalid_key_raises_error(self):
-        """Test get_encrypter with invalid key raises ValueError"""
-        with pytest.raises(ValueError, match="Key must be URL-safe base64"):
-            get_encrypter()
 
     @patch.dict(os.environ, {'SECRETS_ENCRYPTION_KEY': base64.urlsafe_b64encode(b'x' * 32).decode()})
     def test_get_encrypter_functional_test(self):

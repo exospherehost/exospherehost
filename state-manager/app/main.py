@@ -5,7 +5,6 @@ from beanie import init_beanie
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from dotenv import load_dotenv
 from pymongo import AsyncMongoClient
 
 # injecting singletons
@@ -30,7 +29,6 @@ from .routes import router
 from .config.cors import get_cors_config
 from .config.settings import get_settings
  
-load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
