@@ -33,4 +33,4 @@ def app_fixture():
     return app
 
 # Mark all tests in this directory as integration tests
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.with_database

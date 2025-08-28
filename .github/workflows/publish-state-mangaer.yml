@@ -51,41 +51,11 @@ jobs:
         run: |
           uv sync --group dev
 
-      - name: Create test environment file
-        working-directory: state-manager
-        run: |
-          cat > .env.test << EOF
-          # Test Environment Configuration
-          ENVIRONMENT=testing
-          
-          # MongoDB Configuration
-          MONGO_URI=mongodb://admin:password@localhost:27017
-          MONGO_DATABASE_NAME=test_exosphere_state_manager
-          
-          # API Configuration
-          STATE_MANAGER_SECRET=test-secret-key
-          EOF
-
       - name: Wait for MongoDB to be ready
         run: |
           echo "Waiting for MongoDB to be ready..."
           timeout 60 bash -c 'until mongosh --host localhost:27017 --username admin --password password --authenticationDatabase admin --eval "db.runCommand(\"ping\")" > /dev/null 2>&1; do sleep 2; done'
           echo "MongoDB is ready!"
-
-      - name: Run unit tests
-        working-directory: state-manager
-        run: |
-          uv run pytest tests/unit/ --cov=app --cov-report=xml --cov-report=term-missing -v --junitxml=unit-pytest-report.xml
-
-      - name: Run integration tests
-        working-directory: state-manager
-        env:
-          MONGO_URI: mongodb://admin:password@localhost:27017
-          MONGO_DATABASE_NAME: test_exosphere_state_manager
-          STATE_MANAGER_SECRET: test-secret-key
-          ENVIRONMENT: testing
-        run: |
-          uv run pytest tests/integration/ --cov=app --cov-append --cov-report=xml --cov-report=term-missing -v --junitxml=integration-pytest-report.xml
 
       - name: Run full test suite with coverage
         working-directory: state-manager
@@ -93,7 +63,7 @@ jobs:
           MONGO_URI: mongodb://admin:password@localhost:27017
           MONGO_DATABASE_NAME: test_exosphere_state_manager
           STATE_MANAGER_SECRET: test-secret-key
-          ENVIRONMENT: testing
+          SECRETS_ENCRYPTION_KEY: YTzpUlBGLSwm-3yKJRJTZnb0_aQuQQHyz64s8qAERVU=
         run: |
           uv run pytest tests/ --cov=app --cov-report=xml --cov-report=term-missing --cov-report=html -v --junitxml=full-pytest-report.xml
 
@@ -103,28 +73,9 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: exospherehost/exospherehost
           files: state-manager/coverage.xml
-          flags: state-manager-publish
-          name: state-manager-publish-coverage-report
+          flags: unit-tests
+          name: state-manager-coverage-report
           fail_ci_if_error: true
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: state-manager-publish-test-results
-          path: |
-            state-manager/unit-pytest-report.xml
-            state-manager/integration-pytest-report.xml
-            state-manager/full-pytest-report.xml
-          retention-days: 30
-
-      - name: Upload coverage HTML report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: state-manager-publish-coverage-html
-          path: state-manager/htmlcov/
-          retention-days: 30
 
   publish-image:
     runs-on: ubuntu-latest
