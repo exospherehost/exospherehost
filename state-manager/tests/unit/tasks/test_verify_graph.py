@@ -392,7 +392,7 @@ class TestVerifyGraph:
                         await verify_graph(graph_template)
                         
                         assert graph_template.validation_status == GraphTemplateValidationStatus.VALID
-                        assert graph_template.validation_errors is None
+                        assert graph_template.validation_errors == []
                         graph_template.save.assert_called_once()
 
     @pytest.mark.asyncio

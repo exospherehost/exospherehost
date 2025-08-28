@@ -114,7 +114,7 @@ async def verify_graph(graph_template: GraphTemplate):
             return
         
         graph_template.validation_status = GraphTemplateValidationStatus.VALID
-        graph_template.validation_errors = None
+        graph_template.validation_errors = []
         await graph_template.save()
         
     except Exception as e:

@@ -4,7 +4,7 @@ import asyncio
 
 from pymongo import IndexModel
 from pydantic import Field, field_validator, PrivateAttr, model_validator
-from typing import Optional, List, Self, Dict
+from typing import List, Self, Dict
 
 from .base import BaseDatabaseModel
 from ..graph_template_validation_status import GraphTemplateValidationStatus
