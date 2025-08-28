@@ -4,9 +4,8 @@ from datetime import datetime
 from bson import ObjectId
 
 from app.controller.get_graph_structure import get_graph_structure
-from app.models.db.state import State
 from app.models.state_status_enum import StateStatusEnum
-from app.models.graph_structure_models import GraphStructureResponse, GraphNode, GraphEdge
+from app.models.graph_structure_models import GraphStructureResponse
 
 
 class TestGetGraphStructure:

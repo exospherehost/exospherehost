@@ -1,6 +1,4 @@
 import base64
-from collections import deque
-import copy
 import time
 import asyncio
 
@@ -24,7 +22,7 @@ class GraphTemplate(BaseDatabaseModel):
     secrets: Dict[str, str] = Field(default_factory=dict, description="Secrets of the graph")
 
     _node_by_identifier: Dict[str, NodeTemplate] | None = PrivateAttr(default=None)
-    _parents_by_identifier: Dict[str, set[str]] | None = PrivateAttr(default=None)
+    _parents_by_identifier: Dict[str, set[str]] | None = PrivateAttr(default=None) # type: ignore
     _root_node: NodeTemplate | None = PrivateAttr(default=None)
 
     class Settings:
@@ -186,7 +184,23 @@ class GraphTemplate(BaseDatabaseModel):
                 raise ValueError("Decoded value is too short to contain valid nonce")
         except Exception:
             raise ValueError("Value is not valid URL-safe base64 encoded")
-    
+
+    @model_validator(mode='after')
+    def validate_unites_identifiers_exist(self) -> Self:
+        errors = []
+        identifiers = set()
+        for node in self.nodes:
+            identifiers.add(node.identifier)
+        for node in self.nodes:
+            if node.unites is not None:
+                if node.unites.identifier not in identifiers:
+                    errors.append(f"Node {node.identifier} has an unites target {node.unites.identifier} that does not exist")
+                if node.unites.identifier == node.identifier:
+                    errors.append(f"Node {node.identifier} has an unites target {node.unites.identifier} that is the same as the node itself")
+        if errors:
+            raise ValueError("\n".join(errors))
+        return self
+
     @model_validator(mode='after')
     def validate_graph_is_connected(self) -> Self:
         errors = []
@@ -206,22 +220,6 @@ class GraphTemplate(BaseDatabaseModel):
         for node in self.nodes:
             if node.identifier in self.get_parents_by_identifier(node.identifier):
                 errors.append(f"Node {node.identifier} is not acyclic")
-        if errors:
-            raise ValueError("\n".join(errors))
-        return self
-    
-    @model_validator(mode='after')
-    def verify_unites_identifiers_exist(self) -> Self:
-        errors = []
-        identifiers = set()
-        for node in self.nodes:
-            identifiers.add(node.identifier)
-        for node in self.nodes:
-            if node.unites is not None:
-                if node.unites.identifier not in identifiers:
-                    errors.append(f"Node {node.identifier} has a unit {node.unites.identifier} that does not exist")
-                if node.unites.identifier == node.identifier:
-                    errors.append(f"Node {node.identifier} has a unit {node.unites.identifier} that is the same as the node itself")
         if errors:
             raise ValueError("\n".join(errors))
         return self
