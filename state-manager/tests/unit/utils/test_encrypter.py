@@ -2,7 +2,6 @@ import os
 import base64
 import pytest
 from unittest.mock import patch, MagicMock
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from app.utils.encrypter import Encrypter, get_encrypter
 

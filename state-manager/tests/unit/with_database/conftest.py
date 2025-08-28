@@ -11,8 +11,6 @@ from asgi_lifespan import LifespanManager
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-# Import the FastAPI app and models from the system
-from app.main import app
 
 @pytest.fixture(scope="session")
 def event_loop():
@@ -30,6 +28,8 @@ async def app_started(app_fixture):
 @pytest.fixture(scope="session")
 def app_fixture():
     """Get the FastAPI app from the system."""
+    # Import the FastAPI app and models from the system
+    from app.main import app
     return app
 
 # Mark all tests in this directory as integration tests
