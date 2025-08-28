@@ -7,15 +7,17 @@ class Settings(BaseModel):
     
     # MongoDB Configuration
     mongo_uri: str = Field(..., description="MongoDB connection URI" )
-    mongo_database_name: str = Field(..., description="MongoDB database name")
+    mongo_database_name: str = Field(default="exosphere-state-manager", description="MongoDB database name")
     state_manager_secret: str = Field(..., description="Secret key for API authentication")
+    secrets_encryption_key: str = Field(..., description="Key for encrypting secrets")
     
     @classmethod
     def from_env(cls) -> "Settings":
         return cls(
             mongo_uri=os.getenv("MONGO_URI"), # type: ignore
-            mongo_database_name=os.getenv("MONGO_DATABASE_NAME"), # type: ignore
+            mongo_database_name=os.getenv("MONGO_DATABASE_NAME", "exosphere-state-manager"), # type: ignore
             state_manager_secret=os.getenv("STATE_MANAGER_SECRET"), # type: ignore
+            secrets_encryption_key=os.getenv("SECRETS_ENCRYPTION_KEY"), # type: ignore
         )
 
 

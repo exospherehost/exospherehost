@@ -1,6 +1,9 @@
-import os
 import base64
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+from app.config.settings import get_settings
+
+settings = get_settings()
 
 class Encrypter:
 
@@ -9,9 +12,7 @@ class Encrypter:
         return base64.urlsafe_b64encode(AESGCM.generate_key(bit_length=256)).decode()
 
     def __init__(self):
-        key_b64 = os.getenv("SECRETS_ENCRYPTION_KEY")
-        if not key_b64:
-            raise ValueError("SECRETS_ENCRYPTION_KEY is not set")
+        key_b64 = settings.secrets_encryption_key
         try:
             self._key = base64.urlsafe_b64decode(key_b64)
         except Exception as exc:
