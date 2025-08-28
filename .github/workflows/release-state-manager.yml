@@ -26,7 +26,7 @@ jobs:
           --health-cmd "mongosh --eval 'db.runCommand(\"ping\")'"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
         env:
           MONGO_INITDB_ROOT_USERNAME: admin
           MONGO_INITDB_ROOT_PASSWORD: password
@@ -43,20 +43,12 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v2
-        with:
-          cache: true
 
       - name: Install dev dependencies with uv
         working-directory: state-manager
         run: |
           uv sync --group dev
-
-      - name: Wait for MongoDB to be ready
-        run: |
-          echo "Waiting for MongoDB to be ready..."
-          timeout 60 bash -c 'until mongosh --host localhost:27017 --username admin --password password --authenticationDatabase admin --eval "db.runCommand(\"ping\")" > /dev/null 2>&1; do sleep 2; done'
-          echo "MongoDB is ready!"
-
+          
       - name: Run full test suite with coverage
         working-directory: state-manager
         env:
