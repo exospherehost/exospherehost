@@ -2,7 +2,7 @@ import pytest
 
 from app.models.db.graph_template_model import GraphTemplate
 from app.models.graph_template_validation_status import GraphTemplateValidationStatus
-from app.models.node_template_model import NodeTemplate
+from app.models.node_template_model import NodeTemplate, Unites
 
 @pytest.mark.asyncio
 async def test_graph_template_basic(app_started):
@@ -46,8 +46,20 @@ async def test_liner_graph_template(app_started):
                 namespace="test_namespace",
                 identifier="node2",
                 inputs={},
-                next_nodes=None,
+                next_nodes=[
+                    "node3"
+                ],
                 unites=None
+            ),
+            NodeTemplate(
+                node_name="node3",
+                namespace="test_namespace",
+                identifier="node3",
+                inputs={},
+                next_nodes=None,
+                unites=Unites(
+                    identifier="node1"
+                )
             )
         ],
         validation_status=GraphTemplateValidationStatus.PENDING
@@ -67,5 +79,28 @@ async def test_graph_template_invalid_liner_graph_template(app_started):
             name="test_invalid_liner_graph_template",
             namespace="test_namespace",
             nodes=[],
+            validation_status=GraphTemplateValidationStatus.PENDING
+        )
+
+
+@pytest.mark.asyncio
+async def test_self_unites_validation(app_started):
+    """Test self unites validation"""
+    with pytest.raises(ValueError, match="Node node1 has an unites target node1 that is the same as the node itself"):
+        GraphTemplate(
+            name="test_invalid_liner_graph_template",
+            namespace="test_namespace",
+            nodes=[
+                NodeTemplate(
+                    node_name="node1",
+                    namespace="test_namespace",
+                    identifier="node1",
+                    inputs={},
+                    next_nodes=None,
+                    unites=Unites(
+                        identifier="node1"
+                    )
+                )
+            ],
             validation_status=GraphTemplateValidationStatus.PENDING
         )

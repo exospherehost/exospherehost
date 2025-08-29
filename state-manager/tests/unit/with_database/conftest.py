@@ -3,7 +3,13 @@ Integration test configuration and fixtures.
 """
 import pytest
 import asyncio
+import pathlib
+import sys
 from asgi_lifespan import LifespanManager
+
+# Add the project root directory to the Python path
+project_root = str(pathlib.Path(__file__).parent.parent.parent.parent)
+sys.path.insert(0, project_root)
 
 @pytest.fixture(scope="session")
 def event_loop():
