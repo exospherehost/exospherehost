@@ -110,7 +110,7 @@ class GraphTemplate(BaseDatabaseModel):
             dfs(root_node_identifier, set(), set())
 
             if len(awaiting_parent.keys()) > 0:
-                raise ValueError(f"Graph is not a valid tree: {awaiting_parent}")
+                raise ValueError(f"Graph is disconnected at: {awaiting_parent}")
     
         except Exception as e:
             raise ValueError(f"Error building dependency graph: {e}")

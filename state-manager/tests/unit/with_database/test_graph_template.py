@@ -279,6 +279,109 @@ async def test_invalid_graphs_with_cycles_with_unites(app_started):
             validation_status=GraphTemplateValidationStatus.PENDING
         )
 
+@pytest.mark.asyncio
+async def test_basic_invalid_graphs(app_started):
+    """Test invalid graphs with empty name and namespace"""
+
+    # test invalid graph with empty name and namespace
+    with pytest.raises(ValueError) as exc_info:
+        GraphTemplate(
+            name="",
+            namespace="",
+            nodes=[],
+            validation_status=GraphTemplateValidationStatus.PENDING
+        )
+    assert "Name cannot be empty" in str(exc_info.value)
+    assert "Namespace cannot be empty" in str(exc_info.value)
+
+    # test invalid graph with non-unique node identifiers
+    with pytest.raises(ValueError) as exc_info:
+        GraphTemplate(
+            name="test_name",
+            namespace="test_namespace",
+            nodes=[
+                NodeTemplate(
+                    node_name="node1",
+                    namespace="test_namespace",
+                    identifier="node1",
+                    inputs={},
+                    next_nodes=None,
+                    unites=None
+                ),
+                NodeTemplate(
+                    node_name="node2",
+                    namespace="test_namespace",
+                    identifier="node1",
+                    inputs={},
+                    next_nodes=None,
+                    unites=None
+                )
+            ],
+            validation_status=GraphTemplateValidationStatus.PENDING
+        )
+    assert "Node identifier node1 is not unique" in str(exc_info.value)
+
+    # test invalid graph with non-existing node identifiers
+    with pytest.raises(ValueError) as exc_info:
+        GraphTemplate(
+            name="test_name",
+            namespace="test_namespace",
+            nodes=[
+                NodeTemplate(
+                    node_name="node1",
+                    namespace="test_namespace",
+                    identifier="node1",
+                    inputs={},
+                    next_nodes=[
+                        "node2"
+                    ],
+                    unites=None
+                ),
+                NodeTemplate(
+                    node_name="node2",
+                    namespace="test_namespace",
+                    identifier="node2",
+                    inputs={},
+                    next_nodes=[
+                        "node3"
+                    ],
+                    unites = None
+                )
+            ],
+            validation_status=GraphTemplateValidationStatus.PENDING
+        )
+    assert "Node identifier node3 does not exist in the graph" in str(exc_info.value)
+
+    # test invalid graph with non-existing unites identifiers
+    with pytest.raises(ValueError) as exc_info:
+        GraphTemplate(
+            name="test_name",
+            namespace="test_namespace",
+            nodes=[
+                NodeTemplate(
+                    node_name="node1",
+                    namespace="test_namespace",
+                    identifier="node1",
+                    inputs={},
+                    next_nodes=[
+                        "node2"
+                    ],
+                    unites=None
+                ),
+                NodeTemplate(
+                    node_name="node2",
+                    namespace="test_namespace",
+                    identifier="node2",
+                    inputs={},
+                    next_nodes=None,
+                    unites = Unites(
+                        identifier="node3"
+                    )
+                )
+            ],
+            validation_status=GraphTemplateValidationStatus.PENDING
+        )
+    assert "Node node2 has an unites target node3 that does not exist" in str(exc_info.value)
 
 @pytest.mark.asyncio
 async def test_valid_graphs_with_unites(app_started):
@@ -371,3 +474,55 @@ async def test_valid_graphs_with_unites(app_started):
     assert graph_template_model_2.get_path_by_identifier("node1") == set()
     assert graph_template_model_2.get_path_by_identifier("node2") == {"node1"}
     assert graph_template_model_2.get_path_by_identifier("node3") == {"node1"}
+
+
+@pytest.mark.asyncio
+async def test_invalid_graphs_with_disconnected_nodes(app_started):
+    """Test invalid graphs with disconnected nodes"""
+    with pytest.raises(ValueError, match="Graph is disconnected"):
+        GraphTemplate(
+            name="test_liner_graph_template_1",
+            namespace="test_namespace",
+            nodes=[
+                NodeTemplate(
+                    node_name="node1",
+                    namespace="test_namespace",
+                    identifier="node1",
+                    inputs={},
+                    next_nodes=[
+                        "node3", 
+                        "node2"
+                    ],
+                    unites=None
+                ),
+                NodeTemplate(
+                    node_name="node2",
+                    namespace="test_namespace",
+                    identifier="node2",
+                    inputs={},
+                    next_nodes=None,
+                    unites=None
+                ),
+                NodeTemplate(
+                    node_name="node3",
+                    namespace="test_namespace",
+                    identifier="node3",
+                    inputs={},
+                    next_nodes=None,
+                    unites=Unites(
+                        identifier="node4"
+                    )
+                ),
+                NodeTemplate(
+                    node_name="node4",
+                    namespace="test_namespace",
+                    identifier="node4",
+                    inputs={},
+                    next_nodes=None,
+                    unites=Unites(
+                        identifier="node3"
+                    )
+                )
+            ],
+            validation_status=GraphTemplateValidationStatus.PENDING
+        )
