@@ -610,7 +610,7 @@ async def test_valid_graph_inputs(app_started):
         ],
         validation_status=GraphTemplateValidationStatus.PENDING
     )
-    dependent_strings = graph_template_model.get_node_by_identifier("node2").get_dependent_strings()
+    dependent_strings = graph_template_model.get_node_by_identifier("node2").get_dependent_strings() # type: ignore
     assert len(dependent_strings) == 2
 
     input_set: set[tuple[str, str]] = set()
@@ -651,7 +651,7 @@ async def test_valid_graph_inputs(app_started):
         ],
         validation_status=GraphTemplateValidationStatus.PENDING
     )
-    dependent_strings = graph_template_model.get_node_by_identifier("node2").get_dependent_strings()
+    dependent_strings = graph_template_model.get_node_by_identifier("node2").get_dependent_strings() # type: ignore
     assert len(dependent_strings) == 2
 
     input_set: set[tuple[str, str]] = set()
