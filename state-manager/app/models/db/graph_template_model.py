@@ -24,6 +24,7 @@ class GraphTemplate(BaseDatabaseModel):
     _node_by_identifier: Dict[str, NodeTemplate] | None = PrivateAttr(default=None)
     _parents_by_identifier: Dict[str, set[str]] | None = PrivateAttr(default=None) # type: ignore
     _root_node: NodeTemplate | None = PrivateAttr(default=None)
+    _path_by_identifier: Dict[str, set[str]] | None = PrivateAttr(default=None) # type: ignore
 
     class Settings:
         indexes = [
@@ -55,7 +56,7 @@ class GraphTemplate(BaseDatabaseModel):
             raise ValueError("There should be exactly one root node in the graph but found " + str(len(zero_in_degree_nodes)) + " nodes with zero in-degree: " + str(zero_in_degree_nodes))
         self._root_node = zero_in_degree_nodes[0]
 
-    def _build_parents_by_identifier(self) -> None:
+    def _build_parents_path_by_identifier(self) -> None:
         try:
             root_node_identifier = self.get_root_node().identifier
 
@@ -63,13 +64,16 @@ class GraphTemplate(BaseDatabaseModel):
             awaiting_parent: dict[str, list[str]] = {}
 
             self._parents_by_identifier: dict[str, set[str]] = {}
+            self._path_by_identifier: dict[str, set[str]] = {}
 
             for node in self.nodes:
                 self._parents_by_identifier[node.identifier] = set()
+                self._path_by_identifier[node.identifier] = set()
                 visited[node.identifier] = False
 
-            def dfs(node_identifier: str, parents: set[str]) -> None:
+            def dfs(node_identifier: str, parents: set[str], path: set[str]) -> None:
                 self._parents_by_identifier[node_identifier] = parents | self._parents_by_identifier[node_identifier]
+                self._path_by_identifier[node_identifier] = path | self._path_by_identifier[node_identifier]
 
                 if visited[node_identifier]:
                     return
@@ -78,8 +82,7 @@ class GraphTemplate(BaseDatabaseModel):
 
                 node = self.get_node_by_identifier(node_identifier)
 
-                if node is None:
-                    return
+                assert node is not None
 
                 if node.unites is None:
                     parents_for_children = parents | {node_identifier}
@@ -93,18 +96,18 @@ class GraphTemplate(BaseDatabaseModel):
                     awaiting_parent[node.unites.identifier].append(node_identifier)
                     return
                 
+                if node_identifier in awaiting_parent:
+                    for awaiting_identifier in awaiting_parent[node_identifier]:
+                        dfs(awaiting_identifier, parents_for_children, self._path_by_identifier[awaiting_identifier])
+                    del awaiting_parent[node_identifier]
+
                 if node.next_nodes is None:
                     return
 
                 for next_node_identifier in node.next_nodes:
-                    dfs(next_node_identifier, parents_for_children)
+                    dfs(next_node_identifier, parents_for_children, path | {node_identifier})
 
-                if node_identifier in awaiting_parent:
-                    for parent_identifier in awaiting_parent[node_identifier]:
-                        dfs(parent_identifier, parents_for_children)
-                    del awaiting_parent[node_identifier]
-
-            dfs(root_node_identifier, set())
+            dfs(root_node_identifier, set(), set())
 
             if len(awaiting_parent.keys()) > 0:
                 raise ValueError(f"Graph is not a valid tree: {awaiting_parent}")
@@ -218,7 +221,7 @@ class GraphTemplate(BaseDatabaseModel):
     def validate_graph_is_acyclic(self) -> Self:
         errors = []
         for node in self.nodes:
-            if node.identifier in self.get_parents_by_identifier(node.identifier):
+            if node.identifier in self.get_path_by_identifier(node.identifier):
                 errors.append(f"Node {node.identifier} is not acyclic")
         if errors:
             raise ValueError("\n".join(errors))
@@ -287,10 +290,17 @@ class GraphTemplate(BaseDatabaseModel):
     
     def get_parents_by_identifier(self, identifier: str) -> set[str]:
         if self._parents_by_identifier is None:
-            self._build_parents_by_identifier()
+            self._build_parents_path_by_identifier()
         
         assert self._parents_by_identifier is not None
         return self._parents_by_identifier.get(identifier, set())
+    
+    def get_path_by_identifier(self, identifier: str) -> set[str]:
+        if self._path_by_identifier is None:
+            self._build_parents_path_by_identifier()
+        
+        assert self._path_by_identifier is not None
+        return self._path_by_identifier.get(identifier, set())
     
     @staticmethod
     async def get(namespace: str, graph_name: str) -> "GraphTemplate":
