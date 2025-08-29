@@ -395,6 +395,19 @@ async def test_basic_invalid_graphs(app_started):
         )
     assert "Secrets cannot be empty" in str(exc_info.value)
 
+    # test invalid graph with non-urlsafe base64 encoded secret
+    with pytest.raises(ValueError) as exc_info:
+        GraphTemplate(
+            name="test_name",
+            namespace="test_namespace",
+            nodes=[],
+            validation_status=GraphTemplateValidationStatus.PENDING,
+            secrets={
+                "secret1": "invalid_base64_string_that_is_long_enough_to_pass_length_check_but_not_valid_base64_encoding_123456789",
+            }
+        )
+    assert "Value is not valid URL-safe base64 encoded" in str(exc_info.value)
+
 @pytest.mark.asyncio
 async def test_valid_graphs_with_unites(app_started):
     """Test valid graphs with unites"""
@@ -538,6 +551,34 @@ async def test_invalid_graphs_with_disconnected_nodes(app_started):
             ],
             validation_status=GraphTemplateValidationStatus.PENDING
         )
+
+    with pytest.raises(ValueError) as exc_info:
+        GraphTemplate(
+            name="test_liner_graph_template_1",
+            namespace="test_namespace",
+            nodes=[
+                NodeTemplate(
+                    node_name="node1",
+                    namespace="test_namespace",
+                    identifier="node1",
+                    inputs={},
+                    next_nodes=None,
+                    unites=None
+                ),
+                NodeTemplate(
+                    node_name="node2",
+                    namespace="test_namespace",
+                    identifier="node2",
+                    inputs={},
+                    next_nodes=None,
+                    unites=Unites(
+                        identifier="node1"
+                    )
+                )
+            ],
+            validation_status=GraphTemplateValidationStatus.PENDING
+        )
+    assert "is not connected to the root node" in str(exc_info.value)
 
 @pytest.mark.asyncio
 async def test_valid_graph_inputs(app_started):
@@ -699,3 +740,63 @@ async def test_invalid_graph_inputs(app_started):
             validation_status=GraphTemplateValidationStatus.PENDING
         )
     assert "Input ${{node2.outputs.output1}} depends on node2 but node2 is not a parent of node3" in str(exc_info.value)
+
+    with pytest.raises(ValueError) as exc_info:
+        GraphTemplate(
+            name="test_graph",
+            namespace="test_namespace",
+            nodes=[
+                NodeTemplate(
+                    node_name="node1",
+                    namespace="test_namespace",
+                    identifier="node1",
+                    inputs={},
+                    next_nodes=[
+                        "node2"
+                    ],
+                    unites=None
+                ),
+                NodeTemplate(
+                    node_name="node2",
+                    namespace="test_namespace",
+                    identifier="node2",
+                    inputs={
+                        "input1": 123
+                    },
+                    next_nodes=None,
+                    unites=None
+                )
+            ],
+            validation_status=GraphTemplateValidationStatus.PENDING
+        )
+    assert "is not a string" in str(exc_info.value)
+
+    with pytest.raises(ValueError) as exc_info:
+        GraphTemplate(
+            name="test_graph",
+            namespace="test_namespace",
+            nodes=[
+                NodeTemplate(
+                    node_name="node1",
+                    namespace="test_namespace",
+                    identifier="node1",
+                    inputs={},
+                    next_nodes=[
+                        "node2"
+                    ],
+                    unites=None
+                ),
+                NodeTemplate(
+                    node_name="node2",
+                    namespace="test_namespace",
+                    identifier="node2",
+                    inputs={
+                        "input1": "${{node1.outputs.output1"
+                    },
+                    next_nodes=None,
+                    unites=None
+                )
+            ],
+            validation_status=GraphTemplateValidationStatus.PENDING
+        )
+    assert "Error creating dependent string for input ${{node1.outputs.output1" in str(exc_info.value)

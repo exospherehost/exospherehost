@@ -242,7 +242,7 @@ class GraphTemplate(BaseDatabaseModel):
                             errors.append(f"Input {input_value} depends on {identifier} but {identifier} is not a parent of {node.identifier}")
 
                 except Exception as e:
-                    errors.append(f"Error creating dependent string for input {input_value}: {e}")
+                    errors.append(f"Error creating dependent string for input {input_value} check syntax string: {str(e)}")
         if errors:
             raise ValueError("\n".join(errors))
 
