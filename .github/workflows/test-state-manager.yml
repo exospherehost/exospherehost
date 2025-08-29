@@ -23,6 +23,10 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        env:
+          MONGO_INITDB_ROOT_USERNAME: admin
+          MONGO_INITDB_ROOT_PASSWORD: password
+          MONGO_INITDB_DATABASE: test_db
 
     steps:
       - name: Checkout code
@@ -42,11 +46,16 @@ jobs:
         working-directory: state-manager
         run: |
           uv sync --group dev
-
-      - name: Run unit tests with pytest and coverage
+          
+      - name: Run full test suite with coverage
         working-directory: state-manager
+        env:
+          MONGO_URI: mongodb://admin:password@localhost:27017
+          MONGO_DATABASE_NAME: test_exosphere_state_manager
+          STATE_MANAGER_SECRET: test-secret-key
+          SECRETS_ENCRYPTION_KEY: YTzpUlBGLSwm-3yKJRJTZnb0_aQuQQHyz64s8qAERVU=
         run: |
-          uv run pytest tests/unit/ --cov=app --cov-report=xml --cov-report=term-missing -v --junitxml=pytest-report.xml
+          uv run pytest tests/ --cov=app --cov-report=xml --cov-report=term-missing --cov-report=html -v --junitxml=full-pytest-report.xml
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
@@ -54,14 +63,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: exospherehost/exospherehost
           files: state-manager/coverage.xml
-          flags: state-manager-unittests
+          flags: unit-tests
           name: state-manager-coverage-report
           fail_ci_if_error: true
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: state-manager-test-results
-          path: state-manager/pytest-report.xml
-          retention-days: 30

@@ -167,14 +167,14 @@ class TestModuleConstants:
         assert api_key_header.auto_error is False
 
     @patch.dict(os.environ, {'STATE_MANAGER_SECRET': 'test-constant-key'})
-    def test_api_key_loads_from_environment(self):
+    async def test_api_key_loads_from_environment(self):
         """Test API_KEY loads from environment variable"""
         import importlib
         import app.utils.check_secret
         importlib.reload(app.utils.check_secret)
         
         # Access the reloaded module's API_KEY
-        assert app.utils.check_secret.API_KEY == 'test-constant-key'
+        assert await app.utils.check_secret.check_api_key('test-constant-key') == 'test-constant-key'
 
 class TestIntegrationWithFastAPI:
     """Integration tests with FastAPI dependency system"""

@@ -1,12 +1,10 @@
 """
-main file for exosphere apis
+main file for exosphere state manager
 """
-import os
 from beanie import init_beanie
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from dotenv import load_dotenv
 from pymongo import AsyncMongoClient
 
 # injecting singletons
@@ -29,8 +27,8 @@ from .routes import router
 
 # importing CORS config
 from .config.cors import get_cors_config
+from .config.settings import get_settings
  
-load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,15 +36,17 @@ async def lifespan(app: FastAPI):
     logger = LogsManager().get_logger()
     logger.info("server starting")
 
+    # Get settings
+    settings = get_settings()
+
     # initializing beanie
-    client = AsyncMongoClient(os.getenv("MONGO_URI"))
-    db = client[os.getenv("MONGO_DATABASE_NAME", "exosphere-state-manager")]
+    client = AsyncMongoClient(settings.mongo_uri)
+    db = client[settings.mongo_database_name]
     await init_beanie(db, document_models=[State, Namespace, GraphTemplate, RegisteredNode])
     logger.info("beanie dbs initialized")
 
     # initialize secret
-    secret = os.getenv("STATE_MANAGER_SECRET")
-    if not secret:
+    if not settings.state_manager_secret:
         raise ValueError("STATE_MANAGER_SECRET is not set")
     logger.info("secret initialized")
 

@@ -24,3 +24,9 @@ __pycache__/
 # Other
 .env
 Dockerfile 
+tests/
+pytest.ini
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml

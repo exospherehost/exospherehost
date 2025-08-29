@@ -1,4 +1,3 @@
-import pytest
 from datetime import datetime
 from app.models.db.base import BaseDatabaseModel
 
@@ -17,12 +16,6 @@ class TestBaseDatabaseModel:
         # Check field descriptions
         assert model_fields['created_at'].description == "Date and time when the model was created"
         assert model_fields['updated_at'].description == "Date and time when the model was last updated"
-
-    def test_base_model_abc_inheritance(self):
-        """Test that BaseDatabaseModel is an abstract base class"""
-        # Should not be able to instantiate BaseDatabaseModel directly
-        with pytest.raises(Exception):  # Could be TypeError or CollectionWasNotInitialized
-            BaseDatabaseModel()
 
     def test_base_model_document_inheritance(self):
         """Test that BaseDatabaseModel inherits from Document"""

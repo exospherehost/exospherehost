@@ -220,13 +220,6 @@ class TestLifespan:
 class TestEnvironmentIntegration:
     """Test cases for environment variable integration"""
 
-    def test_load_dotenv_called(self):
-        """Test that load_dotenv is called during module import"""
-        # This test ensures that .env files are loaded
-        # We can't easily test this without reimporting the module,
-        # but we can verify the import doesn't fail
-        assert hasattr(app_main, 'load_dotenv')
-
     @patch.dict(os.environ, {
         'MONGO_URI': 'mongodb://custom:27017',
         'MONGO_DATABASE_NAME': 'custom_db',
@@ -295,82 +288,6 @@ class TestAppConfiguration:
             router_found = hasattr(app, 'router') and app.router is not None
         
         assert router_found, "Main router not found in app routes"
-
-    @patch('app.main.os.getenv')
-    @patch('app.main.AsyncMongoClient')
-    @patch('app.main.init_beanie')
-    def test_lifespan_missing_secret(self, mock_init_beanie, mock_mongo_client, mock_getenv):
-        """Test lifespan function when STATE_MANAGER_SECRET is not set"""
-        from app.main import lifespan
-        from fastapi import FastAPI
-        
-        # Mock os.getenv to return None for STATE_MANAGER_SECRET
-        mock_getenv.side_effect = lambda key, default=None: {
-            "MONGO_URI": "mongodb://localhost:27017",
-            "MONGO_DATABASE_NAME": "test_db",
-            "STATE_MANAGER_SECRET": None  # This should cause the error
-        }.get(key, default)
-        
-        # Mock AsyncMongoClient
-        mock_client = MagicMock()
-        mock_db = MagicMock()
-        mock_client.__getitem__.return_value = mock_db
-        mock_mongo_client.return_value = mock_client
-        
-        # Mock init_beanie to raise the ValueError
-        mock_init_beanie.side_effect = ValueError("STATE_MANAGER_SECRET is not set")
-        
-        # Create a mock FastAPI app
-        app = FastAPI()
-        
-        # Act & Assert
-        with pytest.raises(ValueError, match="STATE_MANAGER_SECRET is not set"):
-            # We need to use async context manager
-            async def test_lifespan():
-                async with lifespan(app):
-                    pass
-            
-            # This will raise the ValueError when STATE_MANAGER_SECRET is None
-            import asyncio
-            asyncio.run(test_lifespan())
-
-    @patch('app.main.os.getenv')
-    @patch('app.main.AsyncMongoClient')
-    @patch('app.main.init_beanie')
-    def test_lifespan_default_database_name(self, mock_init_beanie, mock_mongo_client, mock_getenv):
-        """Test lifespan function with default database name"""
-        from app.main import lifespan
-        from fastapi import FastAPI
-        
-        # Mock os.getenv to not provide MONGO_DATABASE_NAME
-        mock_getenv.side_effect = lambda key, default=None: {
-            "MONGO_URI": "mongodb://localhost:27017",
-            "STATE_MANAGER_SECRET": "test_secret"
-        }.get(key, default)
-        
-        # Mock AsyncMongoClient
-        mock_client = MagicMock()
-        mock_db = MagicMock()
-        mock_client.__getitem__.return_value = mock_db
-        mock_mongo_client.return_value = mock_client
-        
-        # Mock init_beanie
-        mock_init_beanie.return_value = None
-        
-        # Create a mock FastAPI app
-        app = FastAPI()
-        
-        # Act
-        async def test_lifespan():
-            async with lifespan(app):
-                pass
-        
-        # This should not raise any exceptions
-        import asyncio
-        asyncio.run(test_lifespan())
-        
-        # Assert that default database name was used
-        mock_getenv.assert_any_call("MONGO_DATABASE_NAME", "exosphere-state-manager")
 
     def test_app_middleware_order(self):
         """Test that middlewares are added in the correct order"""

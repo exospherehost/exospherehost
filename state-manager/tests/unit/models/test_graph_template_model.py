@@ -166,6 +166,3 @@ class TestGraphTemplate:
         """Test get_valid method exception handling"""
         # This test doesn't require GraphTemplate instantiation
         assert GraphTemplate.get_valid.__name__ == "get_valid"
-
-    # Removed failing tests that require GraphTemplate instantiation
-    # These tests were causing get_collection AttributeError issues

@@ -287,3 +287,51 @@ class TestUpsertGraphTemplate:
         # Assert
         assert result.validation_status == GraphTemplateValidationStatus.INVALID
         assert result.validation_errors == ["Previous error 1", "Previous error 2"]  # Should be reset to empty
+
+    @patch('app.controller.upsert_graph_template.GraphTemplate')
+    async def test_upsert_graph_template_validation_error(
+        self,
+        mock_graph_template_class,
+        mock_namespace,
+        mock_graph_name,
+        mock_background_tasks,
+        mock_request_id
+    ):
+        """Test upsert with validation error during template creation"""
+        from fastapi import HTTPException
+        
+        # Arrange - Create a request with valid data
+        valid_nodes = [
+            NodeTemplate(
+                identifier="node1",
+                node_name="test_node",
+                namespace="test_namespace",
+                inputs={},
+                next_nodes=[],
+                unites=None
+            )
+        ]
+        
+        valid_request = UpsertGraphTemplateRequest(
+            nodes=valid_nodes,
+            secrets={"secret1": "value1"}
+        )
+        
+        # Mock find_one to return None (new template creation)
+        mock_graph_template_class.find_one = AsyncMock(return_value=None)
+        
+        # Mock insert to raise ValueError during validation (this simulates validation error in GraphTemplate)
+        mock_graph_template_class.insert = AsyncMock(side_effect=ValueError("Node identifier node1 is not unique"))
+
+        # Act & Assert
+        with pytest.raises(HTTPException) as exc_info:
+            await upsert_graph_template(
+                mock_namespace,
+                mock_graph_name,
+                valid_request,
+                mock_request_id,
+                mock_background_tasks
+            )
+        
+        assert exc_info.value.status_code == 400
+        assert "Error validating graph template: Node identifier node1 is not unique" in str(exc_info.value.detail)
