@@ -135,10 +135,6 @@ class GraphTemplate(BaseDatabaseModel):
         for secret_name, secret_value in v.items():
             if not secret_name or not secret_value:
                 raise ValueError("Secrets cannot be empty")
-            if not isinstance(secret_name, str):
-                raise ValueError("Secret name must be a string")
-            if not isinstance(secret_value, str):
-                raise ValueError("Secret value must be a string")
             cls._validate_secret_value(secret_value)
             
         return v

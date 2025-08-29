@@ -383,6 +383,18 @@ async def test_basic_invalid_graphs(app_started):
         )
     assert "Node node2 has an unites target node3 that does not exist" in str(exc_info.value)
 
+    with pytest.raises(ValueError) as exc_info:
+        GraphTemplate(
+            name="test_name",
+            namespace="test_namespace",
+            nodes=[],
+            validation_status=GraphTemplateValidationStatus.PENDING,
+            secrets={
+                "secret1": "",
+            }
+        )
+    assert "Secrets cannot be empty" in str(exc_info.value)
+
 @pytest.mark.asyncio
 async def test_valid_graphs_with_unites(app_started):
     """Test valid graphs with unites"""
@@ -440,7 +452,7 @@ async def test_valid_graphs_with_unites(app_started):
                 identifier="node1",
                 inputs={},
                 next_nodes=[
-                    # fliped the order, both cases should work the same
+                    # flipped the order, both cases should work the same
                     "node3", 
                     "node2"
                 ],
@@ -526,3 +538,164 @@ async def test_invalid_graphs_with_disconnected_nodes(app_started):
             ],
             validation_status=GraphTemplateValidationStatus.PENDING
         )
+
+@pytest.mark.asyncio
+async def test_valid_graph_inputs(app_started):
+    """Test valid graph inputs"""
+    graph_template_model = GraphTemplate(
+        name="test_graph",
+        namespace="test_namespace",
+        nodes=[
+            NodeTemplate(
+                node_name="node1",
+                namespace="test_namespace",
+                identifier="node1",
+                inputs={},
+                next_nodes=[
+                    "node2"
+                ],
+                unites=None
+            ),
+            NodeTemplate(
+                node_name="node2",
+                namespace="test_namespace",
+                identifier="node2",
+                inputs={
+                    "input1": "${{node1.outputs.output1}}",
+                    "input2": "${{node1.outputs.output2}}"
+                },
+                next_nodes=None,
+                unites=None
+            )
+        ],
+        validation_status=GraphTemplateValidationStatus.PENDING
+    )
+    dependent_strings = graph_template_model.get_node_by_identifier("node2").get_dependent_strings()
+    assert len(dependent_strings) == 2
+
+    input_set: set[tuple[str, str]] = set()
+
+    for dependent_string in dependent_strings:
+        for identifier, field in dependent_string.get_identifier_field():
+            input_set.add((identifier, field))
+
+    assert len(input_set) == 2
+    assert input_set == {("node1", "output1"), ("node1", "output2")}
+
+
+    graph_template_model = GraphTemplate(
+        name="test_graph",
+        namespace="test_namespace",
+        nodes=[
+            NodeTemplate(
+                node_name="node1",
+                namespace="test_namespace",
+                identifier="node1",
+                inputs={},
+                next_nodes=[
+                    "node2"
+                ],
+                unites=None
+            ),
+            NodeTemplate(
+                node_name="node2",
+                namespace="test_namespace",
+                identifier="node2",
+                inputs={
+                    "input1": "testing",
+                    "input2": "${{node1.outputs.output2}}"
+                },
+                next_nodes=None,
+                unites=None
+            )
+        ],
+        validation_status=GraphTemplateValidationStatus.PENDING
+    )
+    dependent_strings = graph_template_model.get_node_by_identifier("node2").get_dependent_strings()
+    assert len(dependent_strings) == 2
+
+    input_set: set[tuple[str, str]] = set()
+
+    for dependent_string in dependent_strings:
+        for identifier, field in dependent_string.get_identifier_field():
+            input_set.add((identifier, field))
+
+    assert len(input_set) == 1
+    assert input_set == {("node1", "output2")}
+
+
+@pytest.mark.asyncio
+async def test_invalid_graph_inputs(app_started):
+    """Test invalid graph inputs"""
+    with pytest.raises(ValueError) as exc_info:
+        GraphTemplate(
+            name="test_graph",
+            namespace="test_namespace",
+            nodes=[
+                NodeTemplate(
+                    node_name="node1",
+                    namespace="test_namespace",
+                    identifier="node1",
+                    inputs={},
+                    next_nodes=[
+                        "node2"
+                    ],
+                    unites=None
+                ),
+                NodeTemplate(
+                    node_name="node2",
+                    namespace="test_namespace",
+                    identifier="node2",
+                    inputs={
+                        "input1": "${{node1.outputs.output1}}",
+                        "input2": "${{node2.outputs.output2}}"
+                    },
+                    next_nodes=None,
+                    unites=None
+                )
+            ],
+            validation_status=GraphTemplateValidationStatus.PENDING
+        )
+    assert "Input ${{node2.outputs.output2}} depends on node2 but node2 is not a parent of node2" in str(exc_info.value)
+
+    with pytest.raises(ValueError) as exc_info:
+        GraphTemplate(
+            name="test_graph",
+            namespace="test_namespace",
+            nodes=[
+                NodeTemplate(
+                    node_name="node1",
+                    namespace="test_namespace",
+                    identifier="node1",
+                    inputs={},
+                    next_nodes=[
+                        "node2"
+                    ],
+                    unites=None
+                ),
+                NodeTemplate(
+                    node_name="node2",
+                    namespace="test_namespace",
+                    identifier="node2",
+                    inputs={},
+                    next_nodes=[
+                        "node3"
+                    ],
+                    unites=None
+                ),
+                NodeTemplate(
+                    node_name="node3",
+                    namespace="test_namespace",
+                    identifier="node3",
+                    inputs={
+                        "input1": "${{node2.outputs.output1}}"
+                    },
+                    next_nodes=None,
+                    unites=Unites(
+                        identifier="node1"
+                    )
+                )
+            ],
+            validation_status=GraphTemplateValidationStatus.PENDING
+        )
+    assert "Input ${{node2.outputs.output1}} depends on node2 but node2 is not a parent of node3" in str(exc_info.value)
