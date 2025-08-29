@@ -1,4 +1,3 @@
-from pydantic import NonNegativeInt
 import pytest
 
 from app.models.db.graph_template_model import GraphTemplate

@@ -1,4 +1,3 @@
-import pytest
 from app.main import health
 
 def test_health_api():
