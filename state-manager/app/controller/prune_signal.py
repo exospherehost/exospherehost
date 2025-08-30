@@ -13,7 +13,7 @@ async def prune_signal(namespace_name: str, state_id: PydanticObjectId, body: Pr
     try:
         logger.info(f"Received prune signal for state {state_id} for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
 
-        state = await State.find_one(State.id == state_id, State.namespace_name == namespace_name)
+        state = await State.find_one(State.id == state_id)
 
         if not state:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="State not found")
