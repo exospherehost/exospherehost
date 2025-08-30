@@ -22,7 +22,7 @@ async def re_queue_after_signal(namespace_name: str, state_id: PydanticObjectId,
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="State is not created")
         
         state.status = StateStatusEnum.CREATED
-        state.enqueue_after = state.enqueue_after + body.enqueue_after
+        state.enqueue_after = int(time.time() * 1000) + body.enqueue_after
         await state.save()
 
         return SignalResponseModel(status=StateStatusEnum.CREATED, enqueue_after=state.enqueue_after)
