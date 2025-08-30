@@ -38,8 +38,8 @@ from ._version import version as __version__
 from .runtime import Runtime
 from .node.BaseNode import BaseNode
 from .statemanager import StateManager, TriggerState
-from .signals import PruneSingal, ReQueueAfterSingal
+from .signals import PruneSignal, ReQueueAfterSignal
 
 VERSION = __version__
 
-__all__ = ["Runtime", "BaseNode", "StateManager", "TriggerState", "VERSION", "PruneSingal", "ReQueueAfterSingal"]
+__all__ = ["Runtime", "BaseNode", "StateManager", "TriggerState", "VERSION", "PruneSignal", "ReQueueAfterSignal"]

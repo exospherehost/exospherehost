@@ -2,7 +2,7 @@ from typing import Any
 from aiohttp import ClientSession
 from datetime import timedelta
 
-class PruneSingal(Exception):
+class PruneSignal(Exception):
     """
     Exception used to signal that a prune operation should be performed.
 
@@ -33,7 +33,7 @@ class PruneSingal(Exception):
                     raise Exception(f"Failed to send prune signal to {endpoint}")
                 
 
-class ReQueueAfterSingal(Exception):
+class ReQueueAfterSignal(Exception):
     """
     Exception used to signal that a requeue operation should be performed after a specified timedelta.
 
@@ -43,8 +43,12 @@ class ReQueueAfterSingal(Exception):
     Note:
         Do not catch this Exception, let it bubble up to Runtime for handling at StateManager.
     """
-    def __init__(self, timedelta: timedelta):
-        self.timedelta = timedelta
+    def __init__(self, delay: timedelta):
+        self.delay = delay
+
+        if self.delay.total_seconds() <= 0:
+            raise Exception("Delay must be greater than 0")
+
         super().__init__(f"ReQueueAfter signal received with timedelta: {timedelta} \n NOTE: Do not catch this Exception, let it bubble up to Runtime for handling at StateManager")
 
     async def send(self, endpoint: str, key: str):
@@ -59,7 +63,7 @@ class ReQueueAfterSingal(Exception):
             Exception: If the HTTP request fails (status code != 200).
         """
         body = {
-            "enqueue_after": int(self.timedelta.total_seconds() * 1000)
+            "enqueue_after": int(self.delay.total_seconds() * 1000)
         }
         async with ClientSession() as session:
             async with session.post(endpoint, json=body, headers={"x-api-key": key}) as response:

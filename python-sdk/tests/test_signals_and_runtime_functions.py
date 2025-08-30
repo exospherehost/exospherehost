@@ -3,7 +3,7 @@ import logging
 from unittest.mock import AsyncMock, patch, MagicMock
 from datetime import timedelta
 from pydantic import BaseModel
-from exospherehost.signals import PruneSingal, ReQueueAfterSingal
+from exospherehost.signals import PruneSignal, ReQueueAfterSignal
 from exospherehost.runtime import Runtime, _setup_default_logging
 from exospherehost.node.BaseNode import BaseNode
 
@@ -56,35 +56,35 @@ class MockTestNode(BaseNode):
         return self.Outputs(message=f"Hello {self.inputs.name}") # type: ignore
 
 
-class TestPruneSingal:
-    """Test cases for PruneSingal exception class."""
+class TestPruneSignal:
+    """Test cases for PruneSignal exception class."""
 
     def test_prune_signal_initialization_with_data(self):
-        """Test PruneSingal initialization with custom data."""
+        """Test PruneSignal initialization with custom data."""
         data = {"reason": "test", "custom_field": "value"}
-        signal = PruneSingal(data)
+        signal = PruneSignal(data)
         
         assert signal.data == data
         assert "Prune signal received with data" in str(signal)
         assert "Do not catch this Exception" in str(signal)
 
     def test_prune_signal_initialization_without_data(self):
-        """Test PruneSingal initialization without data (default empty dict)."""
-        signal = PruneSingal()
+        """Test PruneSignal initialization without data (default empty dict)."""
+        signal = PruneSignal()
         
         assert signal.data == {}
         assert "Prune signal received with data" in str(signal)
 
     def test_prune_signal_inheritance(self):
-        """Test that PruneSingal properly inherits from Exception."""
-        signal = PruneSingal()
+        """Test that PruneSignal properly inherits from Exception."""
+        signal = PruneSignal()
         assert isinstance(signal, Exception)
 
     @pytest.mark.asyncio
     async def test_prune_signal_send_success(self):
         """Test successful sending of prune signal."""
         data = {"reason": "test_prune"}
-        signal = PruneSingal(data)
+        signal = PruneSignal(data)
         
         mock_session, mock_post_response, _, _ = create_mock_aiohttp_session()
         mock_post_response.status = 200
@@ -103,7 +103,7 @@ class TestPruneSingal:
     async def test_prune_signal_send_failure(self):
         """Test prune signal sending failure."""
         data = {"reason": "test_prune"}
-        signal = PruneSingal(data)
+        signal = PruneSignal(data)
         
         mock_session, mock_post_response, _, _ = create_mock_aiohttp_session()
         mock_post_response.status = 500
@@ -113,29 +113,29 @@ class TestPruneSingal:
                 await signal.send("http://test-endpoint/prune", "test-api-key")
 
 
-class TestReQueueAfterSingal:
-    """Test cases for ReQueueAfterSingal exception class."""
+class TestReQueueAfterSignal:
+    """Test cases for ReQueueAfterSignal exception class."""
 
     def test_requeue_signal_initialization(self):
-        """Test ReQueueAfterSingal initialization."""
+        """Test ReQueueAfterSignal initialization."""
         delta = timedelta(seconds=30)
-        signal = ReQueueAfterSingal(delta)
+        signal = ReQueueAfterSignal(delta)
         
-        assert signal.timedelta == delta
+        assert signal.delay == delta
         assert "ReQueueAfter signal received with timedelta" in str(signal)
         assert "Do not catch this Exception" in str(signal)
 
     def test_requeue_signal_inheritance(self):
-        """Test that ReQueueAfterSingal properly inherits from Exception."""
+        """Test that ReQueueAfterSignal properly inherits from Exception."""
         delta = timedelta(minutes=5)
-        signal = ReQueueAfterSingal(delta)
+        signal = ReQueueAfterSignal(delta)
         assert isinstance(signal, Exception)
 
     @pytest.mark.asyncio
     async def test_requeue_signal_send_success(self):
         """Test successful sending of requeue signal."""
         delta = timedelta(seconds=45)
-        signal = ReQueueAfterSingal(delta)
+        signal = ReQueueAfterSignal(delta)
         
         mock_session, mock_post_response, _, _ = create_mock_aiohttp_session()
         mock_post_response.status = 200
@@ -155,7 +155,7 @@ class TestReQueueAfterSingal:
     async def test_requeue_signal_send_with_minutes(self):
         """Test requeue signal sending with minutes in timedelta."""
         delta = timedelta(minutes=2, seconds=30)
-        signal = ReQueueAfterSingal(delta)
+        signal = ReQueueAfterSignal(delta)
         
         mock_session, mock_post_response, _, _ = create_mock_aiohttp_session()
         mock_post_response.status = 200
@@ -175,7 +175,7 @@ class TestReQueueAfterSingal:
     async def test_requeue_signal_send_failure(self):
         """Test requeue signal sending failure."""
         delta = timedelta(seconds=30)
-        signal = ReQueueAfterSingal(delta)
+        signal = ReQueueAfterSignal(delta)
         
         mock_session, mock_post_response, _, _ = create_mock_aiohttp_session()
         mock_post_response.status = 400
@@ -219,13 +219,13 @@ class TestRuntimeSignalHandling:
             key="test-key"
         )
         
-        # Test PruneSingal with runtime endpoint
-        prune_signal = PruneSingal({"reason": "direct_test"})
+        # Test PruneSignal with runtime endpoint
+        prune_signal = PruneSignal({"reason": "direct_test"})
         mock_session, mock_post_response, _, _ = create_mock_aiohttp_session()
         mock_post_response.status = 200
         
         with patch('exospherehost.signals.ClientSession', return_value=mock_session):
-            await prune_signal.send(runtime._get_prune_endpoint("test-state"), runtime._key)
+            await prune_signal.send(runtime._get_prune_endpoint("test-state"), runtime._key) # type: ignore
         
         # Verify prune endpoint was called correctly
         mock_session.post.assert_called_once_with(
@@ -245,13 +245,13 @@ class TestRuntimeSignalHandling:
             key="test-key"
         )
         
-        # Test ReQueueAfterSingal with runtime endpoint
-        requeue_signal = ReQueueAfterSingal(timedelta(minutes=10))
+        # Test ReQueueAfterSignal with runtime endpoint
+        requeue_signal = ReQueueAfterSignal(timedelta(minutes=10))
         mock_session, mock_post_response, _, _ = create_mock_aiohttp_session()
         mock_post_response.status = 200
         
         with patch('exospherehost.signals.ClientSession', return_value=mock_session):
-            await requeue_signal.send(runtime._get_requeue_after_endpoint("test-state"), runtime._key)
+            await requeue_signal.send(runtime._get_requeue_after_endpoint("test-state"), runtime._key) # type: ignore
         
         # Verify requeue endpoint was called correctly
         expected_body = {"enqueue_after": 600000}  # 10 minutes * 60 * 1000
@@ -423,22 +423,22 @@ class TestSignalIntegration:
     @pytest.mark.asyncio
     async def test_signal_exception_behavior(self):
         """Test that signals are proper exceptions that can be raised and caught."""
-        # Test PruneSingal
-        prune_signal = PruneSingal({"test": "data"})
+        # Test PruneSignal
+        prune_signal = PruneSignal({"test": "data"})
         
-        with pytest.raises(PruneSingal) as exc_info:
+        with pytest.raises(PruneSignal) as exc_info:
             raise prune_signal
         
         assert exc_info.value.data == {"test": "data"}
         assert isinstance(exc_info.value, Exception)
         
-        # Test ReQueueAfterSingal
-        requeue_signal = ReQueueAfterSingal(timedelta(seconds=30))
+        # Test ReQueueAfterSignal
+        requeue_signal = ReQueueAfterSignal(timedelta(seconds=30))
         
-        with pytest.raises(ReQueueAfterSingal) as exc_info:
+        with pytest.raises(ReQueueAfterSignal) as exc_info:
             raise requeue_signal
         
-        assert exc_info.value.timedelta == timedelta(seconds=30)
+        assert exc_info.value.delay == timedelta(seconds=30)
         assert isinstance(exc_info.value, Exception)
 
     @pytest.mark.asyncio
@@ -453,21 +453,21 @@ class TestSignalIntegration:
             state_manage_version="v1"
         )
         
-        # Test PruneSingal with production-like endpoint
-        prune_signal = PruneSingal({"reason": "cleanup", "batch_id": "batch-123"})
+        # Test PruneSignal with production-like endpoint
+        prune_signal = PruneSignal({"reason": "cleanup", "batch_id": "batch-123"})
         expected_prune_endpoint = "https://api.exosphere.host/v1/namespace/production/state/prod-state-456/prune"
         actual_prune_endpoint = runtime._get_prune_endpoint("prod-state-456")
         assert actual_prune_endpoint == expected_prune_endpoint
         
-        # Test ReQueueAfterSingal with production-like endpoint
-        requeue_signal = ReQueueAfterSingal(timedelta(hours=2, minutes=30))
+        # Test ReQueueAfterSignal with production-like endpoint
+        requeue_signal = ReQueueAfterSignal(timedelta(hours=2, minutes=30))
         expected_requeue_endpoint = "https://api.exosphere.host/v1/namespace/production/state/prod-state-789/re-enqueue-after"
         actual_requeue_endpoint = runtime._get_requeue_after_endpoint("prod-state-789")
         assert actual_requeue_endpoint == expected_requeue_endpoint
         
         # Test that signal data is preserved
         assert prune_signal.data == {"reason": "cleanup", "batch_id": "batch-123"}
-        assert requeue_signal.timedelta == timedelta(hours=2, minutes=30)
+        assert requeue_signal.delay == timedelta(hours=2, minutes=30)
 
     @pytest.mark.asyncio
     async def test_signal_send_with_different_endpoints(self):
@@ -504,13 +504,13 @@ class TestSignalEdgeCases:
     """Test cases for signal edge cases and error conditions."""
 
     def test_prune_signal_with_empty_data(self):
-        """Test PruneSingal with empty data."""
-        signal = PruneSingal({})
+        """Test PruneSignal with empty data."""
+        signal = PruneSignal({})
         assert signal.data == {}
         assert isinstance(signal, Exception)
 
     def test_prune_signal_with_complex_data(self):
-        """Test PruneSingal with complex nested data."""
+        """Test PruneSignal with complex nested data."""
         complex_data = {
             "reason": "batch_cleanup",
             "metadata": {
@@ -523,23 +523,23 @@ class TestSignalEdgeCases:
                 "notify_users": False
             }
         }
-        signal = PruneSingal(complex_data)
+        signal = PruneSignal(complex_data)
         assert signal.data == complex_data
 
     def test_requeue_signal_with_zero_timedelta(self):
-        """Test ReQueueAfterSingal with zero timedelta."""
-        signal = ReQueueAfterSingal(timedelta(seconds=0))
-        assert signal.timedelta == timedelta(seconds=0)
+        """Test ReQueueAfterSignal with zero timedelta."""
+        signal = ReQueueAfterSignal(timedelta(seconds=0))
+        assert signal.delay == timedelta(seconds=0)
 
     def test_requeue_signal_with_large_timedelta(self):
-        """Test ReQueueAfterSingal with large timedelta."""
+        """Test ReQueueAfterSignal with large timedelta."""
         large_delta = timedelta(days=7, hours=12, minutes=30, seconds=45)
-        signal = ReQueueAfterSingal(large_delta)
-        assert signal.timedelta == large_delta
+        signal = ReQueueAfterSignal(large_delta)
+        assert signal.delay == large_delta
 
     @pytest.mark.asyncio
     async def test_requeue_signal_timedelta_conversion(self):
-        """Test that ReQueueAfterSingal correctly converts timedelta to milliseconds."""
+        """Test that ReQueueAfterSignal correctly converts timedelta to milliseconds."""
         test_cases = [
             (timedelta(seconds=1), 1000),
             (timedelta(minutes=1), 60000),
@@ -549,7 +549,7 @@ class TestSignalEdgeCases:
         ]
         
         for delta, expected_ms in test_cases:
-            signal = ReQueueAfterSingal(delta)
+            signal = ReQueueAfterSignal(delta)
             
             mock_session, mock_post_response, _, _ = create_mock_aiohttp_session()
             mock_post_response.status = 200
@@ -567,13 +567,13 @@ class TestSignalEdgeCases:
 
     def test_signal_string_representations(self):
         """Test string representations of signals."""
-        prune_signal = PruneSingal({"test": "data"})
+        prune_signal = PruneSignal({"test": "data"})
         prune_str = str(prune_signal)
         assert "Prune signal received with data" in prune_str
         assert "Do not catch this Exception" in prune_str
         assert "{'test': 'data'}" in prune_str
         
-        requeue_signal = ReQueueAfterSingal(timedelta(minutes=5))
+        requeue_signal = ReQueueAfterSignal(timedelta(minutes=5))
         requeue_str = str(requeue_signal)
         assert "ReQueueAfter signal received with timedelta" in requeue_str
         assert "Do not catch this Exception" in requeue_str
@@ -603,7 +603,7 @@ class TestRuntimeHelperFunctions:
         outputs = [MockTestNode.Outputs(message="output1"), MockTestNode.Outputs(message="output2")]
         
         with patch('exospherehost.runtime.ClientSession', return_value=mock_session):
-            await runtime._notify_executed("test-state-id", outputs)
+            await runtime._notify_executed("test-state-id", outputs) # type: ignore
         
         # Verify correct endpoint and payload
         expected_body = {"outputs": [{"message": "output1"}, {"message": "output2"}]}
@@ -660,7 +660,7 @@ class TestRuntimeHelperFunctions:
         
         with patch('exospherehost.runtime.ClientSession', return_value=mock_session):
             # These should not raise exceptions, just log errors
-            await runtime._notify_executed("test-state-id", outputs)
+            await runtime._notify_executed("test-state-id", outputs) # type: ignore
             await runtime._notify_errored("test-state-id", "Test error")
         
         # Verify both endpoints were called despite failures

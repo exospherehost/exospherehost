@@ -157,7 +157,7 @@ async def errored_state_route(namespace_name: str, state_id: str, body: ErroredR
     "/states/{state_id}/prune",
     response_model=SignalResponseModel,
     status_code=status.HTTP_200_OK,
-    response_description="State skipped successfully",
+    response_description="State pruned successfully",
     tags=["state"]
 )
 async def prune_state_route(namespace_name: str, state_id: str, body: PruneRequestModel, request: Request, api_key: str = Depends(check_api_key)):

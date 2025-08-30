@@ -11,4 +11,4 @@ class PruneRequestModel(BaseModel):
     data: dict[str, Any] = Field(..., description="Data of the state")
 
 class ReEnqueueAfterRequestModel(BaseModel):
-    enqueue_after: int = Field(..., description="Duration in milliseconds to delay the re-enqueuing of the state")
+    enqueue_after: int = Field(..., gt=0, description="Duration in milliseconds to delay the re-enqueuing of the state")

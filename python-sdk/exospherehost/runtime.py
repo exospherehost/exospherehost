@@ -8,7 +8,7 @@ from typing import List, Dict
 from pydantic import BaseModel
 from .node.BaseNode import BaseNode
 from aiohttp import ClientSession
-from .signals import PruneSingal, ReQueueAfterSingal
+from .signals import PruneSignal, ReQueueAfterSignal
 
 logger = logging.getLogger(__name__)
 
@@ -409,15 +409,15 @@ class Runtime:
                 await self._notify_executed(state["state_id"], outputs)
                 logger.info(f"Notified executed state {state['state_id']} for node {node.__name__ if node else "unknown"}")
             
-            except PruneSingal as prune_signal:
+            except PruneSignal as prune_signal:
                 logger.info(f"Pruning state {state['state_id']} for node {node.__name__ if node else "unknown"}")
                 await prune_signal.send(self._get_prune_endpoint(state["state_id"]), self._key) # type: ignore
                 logger.info(f"Pruned state {state['state_id']} for node {node.__name__ if node else "unknown"}")
             
-            except ReQueueAfterSingal as requeue_signal:
-                logger.info(f"Requeuing state {state['state_id']} for node {node.__name__ if node else "unknown"} after {requeue_signal.timedelta}")
+            except ReQueueAfterSignal as requeue_signal:
+                logger.info(f"Requeuing state {state['state_id']} for node {node.__name__ if node else "unknown"} after {requeue_signal.delay}")
                 await requeue_signal.send(self._get_requeue_after_endpoint(state["state_id"]), self._key) # type: ignore
-                logger.info(f"Requeued state {state['state_id']} for node {node.__name__ if node else "unknown"} after {requeue_signal.timedelta}")
+                logger.info(f"Requeued state {state['state_id']} for node {node.__name__ if node else "unknown"} after {requeue_signal.delay}")
                 
             except Exception as e:
                 logger.error(f"Error executing state {state['state_id']} for node {node.__name__ if node else "unknown"}: {e}")
