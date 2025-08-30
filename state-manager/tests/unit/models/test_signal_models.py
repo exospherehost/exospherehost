@@ -77,21 +77,15 @@ class TestReEnqueueAfterRequestModel:
     def test_re_enqueue_after_request_model_zero_delay(self):
         """Test ReEnqueueAfterRequestModel with zero delay"""
         # Arrange & Act
-        delay = 0
-        model = ReEnqueueAfterRequestModel(enqueue_after=delay)
-        
-        # Assert
-        assert model.enqueue_after == delay
+        with pytest.raises(Exception):
+            ReEnqueueAfterRequestModel(enqueue_after=0)
 
     def test_re_enqueue_after_request_model_negative_delay(self):
         """Test ReEnqueueAfterRequestModel with negative delay"""
         # Arrange & Act
-        delay = -5000
-        model = ReEnqueueAfterRequestModel(enqueue_after=delay)
-        
-        # Assert
-        assert model.enqueue_after == delay
-
+        with pytest.raises(Exception):
+            ReEnqueueAfterRequestModel(enqueue_after=-5000)
+    
     def test_re_enqueue_after_request_model_large_delay(self):
         """Test ReEnqueueAfterRequestModel with large delay"""
         # Arrange & Act

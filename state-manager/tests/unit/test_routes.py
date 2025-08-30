@@ -153,13 +153,13 @@ class TestModelValidation:
 
         # Test with zero delay
         zero_data = {"enqueue_after": 0}
-        model = ReEnqueueAfterRequestModel(**zero_data)
-        assert model.enqueue_after == 0
+        with pytest.raises(Exception):
+            ReEnqueueAfterRequestModel(**zero_data)
 
         # Test with negative delay
         negative_data = {"enqueue_after": -5000}
-        model = ReEnqueueAfterRequestModel(**negative_data)
-        assert model.enqueue_after == -5000
+        with pytest.raises(Exception):
+            ReEnqueueAfterRequestModel(**negative_data)
 
         # Test with large delay
         large_data = {"enqueue_after": 86400000}
@@ -821,11 +821,9 @@ class TestRouteHandlerAPIKeyValidation:
         
         # Test cases with different delays
         test_cases = [
-            0,  # No delay
             1000,  # 1 second
             60000,  # 1 minute
-            3600000,  # 1 hour
-            -5000  # Negative delay
+            3600000  # 1 hour
         ]
         
         for delay in test_cases:

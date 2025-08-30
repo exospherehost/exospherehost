@@ -110,7 +110,7 @@ class TestReQueueAfterSignal:
         """Test re-enqueuing with zero delay"""
         # Arrange
         mock_time.time.return_value = 1000.0
-        re_enqueue_request = ReEnqueueAfterRequestModel(enqueue_after=0)
+        re_enqueue_request = ReEnqueueAfterRequestModel(enqueue_after=1)
         mock_state_any_status.save = AsyncMock()
         mock_state_class.find_one = AsyncMock(return_value=mock_state_any_status)
 
@@ -124,8 +124,8 @@ class TestReQueueAfterSignal:
 
         # Assert
         assert result.status == StateStatusEnum.CREATED
-        assert result.enqueue_after == 1000000  # 1000 * 1000 + 0
-        assert mock_state_any_status.enqueue_after == 1000000
+        assert result.enqueue_after == 1000001  # 1000 * 1000 + 0
+        assert mock_state_any_status.enqueue_after == 1000001
         assert mock_state_any_status.save.call_count == 1
 
     @patch('app.controller.re_queue_after_signal.State')
@@ -173,24 +173,13 @@ class TestReQueueAfterSignal:
     ):
         """Test re-enqueuing with negative delay (should still work)"""
         # Arrange
-        mock_time.time.return_value = 1000.0
-        re_enqueue_request = ReEnqueueAfterRequestModel(enqueue_after=-5000)  # Negative delay
-        mock_state_any_status.save = AsyncMock()
-        mock_state_class.find_one = AsyncMock(return_value=mock_state_any_status)
+        
+        with pytest.raises(Exception):
+            ReEnqueueAfterRequestModel(enqueue_after=-5000)  # Negative delay
 
-        # Act
-        result = await re_queue_after_signal(
-            mock_namespace,
-            mock_state_id,
-            re_enqueue_request,
-            mock_request_id
-        )
-
-        # Assert
-        assert result.status == StateStatusEnum.CREATED
-        assert result.enqueue_after == 995000  # 1000 * 1000 + (-5000)
-        assert mock_state_any_status.enqueue_after == 995000
-        assert mock_state_any_status.save.call_count == 1
+        with pytest.raises(Exception):
+            ReEnqueueAfterRequestModel(enqueue_after=0)
+  
 
     @patch('app.controller.re_queue_after_signal.State')
     async def test_re_queue_after_signal_database_error(
