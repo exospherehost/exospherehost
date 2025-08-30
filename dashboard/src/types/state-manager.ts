@@ -146,11 +146,15 @@ export interface StatesByRunIdResponse {
   states: StateListItem[];
 }
 
+export interface RunSummary {
+  run_id: string;
+  created_at: string;
+}
 export interface CurrentStatesResponse {
   namespace: string;
   count: number;
   states: StateListItem[];
-  run_ids: string[];
+  run_ids: RunSummary[];
 }
 
 export interface WorkflowStep {

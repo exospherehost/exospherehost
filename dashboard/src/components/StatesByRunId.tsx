@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { formatDistanceToNow } from 'date-fns';
 import { apiService } from '@/services/api';
 import { 
   CurrentStatesResponse, 
   StatesByRunIdResponse,
-  StateListItem 
+  StateListItem,
+  RunSummary 
 } from '@/types/state-manager';
 import { GraphVisualization } from './GraphVisualization';
 import { 
@@ -25,7 +27,7 @@ interface StatesByRunIdProps {
   namespace: string;
   apiKey: string;
 }
-
+// my new function 
 export const StatesByRunId: React.FC<StatesByRunIdProps> = ({
   namespace,
   apiKey
@@ -43,6 +45,13 @@ export const StatesByRunId: React.FC<StatesByRunIdProps> = ({
   return m;  
 }, [currentStates]);  
 
+const sortedRunIds = React.useMemo(() => {
+  if (!currentStates?.run_ids) return [];
+  return [...currentStates.run_ids].sort((a, b) => 
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+}, [currentStates?.run_ids]);
+
   const loadCurrentStates = async () => {
     setIsLoading(true);
     setError(null);
@@ -53,7 +62,7 @@ export const StatesByRunId: React.FC<StatesByRunIdProps> = ({
       
       // Auto-select the first run ID if available
       if (data.run_ids.length > 0 && !selectedRunId) {
-        setSelectedRunId(data.run_ids[0]);
+        setSelectedRunId(data.run_ids[0].run_id);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load current states');
@@ -177,6 +186,28 @@ export const StatesByRunId: React.FC<StatesByRunIdProps> = ({
           </button>
         </div>
       </div>
+{/* my react component for latest run id's */}
+      <div className="mt-4">
+  <h3 className="text-lg font-semibold mb-2">Latest Run ID</h3>
+  <div className="max-h-60 overflow-y-auto border rounded-lg p-2">
+    {sortedRunIds.length > 0 ? (
+      <ul className="divide-y divide-gray-200">
+        {sortedRunIds.map((run) => (
+          <li key={run.run_id} className="py-2">
+            <div className="flex justify-between items-center">
+              <span className="font-mono text-sm">{run.run_id}</span>
+              <span className="text-xs text-gray-500">
+                {formatDistanceToNow(new Date(run.created_at), { addSuffix: true })}
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p className="text-sm text-gray-500">No run IDs found</p>
+    )}
+  </div>
+</div>
 
       {/* Run ID Selector */}
       {currentStates && currentStates.run_ids.length > 0 && (
@@ -189,19 +220,19 @@ export const StatesByRunId: React.FC<StatesByRunIdProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {currentStates.run_ids.map((runId) => (
               <button
-                key={runId}
-                onClick={() => setSelectedRunId(runId)}
+                key={runId.run_id}
+                onClick={() => setSelectedRunId(runId.run_id)}
                 className={`p-4 rounded-lg border-2 transition-colors ${
-                  selectedRunId === runId
+                  selectedRunId === runId.run_id
                     ? 'border-[#031035] bg-[#031035]/5'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
                 <div className="text-sm font-medium text-gray-900 truncate">
-                  {runId}
+                  {runId.run_id}
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
-                  {countsByRunId.get(runId) ?? 0} states
+                  {countsByRunId.get(runId.run_id) ?? 0} states
                 </div>
               </button>
             ))}
