@@ -45,7 +45,7 @@ from .models.signal_models import SignalResponseModel
 from .models.signal_models import PruneRequestModel
 from .controller.prune_signal import prune_signal
 from .models.signal_models import ReEnqueueAfterRequestModel
-from .controller.re_queue_after_singal import re_queue_after_signal
+from .controller.re_queue_after_signal import re_queue_after_signal
 
 
 logger = LogsManager().get_logger()

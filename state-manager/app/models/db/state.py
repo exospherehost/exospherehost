@@ -70,26 +70,11 @@ class State(BaseDatabaseModel):
             ),
             IndexModel(
                 [
-                    ("enqueue_after", 1)
-                ],
-                name="idx_enqueue_after"
-            ),
-            IndexModel(
-                [
-                    ("status", 1)
-                ],
-                name="idx_status"
-            ),
-            IndexModel(
-                [
+                    ("enqueue_after", 1),
+                    ("status", 1),
                     ("namespace_name", 1),
-                ],
-                name="idx_namespace_name"
-            ),
-            IndexModel(
-                [
                     ("node_name", 1),
                 ],
-                name="idx_node_name"
+                name="idx_enqueue_after"
             )
         ]

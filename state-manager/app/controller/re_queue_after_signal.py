@@ -17,10 +17,7 @@ async def re_queue_after_signal(namespace_name: str, state_id: PydanticObjectId,
 
         if not state:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="State not found")
-        
-        if state.status != StateStatusEnum.CREATED:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="State is not created")
-        
+
         state.status = StateStatusEnum.CREATED
         state.enqueue_after = state.enqueue_after + body.enqueue_after
         await state.save()
