@@ -7,7 +7,7 @@ from pymongo.results import InsertManyResult
 from typing import Any, Optional
 import hashlib
 import json
-
+import time
 
 class State(BaseDatabaseModel):
     node_name: str = Field(..., description="Name of the node of the state")
@@ -18,10 +18,12 @@ class State(BaseDatabaseModel):
     status: StateStatusEnum = Field(..., description="Status of the state")
     inputs: dict[str, Any] = Field(..., description="Inputs of the state")
     outputs: dict[str, Any] = Field(..., description="Outputs of the state")
+    data: dict[str, Any] = Field(default_factory=dict, description="Data of the state")
     error: Optional[str] = Field(None, description="Error message")
     parents: dict[str, PydanticObjectId] = Field(default_factory=dict, description="Parents of the state")
     does_unites: bool = Field(default=False, description="Whether this state unites other states")
     state_fingerprint: str = Field(default="", description="Fingerprint of the state")
+    enqueue_after: int = Field(default_factory=lambda: int(time.time() * 1000), description="Unix time in milliseconds after which the state should be enqueued")
     
     @before_event([Insert, Replace, Save])
     def _generate_fingerprint(self):
@@ -65,5 +67,29 @@ class State(BaseDatabaseModel):
                 partialFilterExpression={
                     "does_unites": True
                 }
+            ),
+            IndexModel(
+                [
+                    ("enqueue_after", 1)
+                ],
+                name="idx_enqueue_after"
+            ),
+            IndexModel(
+                [
+                    ("status", 1)
+                ],
+                name="idx_status"
+            ),
+            IndexModel(
+                [
+                    ("namespace_name", 1),
+                ],
+                name="idx_namespace_name"
+            ),
+            IndexModel(
+                [
+                    ("node_name", 1),
+                ],
+                name="idx_node_name"
             )
         ]

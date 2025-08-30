@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 from ..models.enqueue_request import EnqueueRequestModel
 from ..models.enqueue_response import EnqueueResponseModel, StateModel
@@ -18,7 +19,8 @@ async def find_state(namespace_name: str, nodes: list[str]) -> State | None:
             "status": StateStatusEnum.CREATED,
             "node_name": {
                 "$in": nodes
-            }
+            },
+            "enqueue_after": {"$lte": int(time.time() * 1000)}
         },
         {
             "$set": {"status": StateStatusEnum.QUEUED}

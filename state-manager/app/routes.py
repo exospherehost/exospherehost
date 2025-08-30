@@ -40,6 +40,14 @@ from .controller.get_current_states import get_current_states
 from .models.graph_structure_models import GraphStructureResponse
 from .controller.get_graph_structure import get_graph_structure
 
+### singnals
+from .models.signal_models import SignalResponseModel
+from .models.signal_models import PruneRequestModel
+from .controller.prune_signal import prune_signal
+from .models.signal_models import ReEnqueueAfterRequestModel
+from .controller.re_queue_after_singal import re_queue_after_signal
+
+
 logger = LogsManager().get_logger()
 
 router = APIRouter(prefix="/v0/namespace/{namespace_name}")
@@ -143,6 +151,44 @@ async def errored_state_route(namespace_name: str, state_id: str, body: ErroredR
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
 
     return await errored_state(namespace_name, PydanticObjectId(state_id), body, x_exosphere_request_id)
+
+
+@router.post(
+    "/states/{state_id}/prune",
+    response_model=SignalResponseModel,
+    status_code=status.HTTP_200_OK,
+    response_description="State skipped successfully",
+    tags=["state"]
+)
+async def prune_state_route(namespace_name: str, state_id: str, body: PruneRequestModel, request: Request, api_key: str = Depends(check_api_key)):
+    x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
+
+    if api_key:
+        logger.info(f"API key is valid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+    else:
+        logger.error(f"API key is invalid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+
+    return await prune_signal(namespace_name, PydanticObjectId(state_id), body, x_exosphere_request_id)
+
+
+@router.post(
+    "/states/{state_id}/re-enqueue-after",
+    response_model=SignalResponseModel,
+    status_code=status.HTTP_200_OK,
+    response_description="State re-enqueued successfully",
+    tags=["state"]
+)
+async def re_enqueue_after_state_route(namespace_name: str, state_id: str, body: ReEnqueueAfterRequestModel, request: Request, api_key: str = Depends(check_api_key)):
+    x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
+
+    if api_key:
+        logger.info(f"API key is valid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+    else:
+        logger.error(f"API key is invalid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+    
+    return await re_queue_after_signal(namespace_name, PydanticObjectId(state_id), body, x_exosphere_request_id)
 
 
 @router.put(
