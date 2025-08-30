@@ -11,7 +11,7 @@ logger = LogsManager().get_logger()
 async def prune_signal(namespace_name: str, state_id: PydanticObjectId, body: PruneRequestModel, x_exosphere_request_id: str) -> SignalResponseModel:
 
     try:
-        logger.info(f"Recieved prune signal for state {state_id} for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+        logger.info(f"Received prune signal for state {state_id} for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
 
         state = await State.find_one(State.id == state_id)
 

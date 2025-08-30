@@ -40,7 +40,7 @@ from .controller.get_current_states import get_current_states
 from .models.graph_structure_models import GraphStructureResponse
 from .controller.get_graph_structure import get_graph_structure
 
-### singnals
+### signals
 from .models.signal_models import SignalResponseModel
 from .models.signal_models import PruneRequestModel
 from .controller.prune_signal import prune_signal
