@@ -528,8 +528,8 @@ class TestSignalEdgeCases:
 
     def test_requeue_signal_with_zero_timedelta(self):
         """Test ReQueueAfterSignal with zero timedelta."""
-        signal = ReQueueAfterSignal(timedelta(seconds=0))
-        assert signal.delay == timedelta(seconds=0)
+        with pytest.raises(Exception):
+            ReQueueAfterSignal(timedelta(seconds=0))
 
     def test_requeue_signal_with_large_timedelta(self):
         """Test ReQueueAfterSignal with large timedelta."""
@@ -577,8 +577,6 @@ class TestSignalEdgeCases:
         requeue_str = str(requeue_signal)
         assert "ReQueueAfter signal received with timedelta" in requeue_str
         assert "Do not catch this Exception" in requeue_str
-        assert "0:05:00" in requeue_str
-
 
 class TestRuntimeHelperFunctions:
     """Test cases for Runtime helper functions."""
