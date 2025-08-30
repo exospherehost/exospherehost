@@ -33,7 +33,7 @@ class TestPruneSignal:
     def mock_state_created(self):
         state = MagicMock()
         state.id = PydanticObjectId()
-        state.status = StateStatusEnum.CREATED
+        state.status = StateStatusEnum.QUEUED
         state.enqueue_after = 1234567890
         return state
 
@@ -94,7 +94,7 @@ class TestPruneSignal:
         assert exc_info.value.detail == "State not found"
 
     @patch('app.controller.prune_signal.State')
-    async def test_prune_signal_invalid_status_queued(
+    async def test_prune_signal_invalid_status_created(
         self,
         mock_state_class,
         mock_namespace,
@@ -105,7 +105,7 @@ class TestPruneSignal:
         """Test when state is in QUEUED status (invalid for pruning)"""
         # Arrange
         mock_state = MagicMock()
-        mock_state.status = StateStatusEnum.QUEUED
+        mock_state.status = StateStatusEnum.CREATED
         mock_state_class.find_one = AsyncMock(return_value=mock_state)
 
         # Act & Assert
@@ -118,7 +118,7 @@ class TestPruneSignal:
             )
         
         assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
-        assert exc_info.value.detail == "State is not created"
+        assert exc_info.value.detail == "State is not queued"
 
     @patch('app.controller.prune_signal.State')
     async def test_prune_signal_invalid_status_executed(
@@ -145,7 +145,7 @@ class TestPruneSignal:
             )
         
         assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
-        assert exc_info.value.detail == "State is not created"
+        assert exc_info.value.detail == "State is not queued"
 
     @patch('app.controller.prune_signal.State')
     async def test_prune_signal_invalid_status_errored(
@@ -172,7 +172,7 @@ class TestPruneSignal:
             )
         
         assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
-        assert exc_info.value.detail == "State is not created"
+        assert exc_info.value.detail == "State is not queued"
 
     @patch('app.controller.prune_signal.State')
     async def test_prune_signal_invalid_status_pruned(
@@ -199,7 +199,7 @@ class TestPruneSignal:
             )
         
         assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
-        assert exc_info.value.detail == "State is not created"
+        assert exc_info.value.detail == "State is not queued"
 
     @patch('app.controller.prune_signal.State')
     async def test_prune_signal_database_error(
