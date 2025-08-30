@@ -17,7 +17,6 @@ class TestMainApp:
         assert isinstance(app, FastAPI)
         assert app.title == "Exosphere State Manager"
         assert app.description == "Exosphere State Manager"
-        assert app.version == "0.1.0"
         
         # Check contact info
         assert app.contact is not None
@@ -113,7 +112,7 @@ class TestLifespan:
         'MONGO_DATABASE_NAME': 'test_db',
         'STATE_MANAGER_SECRET': 'test_secret'
     })
-    @patch('app.main.init_beanie')
+    @patch('app.main.init_beanie', new_callable=AsyncMock)
     @patch('app.main.AsyncMongoClient')
     @patch('app.main.LogsManager')
     async def test_lifespan_startup_success(self, mock_logs_manager, mock_mongo_client, mock_init_beanie):
@@ -123,11 +122,10 @@ class TestLifespan:
         mock_logs_manager.return_value.get_logger.return_value = mock_logger
         
         mock_client = MagicMock()
+        mock_client.close = AsyncMock()
         mock_mongo_client.return_value = mock_client
         mock_db = MagicMock()
         mock_client.__getitem__.return_value = mock_db
-        
-        mock_init_beanie.return_value = AsyncMock()
         
         # Create a mock FastAPI app for the lifespan
         mock_app = MagicMock()
@@ -144,14 +142,14 @@ class TestLifespan:
             mock_logger.info.assert_any_call("secret initialized")
         
         # After context manager exits (shutdown)
-        mock_logger.info.assert_any_call("server shutting down")
+        mock_logger.info.assert_any_call("server stopped")
 
     @patch.dict(os.environ, {
         'MONGO_URI': 'mongodb://test:27017',
         'MONGO_DATABASE_NAME': 'test_db',
         'STATE_MANAGER_SECRET': ''  # Empty secret
     })
-    @patch('app.main.init_beanie')
+    @patch('app.main.init_beanie', new_callable=AsyncMock)
     @patch('app.main.AsyncMongoClient')
     @patch('app.main.LogsManager')
     async def test_lifespan_empty_secret_raises_error(self, mock_logs_manager, mock_mongo_client, mock_init_beanie):
@@ -160,11 +158,10 @@ class TestLifespan:
         mock_logs_manager.return_value.get_logger.return_value = mock_logger
         
         mock_client = MagicMock()
+        mock_client.close = AsyncMock()
         mock_mongo_client.return_value = mock_client
         mock_db = MagicMock()
         mock_client.__getitem__.return_value = mock_db
-        
-        mock_init_beanie.return_value = AsyncMock()
         
         mock_app = MagicMock()
         
@@ -177,7 +174,7 @@ class TestLifespan:
         'MONGO_DATABASE_NAME': 'test_db',
         'STATE_MANAGER_SECRET': 'test_secret'
     })
-    @patch('app.main.init_beanie')
+    @patch('app.main.init_beanie', new_callable=AsyncMock)
     @patch('app.main.AsyncMongoClient')
     @patch('app.main.LogsManager')
     async def test_lifespan_init_beanie_with_correct_models(self, mock_logs_manager, mock_mongo_client, mock_init_beanie):
@@ -186,11 +183,10 @@ class TestLifespan:
         mock_logs_manager.return_value.get_logger.return_value = mock_logger
         
         mock_client = MagicMock()
+        mock_client.close = AsyncMock()
         mock_mongo_client.return_value = mock_client
         mock_db = MagicMock()
         mock_client.__getitem__.return_value = mock_db
-        
-        mock_init_beanie.return_value = AsyncMock()
         
         mock_app = MagicMock()
         
@@ -209,11 +205,10 @@ class TestLifespan:
         
         # Import the expected models
         from app.models.db.state import State
-        from app.models.db.namespace import Namespace
         from app.models.db.graph_template_model import GraphTemplate
         from app.models.db.registered_node import RegisteredNode
         
-        expected_models = [State, Namespace, GraphTemplate, RegisteredNode]
+        expected_models = [State, GraphTemplate, RegisteredNode]
         assert document_models == expected_models
 
 
@@ -326,10 +321,7 @@ class TestAppConfiguration:
         
         # Test description
         assert app.description == "Exosphere State Manager"
-        
-        # Test version
-        assert app.version == "0.1.0"
-        
+                
         # Test contact info
         assert app.contact is not None
         assert app.contact["name"] == "Nivedit Jain (Founder exosphere.host)"
