@@ -103,6 +103,7 @@ plugins:
           - exosphere/create-graph.md
           - exosphere/trigger-graph.md
           - exosphere/dashboard.md
+          - exosphere/signals.md
           - exosphere/architecture.md       
 
 markdown_extensions:
@@ -130,4 +131,5 @@ nav:
   - Create Graph: exosphere/create-graph.md
   - Trigger Graph: exosphere/trigger-graph.md  
   - Dashboard: exosphere/dashboard.md
+  - Signals: exosphere/signals.md
   - Architecture: exosphere/architecture.md
