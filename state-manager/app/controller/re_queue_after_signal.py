@@ -13,13 +13,13 @@ async def re_queue_after_signal(namespace_name: str, state_id: PydanticObjectId,
     try:
         logger.info(f"Received re-queue after signal for state {state_id} for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
 
-        state = await State.find_one(State.id == state_id)
+        state = await State.find_one(State.id == state_id, State.namespace_name == namespace_name)
 
         if not state:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="State not found")
 
         state.status = StateStatusEnum.CREATED
-        state.enqueue_after = state.enqueue_after + body.enqueue_after
+        state.enqueue_after = int(time.time() * 1000) + body.enqueue_after
         await state.save()
 
         return SignalResponseModel(status=StateStatusEnum.CREATED, enqueue_after=state.enqueue_after)
