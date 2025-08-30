@@ -15,7 +15,7 @@ def test_package_all_imports():
     """Test that __all__ contains all expected exports."""
     from exospherehost import __all__
     
-    expected_exports = ["Runtime", "BaseNode", "StateManager", "TriggerState", "VERSION"]
+    expected_exports = ["Runtime", "BaseNode", "StateManager", "TriggerState", "VERSION", "PruneSingal", "ReQueueAfterSingal"]
     
     for export in expected_exports:
         assert export in __all__, f"{export} should be in __all__"
