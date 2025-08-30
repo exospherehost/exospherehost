@@ -18,7 +18,6 @@ from .middlewares.request_id_middleware import RequestIdMiddleware
 
 # injecting models
 from .models.db.state import State
-from .models.db.namespace import Namespace
 from .models.db.graph_template_model import GraphTemplate
 from .models.db.registered_node import RegisteredNode
 
@@ -42,7 +41,7 @@ async def lifespan(app: FastAPI):
     # initializing beanie
     client = AsyncMongoClient(settings.mongo_uri)
     db = client[settings.mongo_database_name]
-    await init_beanie(db, document_models=[State, Namespace, GraphTemplate, RegisteredNode])
+    await init_beanie(db, document_models=[State, GraphTemplate, RegisteredNode])
     logger.info("beanie dbs initialized")
 
     # initialize secret
@@ -54,14 +53,15 @@ async def lifespan(app: FastAPI):
     yield
 
     # end of the server
-    logger.info("server shutting down")
+    await client.close()
+    logger.info("server stopped")
 
 
 app = FastAPI(
     lifespan=lifespan,
     title="Exosphere State Manager",
     description="Exosphere State Manager",
-    version="0.1.0",
+    version="0.0.2-beta",
     contact={
         "name": "Nivedit Jain (Founder exosphere.host)",
         "email": "nivedit@exosphere.host",
