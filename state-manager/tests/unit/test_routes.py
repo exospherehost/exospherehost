@@ -29,6 +29,8 @@ class TestRouteStructure:
         assert any('/v0/namespace/{namespace_name}/graph/{graph_name}/states/create' in path for path in paths)
         assert any('/v0/namespace/{namespace_name}/states/{state_id}/executed' in path for path in paths)
         assert any('/v0/namespace/{namespace_name}/states/{state_id}/errored' in path for path in paths)
+        assert any('/v0/namespace/{namespace_name}/states/{state_id}/prune' in path for path in paths)
+        assert any('/v0/namespace/{namespace_name}/states/{state_id}/re-enqueue-after' in path for path in paths)
         
         # Graph template routes (there are two /graph/{graph_name} routes - GET and PUT)
         assert any('/v0/namespace/{namespace_name}/graph/{graph_name}' in path for path in paths)
@@ -108,6 +110,84 @@ class TestModelValidation:
         assert model.run_id == "test-run-id"
         assert len(model.states) == 1
         assert model.states[0].identifier == "node1"
+
+    def test_prune_request_model_validation(self):
+        """Test PruneRequestModel validation"""
+        from app.models.signal_models import PruneRequestModel
+        
+        # Test with valid data
+        valid_data = {
+            "data": {"key": "value", "nested": {"data": "test"}}
+        }
+        model = PruneRequestModel(**valid_data)
+        assert model.data == {"key": "value", "nested": {"data": "test"}}
+
+        # Test with empty data
+        empty_data = {"data": {}}
+        model = PruneRequestModel(**empty_data)
+        assert model.data == {}
+
+        # Test with complex data
+        complex_data = {
+            "data": {
+                "string": "test",
+                "number": 42,
+                "boolean": True,
+                "list": [1, 2, 3]
+            }
+        }
+        model = PruneRequestModel(**complex_data)
+        assert model.data["string"] == "test"
+        assert model.data["number"] == 42
+        assert model.data["boolean"] is True
+        assert model.data["list"] == [1, 2, 3]
+
+    def test_re_enqueue_after_request_model_validation(self):
+        """Test ReEnqueueAfterRequestModel validation"""
+        from app.models.signal_models import ReEnqueueAfterRequestModel
+        
+        # Test with valid data
+        valid_data = {"enqueue_after": 5000}
+        model = ReEnqueueAfterRequestModel(**valid_data)
+        assert model.enqueue_after == 5000
+
+        # Test with zero delay
+        zero_data = {"enqueue_after": 0}
+        model = ReEnqueueAfterRequestModel(**zero_data)
+        assert model.enqueue_after == 0
+
+        # Test with negative delay
+        negative_data = {"enqueue_after": -5000}
+        model = ReEnqueueAfterRequestModel(**negative_data)
+        assert model.enqueue_after == -5000
+
+        # Test with large delay
+        large_data = {"enqueue_after": 86400000}
+        model = ReEnqueueAfterRequestModel(**large_data)
+        assert model.enqueue_after == 86400000
+
+    def test_signal_response_model_validation(self):
+        """Test SignalResponseModel validation"""
+        from app.models.signal_models import SignalResponseModel
+        from app.models.state_status_enum import StateStatusEnum
+        
+        # Test with valid data
+        valid_data = {
+            "enqueue_after": 1234567890,
+            "status": "PRUNED"
+        }
+        model = SignalResponseModel(**valid_data)
+        assert model.enqueue_after == 1234567890
+        assert model.status == StateStatusEnum.PRUNED
+
+        # Test with CREATED status
+        created_data = {
+            "enqueue_after": 1234567890,
+            "status": "CREATED"
+        }
+        model = SignalResponseModel(**created_data)
+        assert model.enqueue_after == 1234567890
+        assert model.status == StateStatusEnum.CREATED
 
     def test_executed_request_model_validation(self):
         """Test ExecutedRequestModel validation"""
@@ -331,7 +411,7 @@ class TestRouteHandlerAPIKeyValidation:
         
         # Act & Assert
         with pytest.raises(HTTPException) as exc_info:
-            await enqueue_state("test_namespace", body, mock_request, None)
+            await enqueue_state("test_namespace", body, mock_request, None) # type: ignore
         
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Invalid API key"
@@ -385,7 +465,7 @@ class TestRouteHandlerAPIKeyValidation:
         
         # Act & Assert
         with pytest.raises(HTTPException) as exc_info:
-            await trigger_graph_route("test_namespace", "test_graph", body, mock_request, None)
+            await trigger_graph_route("test_namespace", "test_graph", body, mock_request, None) # type: ignore
         
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Invalid API key"
@@ -609,4 +689,158 @@ class TestRouteHandlerAPIKeyValidation:
         assert result.namespace == "test_namespace"
         assert result.run_id == "test_run"
         assert result.count == 1
-        assert len(result.states) == 1 
+        assert len(result.states) == 1
+
+    @patch('app.routes.prune_signal')
+    async def test_prune_state_route_with_valid_api_key(self, mock_prune_signal, mock_request):
+        """Test prune_state_route with valid API key"""
+        from app.routes import prune_state_route
+        from app.models.signal_models import PruneRequestModel, SignalResponseModel
+        from app.models.state_status_enum import StateStatusEnum
+        from beanie import PydanticObjectId
+        
+        # Arrange
+        state_id = "507f1f77bcf86cd799439011"
+        prune_request = PruneRequestModel(data={"key": "value"})
+        expected_response = SignalResponseModel(
+            status=StateStatusEnum.PRUNED,
+            enqueue_after=1234567890
+        )
+        mock_prune_signal.return_value = expected_response
+        
+        # Act
+        result = await prune_state_route("test_namespace", state_id, prune_request, mock_request, "valid_key")
+        
+        # Assert
+        mock_prune_signal.assert_called_once_with("test_namespace", PydanticObjectId(state_id), prune_request, "test-request-id")
+        assert result == expected_response
+
+    @patch('app.routes.prune_signal')
+    async def test_prune_state_route_with_invalid_api_key(self, mock_prune_signal, mock_request):
+        """Test prune_state_route with invalid API key"""
+        from app.routes import prune_state_route
+        from app.models.signal_models import PruneRequestModel
+        from fastapi import HTTPException, status
+        
+        # Arrange
+        state_id = "507f1f77bcf86cd799439011"
+        prune_request = PruneRequestModel(data={"key": "value"})
+        
+        # Act & Assert
+        with pytest.raises(HTTPException) as exc_info:
+            await prune_state_route("test_namespace", state_id, prune_request, mock_request, None) # type: ignore
+        
+        assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
+        assert exc_info.value.detail == "Invalid API key"
+        mock_prune_signal.assert_not_called()
+
+    @patch('app.routes.re_queue_after_signal')
+    async def test_re_enqueue_after_state_route_with_valid_api_key(self, mock_re_queue_after_signal, mock_request):
+        """Test re_enqueue_after_state_route with valid API key"""
+        from app.routes import re_enqueue_after_state_route
+        from app.models.signal_models import ReEnqueueAfterRequestModel, SignalResponseModel
+        from app.models.state_status_enum import StateStatusEnum
+        from beanie import PydanticObjectId
+        
+        # Arrange
+        state_id = "507f1f77bcf86cd799439011"
+        re_enqueue_request = ReEnqueueAfterRequestModel(enqueue_after=5000)
+        expected_response = SignalResponseModel(
+            status=StateStatusEnum.CREATED,
+            enqueue_after=1234567890
+        )
+        mock_re_queue_after_signal.return_value = expected_response
+        
+        # Act
+        result = await re_enqueue_after_state_route("test_namespace", state_id, re_enqueue_request, mock_request, "valid_key")
+        
+        # Assert
+        mock_re_queue_after_signal.assert_called_once_with("test_namespace", PydanticObjectId(state_id), re_enqueue_request, "test-request-id")
+        assert result == expected_response
+
+    @patch('app.routes.re_queue_after_signal')
+    async def test_re_enqueue_after_state_route_with_invalid_api_key(self, mock_re_queue_after_signal, mock_request):
+        """Test re_enqueue_after_state_route with invalid API key"""
+        from app.routes import re_enqueue_after_state_route
+        from app.models.signal_models import ReEnqueueAfterRequestModel
+        from fastapi import HTTPException, status
+        
+        # Arrange
+        state_id = "507f1f77bcf86cd799439011"
+        re_enqueue_request = ReEnqueueAfterRequestModel(enqueue_after=5000)
+        
+        # Act & Assert
+        with pytest.raises(HTTPException) as exc_info:
+            await re_enqueue_after_state_route("test_namespace", state_id, re_enqueue_request, mock_request, None) # type: ignore
+        
+        assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
+        assert exc_info.value.detail == "Invalid API key"
+        mock_re_queue_after_signal.assert_not_called()
+
+    @patch('app.routes.prune_signal')
+    async def test_prune_state_route_with_different_data(self, mock_prune_signal, mock_request):
+        """Test prune_state_route with different data payloads"""
+        from app.routes import prune_state_route
+        from app.models.signal_models import PruneRequestModel, SignalResponseModel
+        from app.models.state_status_enum import StateStatusEnum
+        from beanie import PydanticObjectId
+        
+        # Test cases with different data
+        test_cases = [
+            {"simple": "value"},
+            {"nested": {"data": "test"}},
+            {"list": [1, 2, 3]},
+            {"boolean": True, "number": 42},
+            {}  # Empty data
+        ]
+        
+        for test_data in test_cases:
+            # Arrange
+            state_id = "507f1f77bcf86cd799439011"
+            prune_request = PruneRequestModel(data=test_data)
+            expected_response = SignalResponseModel(
+                status=StateStatusEnum.PRUNED,
+                enqueue_after=1234567890
+            )
+            mock_prune_signal.return_value = expected_response
+            
+            # Act
+            result = await prune_state_route("test_namespace", state_id, prune_request, mock_request, "valid_key")
+            
+            # Assert
+            mock_prune_signal.assert_called_with("test_namespace", PydanticObjectId(state_id), prune_request, "test-request-id")
+            assert result == expected_response
+
+    @patch('app.routes.re_queue_after_signal')
+    async def test_re_enqueue_after_state_route_with_different_delays(self, mock_re_queue_after_signal, mock_request):
+        """Test re_enqueue_after_state_route with different delay values"""
+        from app.routes import re_enqueue_after_state_route
+        from app.models.signal_models import ReEnqueueAfterRequestModel, SignalResponseModel
+        from app.models.state_status_enum import StateStatusEnum
+        from beanie import PydanticObjectId
+        
+        # Test cases with different delays
+        test_cases = [
+            0,  # No delay
+            1000,  # 1 second
+            60000,  # 1 minute
+            3600000,  # 1 hour
+            -5000  # Negative delay
+        ]
+        
+        for delay in test_cases:
+            # Arrange
+            state_id = "507f1f77bcf86cd799439011"
+            re_enqueue_request = ReEnqueueAfterRequestModel(enqueue_after=delay)
+            expected_response = SignalResponseModel(
+                status=StateStatusEnum.CREATED,
+                enqueue_after=1234567890
+            )
+            mock_re_queue_after_signal.return_value = expected_response
+            
+            # Act
+            result = await re_enqueue_after_state_route("test_namespace", state_id, re_enqueue_request, mock_request, "valid_key")
+            
+            # Assert
+            mock_re_queue_after_signal.assert_called_with("test_namespace", PydanticObjectId(state_id), re_enqueue_request, "test-request-id")
+            assert result == expected_response 
