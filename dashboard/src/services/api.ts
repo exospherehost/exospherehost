@@ -18,7 +18,7 @@ import {
 } from '@/types/state-manager';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL || 'http://localhost:8000';
-
+const DEFAULT_API_KEY = process.env.NEXT_PUBLIC_EXOSPHERE_API_KEY || '';
 class ApiService {
   private async makeRequest<T>(
     endpoint: string,
@@ -26,18 +26,26 @@ class ApiService {
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     
+    const headers = new Headers(options.headers);
+    headers.set('Content-Type', 'application/json');
+    headers.set('x-api-key', process.env.NEXT_PUBLIC_EXOSPHERE_API_KEY || '');
+  
     const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
       ...options,
+      headers,
     });
-
+  
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({}));
+      console.error('API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        url,
+        errorData
+      });
+      throw new Error(errorData.detail || `API request failed: ${response.statusText}`);
     }
-
+  
     return response.json();
   }
 
@@ -52,7 +60,7 @@ class ApiService {
       {
         method: 'PUT',
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': DEFAULT_API_KEY,
         },
         body: JSON.stringify(request),
       }
@@ -88,7 +96,7 @@ class ApiService {
       {
         method: 'GET',
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': DEFAULT_API_KEY,
         },
       }
     );
@@ -106,7 +114,7 @@ class ApiService {
       {
         method: 'POST',
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': DEFAULT_API_KEY,
         },
         body: JSON.stringify(request),
       }
@@ -123,7 +131,7 @@ class ApiService {
       {
         method: 'POST',
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': DEFAULT_API_KEY,
         },
         body: JSON.stringify(request),
       }
@@ -141,7 +149,7 @@ class ApiService {
       {
         method: 'POST',
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': DEFAULT_API_KEY,
         },
         body: JSON.stringify(request),
       }
@@ -158,7 +166,7 @@ class ApiService {
       {
         method: 'GET',
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': DEFAULT_API_KEY,
         },
       }
     );
@@ -174,7 +182,7 @@ class ApiService {
       {
         method: 'GET',
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': DEFAULT_API_KEY,
         },
       }
     );
@@ -189,7 +197,7 @@ class ApiService {
       {
         method: 'GET',
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': DEFAULT_API_KEY,
         },
       }
     );
@@ -205,7 +213,7 @@ class ApiService {
       {
         method: 'GET',
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': DEFAULT_API_KEY,
         },
       }
     );
@@ -221,7 +229,7 @@ class ApiService {
       {
         method: 'GET',
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': DEFAULT_API_KEY,
         },
       }
     );
@@ -237,7 +245,7 @@ class ApiService {
       {
         method: 'GET',
         headers: {
-          'X-API-Key': apiKey,
+          'X-API-Key': DEFAULT_API_KEY,
         },
       }
     );
