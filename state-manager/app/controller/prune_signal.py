@@ -18,8 +18,8 @@ async def prune_signal(namespace_name: str, state_id: PydanticObjectId, body: Pr
         if not state:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="State not found")
         
-        if state.status != StateStatusEnum.CREATED:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="State is not created")
+        if state.status != StateStatusEnum.QUEUED:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="State is not queued")
         
         state.status = StateStatusEnum.PRUNED
         state.data = body.data
