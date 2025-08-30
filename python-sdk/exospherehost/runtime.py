@@ -8,6 +8,7 @@ from typing import List, Dict
 from pydantic import BaseModel
 from .node.BaseNode import BaseNode
 from aiohttp import ClientSession
+from .signals import PruneSingal, ReQueueAfterSingal
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +160,18 @@ class Runtime:
         Construct the endpoint URL for getting secrets.
         """
         return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/state/{state_id}/secrets"
+    
+    def _get_prune_endpoint(self, state_id: str):
+        """
+        Construct the endpoint URL for pruning a state.
+        """
+        return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/state/{state_id}/prune"
+    
+    def _get_requeue_after_endpoint(self, state_id: str):
+        """
+        Construct the endpoint URL for requeuing a state after a timedelta.
+        """
+        return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/state/{state_id}/re-enqueue-after"
 
     async def _register(self):
         """
@@ -395,6 +408,16 @@ class Runtime:
 
                 await self._notify_executed(state["state_id"], outputs)
                 logger.info(f"Notified executed state {state['state_id']} for node {node.__name__ if node else "unknown"}")
+            
+            except PruneSingal as prune_signal:
+                logger.info(f"Pruning state {state['state_id']} for node {node.__name__ if node else "unknown"}")
+                await prune_signal.send(self._get_prune_endpoint(state["state_id"]), self._key) # type: ignore
+                logger.info(f"Pruned state {state['state_id']} for node {node.__name__ if node else "unknown"}")
+            
+            except ReQueueAfterSingal as requeue_signal:
+                logger.info(f"Requeuing state {state['state_id']} for node {node.__name__ if node else "unknown"} after {requeue_signal.timedelta}")
+                await requeue_signal.send(self._get_requeue_after_endpoint(state["state_id"]), self._key) # type: ignore
+                logger.info(f"Requeued state {state['state_id']} for node {node.__name__ if node else "unknown"} after {requeue_signal.timedelta}")
                 
             except Exception as e:
                 logger.error(f"Error executing state {state['state_id']} for node {node.__name__ if node else "unknown"}: {e}")
