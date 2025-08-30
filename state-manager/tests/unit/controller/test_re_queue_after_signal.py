@@ -1,11 +1,10 @@
 import pytest
-import time
 from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi import HTTPException, status
 from beanie import PydanticObjectId
 
 from app.controller.re_queue_after_signal import re_queue_after_signal
-from app.models.signal_models import ReEnqueueAfterRequestModel, SignalResponseModel
+from app.models.signal_models import ReEnqueueAfterRequestModel
 from app.models.state_status_enum import StateStatusEnum
 
 

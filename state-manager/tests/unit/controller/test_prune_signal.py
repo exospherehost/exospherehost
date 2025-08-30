@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 from beanie import PydanticObjectId
 
 from app.controller.prune_signal import prune_signal
-from app.models.signal_models import PruneRequestModel, SignalResponseModel
+from app.models.signal_models import PruneRequestModel
 from app.models.state_status_enum import StateStatusEnum
 
 
