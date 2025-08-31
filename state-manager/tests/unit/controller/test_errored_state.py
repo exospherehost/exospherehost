@@ -411,7 +411,7 @@ class TestErroredState:
 
         # Assert
         assert result.status == StateStatusEnum.ERRORED
-        assert result.retry_created == False
+        assert not result.retry_created
         assert mock_state_queued.status == StateStatusEnum.ERRORED
         assert mock_state_queued.error == mock_errored_request.error
 
@@ -460,7 +460,7 @@ class TestErroredState:
 
         # Assert
         assert result.status == StateStatusEnum.ERRORED
-        assert result.retry_created == False
+        assert not result.retry_created
         assert mock_state.status == StateStatusEnum.ERRORED
         assert mock_state.error == mock_errored_request.error
         # Verify that State constructor was not called (no retry created)
