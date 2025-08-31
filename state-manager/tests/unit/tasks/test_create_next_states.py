@@ -233,9 +233,9 @@ class TestCheckUnitesSatisfied:
         parents = {"parent1": PydanticObjectId()}
         
         with patch('app.tasks.create_next_states.State') as mock_state:
-            mock_find = AsyncMock()
-            mock_find.count.return_value = 1
-            mock_state.find.return_value = mock_find
+            mock_find_one = AsyncMock()
+            mock_find_one.return_value = {"some": "state"}  # Return a non-None value to indicate pending state
+            mock_state.find_one = mock_find_one
             
             result = await check_unites_satisfied("test_namespace", "test_graph", node_template, parents)
             
@@ -255,9 +255,9 @@ class TestCheckUnitesSatisfied:
         parents = {"parent1": PydanticObjectId()}
         
         with patch('app.tasks.create_next_states.State') as mock_state:
-            mock_find = AsyncMock()
-            mock_find.count.return_value = 0
-            mock_state.find.return_value = mock_find
+            mock_find_one = AsyncMock()
+            mock_find_one.return_value = None  # Return None to indicate no pending state
+            mock_state.find_one = mock_find_one
             
             result = await check_unites_satisfied("test_namespace", "test_graph", node_template, parents)
             
@@ -277,9 +277,9 @@ class TestCheckUnitesSatisfied:
         parents = {"parent1": PydanticObjectId()}
         
         with patch('app.tasks.create_next_states.State') as mock_state:
-            mock_find = AsyncMock()
-            mock_find.count.return_value = 1  # Found pending states
-            mock_state.find.return_value = mock_find
+            mock_find_one = AsyncMock()
+            mock_find_one.return_value = {"some": "state"}  # Return a non-None value to indicate pending state
+            mock_state.find_one = mock_find_one
             
             result = await check_unites_satisfied("test_namespace", "test_graph", node_template, parents)
             
@@ -299,9 +299,9 @@ class TestCheckUnitesSatisfied:
         parents = {"parent1": PydanticObjectId()}
         
         with patch('app.tasks.create_next_states.State') as mock_state:
-            mock_find = AsyncMock()
-            mock_find.count.return_value = 0  # No pending states
-            mock_state.find.return_value = mock_find
+            mock_find_one = AsyncMock()
+            mock_find_one.return_value = None  # Return None to indicate no pending state
+            mock_state.find_one = mock_find_one
             
             result = await check_unites_satisfied("test_namespace", "test_graph", node_template, parents)
             
