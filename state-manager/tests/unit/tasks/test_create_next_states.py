@@ -9,7 +9,7 @@ from app.tasks.create_next_states import (
 )
 from app.models.dependent_string import Dependent, DependentString
 from app.models.state_status_enum import StateStatusEnum
-from app.models.node_template_model import NodeTemplate, Unites
+from app.models.node_template_model import NodeTemplate, Unites, UnitesStrategyEnum
 from pydantic import BaseModel
 
 
@@ -257,6 +257,50 @@ class TestCheckUnitesSatisfied:
         with patch('app.tasks.create_next_states.State') as mock_state:
             mock_find = AsyncMock()
             mock_find.count.return_value = 0
+            mock_state.find.return_value = mock_find
+            
+            result = await check_unites_satisfied("test_namespace", "test_graph", node_template, parents)
+            
+            assert result is True
+
+    @pytest.mark.asyncio
+    async def test_check_unites_satisfied_all_done_strategy_pending_states(self):
+        """Test when there are pending states for ALL_DONE strategy"""
+        node_template = NodeTemplate(
+            node_name="test_node",
+            identifier="test_id",
+            namespace="test",
+            inputs={},
+            next_nodes=None,
+            unites=Unites(identifier="parent1", strategy=UnitesStrategyEnum.ALL_DONE)
+        )
+        parents = {"parent1": PydanticObjectId()}
+        
+        with patch('app.tasks.create_next_states.State') as mock_state:
+            mock_find = AsyncMock()
+            mock_find.count.return_value = 1  # Found pending states
+            mock_state.find.return_value = mock_find
+            
+            result = await check_unites_satisfied("test_namespace", "test_graph", node_template, parents)
+            
+            assert result is False
+
+    @pytest.mark.asyncio
+    async def test_check_unites_satisfied_all_done_strategy_no_pending_states(self):
+        """Test when there are no pending states for ALL_DONE strategy"""
+        node_template = NodeTemplate(
+            node_name="test_node",
+            identifier="test_id",
+            namespace="test",
+            inputs={},
+            next_nodes=None,
+            unites=Unites(identifier="parent1", strategy=UnitesStrategyEnum.ALL_DONE)
+        )
+        parents = {"parent1": PydanticObjectId()}
+        
+        with patch('app.tasks.create_next_states.State') as mock_state:
+            mock_find = AsyncMock()
+            mock_find.count.return_value = 0  # No pending states
             mock_state.find.return_value = mock_find
             
             result = await check_unites_satisfied("test_namespace", "test_graph", node_template, parents)
