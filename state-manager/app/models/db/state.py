@@ -24,6 +24,7 @@ class State(BaseDatabaseModel):
     does_unites: bool = Field(default=False, description="Whether this state unites other states")
     state_fingerprint: str = Field(default="", description="Fingerprint of the state")
     enqueue_after: int = Field(default_factory=lambda: int(time.time() * 1000), gt=0, description="Unix time in milliseconds after which the state should be enqueued")
+    retry_count: int = Field(default=0, description="Number of times the state has been retried")
     
     @before_event([Insert, Replace, Save])
     def _generate_fingerprint(self):
@@ -37,6 +38,7 @@ class State(BaseDatabaseModel):
             "identifier": self.identifier,
             "graph_name": self.graph_name,
             "run_id": self.run_id,
+            "retry_count": self.retry_count,
             "parents": {k: str(v) for k, v in self.parents.items()},
         }
         payload = json.dumps(

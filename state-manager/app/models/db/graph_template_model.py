@@ -11,7 +11,7 @@ from ..graph_template_validation_status import GraphTemplateValidationStatus
 from ..node_template_model import NodeTemplate
 from app.utils.encrypter import get_encrypter
 from app.models.dependent_string import DependentString
-
+from app.models.retry_policy_model import RetryPolicyModel
 
 class GraphTemplate(BaseDatabaseModel):
     name: str = Field(..., description="Name of the graph")
@@ -20,6 +20,7 @@ class GraphTemplate(BaseDatabaseModel):
     validation_status: GraphTemplateValidationStatus = Field(..., description="Validation status of the graph")
     validation_errors: List[str] = Field(default_factory=list, description="Validation errors of the graph")
     secrets: Dict[str, str] = Field(default_factory=dict, description="Secrets of the graph")
+    retry_policy: RetryPolicyModel = Field(default_factory=RetryPolicyModel, description="Retry policy of the graph")
 
     _node_by_identifier: Dict[str, NodeTemplate] | None = PrivateAttr(default=None)
     _parents_by_identifier: Dict[str, set[str]] | None = PrivateAttr(default=None) # type: ignore
