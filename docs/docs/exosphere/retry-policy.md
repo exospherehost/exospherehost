@@ -229,6 +229,7 @@ def _cap(value: int) -> int:
 ```
 
 **Behavior:**
+
 - If `max_delay` is set, all calculated delays are capped at this value
 - If `max_delay` is `null` (default), no capping is applied
 - The capping is applied after all strategy calculations.
@@ -238,6 +239,7 @@ def _cap(value: int) -> int:
 Consider an exponential strategy with `backoff_factor: 2000`, `exponent: 2`, and `max_delay: 10000`:
 
 **With capping:**
+
 - Retry 1: 2000ms
 - Retry 2: 4000ms
 - Retry 3: 8000ms
