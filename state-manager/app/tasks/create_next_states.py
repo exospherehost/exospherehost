@@ -1,6 +1,6 @@
 from beanie import PydanticObjectId
 from pymongo.errors import DuplicateKeyError, BulkWriteError
-from beanie.operators import In, NE, NotIn
+from beanie.operators import In, NE
 from app.singletons.logs_manager import LogsManager
 from app.models.db.graph_template_model import GraphTemplate
 from app.models.db.state import State
