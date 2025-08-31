@@ -11,7 +11,7 @@ class UnitesStrategyEnum(str, Enum):
 
 class Unites(BaseModel):
     identifier: str = Field(..., description="Identifier of the node")
-    strategy: UnitesStrategyEnum = Field(..., description="Strategy of the unites")
+    strategy: UnitesStrategyEnum = Field(default=UnitesStrategyEnum.ALL_SUCCESS, description="Strategy of the unites")
 
 
 class NodeTemplate(BaseModel):
