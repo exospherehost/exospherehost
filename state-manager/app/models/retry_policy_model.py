@@ -1,12 +1,59 @@
 from pydantic import BaseModel, Field
 from enum import Enum
+import random
 
-class RetryMethod(str, Enum):
+class RetryStrategy(str, Enum):
     EXPONENTIAL = "EXPONENTIAL"
+    EXPONENTIAL_FULL_JITTER = "EXPONENTIAL_FULL_JITTER"
+    EXPONENTIAL_EQUAL_JITTER = "EXPONENTIAL_EQUAL_JITTER"
+
     LINEAR = "LINEAR"
+    LINEAR_FULL_JITTER = "LINEAR_FULL_JITTER"
+    LINEAR_EQUAL_JITTER = "LINEAR_EQUAL_JITTER"
+
     FIXED = "FIXED"
+    FIXED_FULL_JITTER = "FIXED_FULL_JITTER"
+    FIXED_EQUAL_JITTER = "FIXED_EQUAL_JITTER"
 
 class RetryPolicyModel(BaseModel):
     max_retries: int = Field(default=3, description="The maximum number of retries", ge=0)
-    method: RetryMethod = Field(default=RetryMethod.EXPONENTIAL, description="The method of retry")
-    backoff_factor: int = Field(default=2, description="The backoff factor in seconds (default: 2 = 2 seconds)", gt=0)
+    strategy: RetryStrategy = Field(default=RetryStrategy.EXPONENTIAL, description="The method of retry")
+    backoff_factor: int = Field(default=2000, description="The backoff factor in milliseconds (default: 2000 = 2 seconds)", gt=0)
+    exponent: int = Field(default=2, description="The exponent for the exponential retry strategy", gt=0)
+
+    def compute_delay(self, retry_count: int) -> int:
+        if self.strategy == RetryStrategy.EXPONENTIAL:
+            return (self.backoff_factor * (self.exponent ** retry_count))
+        
+        elif self.strategy == RetryStrategy.EXPONENTIAL_FULL_JITTER:
+            base = self.backoff_factor * (self.exponent ** retry_count)
+            return int(random.uniform(0, base))
+        
+        elif self.strategy == RetryStrategy.EXPONENTIAL_EQUAL_JITTER:
+            base = self.backoff_factor * (self.exponent ** retry_count)
+            return int(base/2 + random.uniform(0, base / 2))
+        
+        elif self.strategy == RetryStrategy.LINEAR:
+            return (self.backoff_factor * retry_count)
+        
+        elif self.strategy == RetryStrategy.LINEAR_FULL_JITTER:
+            base = self.backoff_factor * retry_count
+            return int(random.uniform(0, base))
+
+        elif self.strategy == RetryStrategy.LINEAR_EQUAL_JITTER:
+            base = self.backoff_factor * retry_count
+            return int(base/2 + random.uniform(0, base / 2))
+
+        elif self.strategy == RetryStrategy.FIXED:
+            return self.backoff_factor
+        
+        elif self.strategy == RetryStrategy.FIXED_FULL_JITTER:
+            base = self.backoff_factor
+            return int(random.uniform(0, base))
+
+        elif self.strategy == RetryStrategy.FIXED_EQUAL_JITTER:
+            base = self.backoff_factor
+            return int(base/2 + random.uniform(0, base / 2))
+
+        else:
+            raise Exception("Invalid retry strategy")

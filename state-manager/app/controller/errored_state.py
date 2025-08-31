@@ -1,3 +1,5 @@
+import time
+
 from app.models.errored_models import ErroredRequestModel, ErroredResponseModel
 from fastapi import HTTPException, status
 from beanie import PydanticObjectId
@@ -5,21 +7,9 @@ from beanie import PydanticObjectId
 from app.models.db.state import State
 from app.models.state_status_enum import StateStatusEnum
 from app.singletons.logs_manager import LogsManager
-from app.models.retry_policy_model import RetryPolicyModel, RetryMethod
 from app.models.db.graph_template_model import GraphTemplate
 
 logger = LogsManager().get_logger()
-
-def _calculate_enqueue_after(retry_policy: RetryPolicyModel, retry_count: int) -> int:
-    # convert seconds to milliseconds
-    if retry_policy.method == RetryMethod.FIXED:
-        return (retry_policy.backoff_factor * 1000)
-    elif retry_policy.method == RetryMethod.LINEAR:
-        return (retry_policy.backoff_factor * retry_count) * 1000
-    elif retry_policy.method == RetryMethod.EXPONENTIAL:
-        return (retry_policy.backoff_factor ** retry_count) * 1000
-    else:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid retry method")
 
 async def errored_state(namespace_name: str, state_id: PydanticObjectId, body: ErroredRequestModel, x_exosphere_request_id: str) -> ErroredResponseModel:
 
@@ -49,11 +39,11 @@ async def errored_state(namespace_name: str, state_id: PydanticObjectId, body: E
                 run_id=state.run_id,
                 status=StateStatusEnum.CREATED,
                 inputs=state.inputs,
-                outputs=state.outputs,
-                error=body.error,
+                outputs={},
+                error=None,
                 parents=state.parents,
                 does_unites=state.does_unites,
-                enqueue_after=state.enqueue_after + _calculate_enqueue_after(graph_template.retry_policy, state.retry_count + 1),
+                enqueue_after= int(time.time() * 1000) + graph_template.retry_policy.compute_delay(state.retry_count + 1),
                 retry_count=state.retry_count + 1
             )
             retry_state = await retry_state.insert()
