@@ -392,4 +392,4 @@ Retry policies work alongside Exosphere's signaling system:
 
 - Nodes can still raise `PruneSignal` to stop retries immediately
 - Nodes can raise `ReQueueAfterSignal` to re-queue after some time. This will not mark nodes as failures.
-- The retry count is preserved when using signals. 
+- When a node is re-queued using `ReQueueAfterSignal`, the `retry_count` is not incremented. The existing count is carried over to the new state.
