@@ -20,7 +20,7 @@ class RetryPolicyModel(BaseModel):
     strategy: RetryStrategy = Field(default=RetryStrategy.EXPONENTIAL, description="The method of retry")
     backoff_factor: int = Field(default=2000, description="The backoff factor in milliseconds (default: 2000 = 2 seconds)", gt=0)
     exponent: int = Field(default=2, description="The exponent for the exponential retry strategy", gt=0)
-    max_delay: int | None = Field(default=None, description="The maximum delay in milliseconds (default: 3600000 = 1 hour)", gt=0)
+    max_delay: int | None = Field(default=None, description="The maximum delay in milliseconds (no default limit when None)", gt=0)
 
     def compute_delay(self, retry_count: int) -> int:
 
