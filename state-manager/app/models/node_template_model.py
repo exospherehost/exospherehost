@@ -1,10 +1,17 @@
 from pydantic import Field, BaseModel, field_validator
 from typing import Any, Optional, List
 from .dependent_string import DependentString
+from enum import Enum
+
+
+class UnitesStrategyEnum(str, Enum):
+    ALL_SUCCESS = "ALL_SUCCESS"
+    ALL_DONE = "ALL_DONE"
 
 
 class Unites(BaseModel):
     identifier: str = Field(..., description="Identifier of the node")
+    strategy: UnitesStrategyEnum = Field(..., description="Strategy of the unites")
 
 
 class NodeTemplate(BaseModel):

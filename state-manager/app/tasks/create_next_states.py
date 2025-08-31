@@ -1,6 +1,6 @@
 from beanie import PydanticObjectId
 from pymongo.errors import DuplicateKeyError, BulkWriteError
-from beanie.operators import In, NE
+from beanie.operators import In, NE, NotIn
 from app.singletons.logs_manager import LogsManager
 from app.models.db.graph_template_model import GraphTemplate
 from app.models.db.state import State
@@ -8,6 +8,7 @@ from app.models.state_status_enum import StateStatusEnum
 from app.models.node_template_model import NodeTemplate
 from app.models.db.registered_node import RegisteredNode
 from app.models.dependent_string import DependentString
+from app.models.node_template_model import UnitesStrategyEnum
 from json_schema_to_pydantic import create_model
 from pydantic import BaseModel
 from typing import Type
@@ -30,7 +31,7 @@ async def check_unites_satisfied(namespace: str, graph_name: str, node_template:
     if not unites_id:
         raise ValueError(f"Unit identifier not found in parents: {node_template.unites.identifier}")
     else:
-        if await State.find(
+        if node_template.unites.strategy == UnitesStrategyEnum.ALL_SUCCESS and await State.find(
                 State.namespace_name == namespace,
                 State.graph_name == graph_name,
                 NE(State.status, StateStatusEnum.SUCCESS),
@@ -39,6 +40,18 @@ async def check_unites_satisfied(namespace: str, graph_name: str, node_template:
                 }
             ).count() > 0:
                 return False
+        
+        if node_template.unites.strategy == UnitesStrategyEnum.ALL_DONE and await State.find(
+                State.namespace_name == namespace,
+                State.graph_name == graph_name,
+                In(State.status, [StateStatusEnum.CREATED, StateStatusEnum.QUEUED, StateStatusEnum.EXECUTED]),
+                {
+                    f"parents.{node_template.unites.identifier}": unites_id
+                }
+            ).count() > 0:
+                return False
+        
+        
     return True
 
 
