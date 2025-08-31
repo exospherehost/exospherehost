@@ -336,7 +336,7 @@ Retries are automatically triggered when:
 
 1. A node execution fails with an error
 2. The current retry count is less than `max_retries`
-3. The state status is `QUEUED` or `EXECUTED`
+3. The state status is `QUEUED`
 
 The retry mechanism:
 
