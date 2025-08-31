@@ -30,7 +30,7 @@ class RetryPolicyModel(BaseModel):
             return value
 
         if retry_count < 1:
-            raise ValueError(f"Retry count must be greater than 1, got {retry_count}")
+            raise ValueError(f"Retry count must be greater than or equal to 1, got {retry_count}")
         
         if self.strategy == RetryStrategy.EXPONENTIAL:
             return _cap(self.backoff_factor * (self.exponent ** (retry_count - 1)))
