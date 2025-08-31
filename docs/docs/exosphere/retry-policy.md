@@ -33,7 +33,8 @@ Retry policies are defined in your graph template configuration:
     "max_retries": 3,
     "strategy": "EXPONENTIAL",
     "backoff_factor": 2000,
-    "exponent": 2
+    "exponent": 2,
+    "max_delay": 3600000
   }
 }
 ```
@@ -67,6 +68,14 @@ Retry policies are defined in your graph template configuration:
 - **Default**: `2`
 - **Description**: The exponent used for exponential strategies
 - **Constraints**: Must be > 0
+
+### max_delay
+
+- **Type**: `int | null` (milliseconds)
+- **Default**: `null` (no maximum delay)
+- **Description**: The maximum delay in milliseconds that any retry attempt can have. When set, all calculated delays are capped at this value using the `_cap` function
+- **Constraints**: Must be > 0 when not null
+- **Example**: `3600000` (1 hour) would cap all delays to a maximum of 1 hour
 
 ## Retry Strategies
 
@@ -204,6 +213,43 @@ Fixed delay with equal jitter.
 - Retry 2: 1000-2000ms (random)
 - Retry 3: 1000-2000ms (random)
 
+## Delay Capping
+
+The retry policy includes a built-in delay capping mechanism through the `_cap` function and `max_delay` parameter. This ensures that retry delays never exceed a specified maximum value, even with aggressive exponential backoff strategies.
+
+### How Delay Capping Works
+
+The `_cap` function is applied to all calculated delays:
+
+```python
+def _cap(value: int) -> int:
+    if self.max_delay is not None:
+        return min(value, self.max_delay)
+    return value
+```
+
+**Behavior:**
+- If `max_delay` is set, all calculated delays are capped at this value
+- If `max_delay` is `null` (default), no capping is applied
+- The capping is applied after all strategy calculations.
+
+### Example with Delay Capping
+
+Consider an exponential strategy with `backoff_factor: 2000`, `exponent: 2`, and `max_delay: 10000`:
+
+**With capping:**
+- Retry 1: 2000ms
+- Retry 2: 4000ms
+- Retry 3: 8000ms
+- Retry 4: 10000ms (capped at max_delay)
+
+### When to Use Delay Capping
+
+- **Long-running workflows**: Prevent excessive delays that could impact overall workflow completion time
+- **User-facing applications**: Ensure retries don't create unacceptable wait times
+- **Resource management**: Control resource consumption by limiting retry delays
+- **Predictable behavior**: Create more predictable retry patterns for monitoring and alerting
+
 ## Usage Examples
 
 ### Basic Exponential Retry
@@ -256,6 +302,34 @@ Fixed delay with equal jitter.
 }
 ```
 
+### Exponential Retry with Delay Capping
+
+```json
+{
+  "retry_policy": {
+    "max_retries": 5,
+    "strategy": "EXPONENTIAL",
+    "backoff_factor": 2000,
+    "exponent": 2,
+    "max_delay": 30000
+  }
+}
+```
+
+### Conservative Retry with Maximum Delay
+
+```json
+{
+  "retry_policy": {
+    "max_retries": 3,
+    "strategy": "EXPONENTIAL_FULL_JITTER",
+    "backoff_factor": 1000,
+    "exponent": 3,
+    "max_delay": 60000
+  }
+}
+```
+
 ## When Retries Are Triggered
 
 Retries are automatically triggered when:
@@ -289,6 +363,7 @@ The retry mechanism:
 - **max_retries**: Consider the nature of your failures and downstream dependencies
 - **backoff_factor**: Balance between responsiveness and resource usage
 - **exponent**: Higher values create more aggressive backoff
+- **max_delay**: Set a reasonable maximum delay to prevent excessive wait times, especially for exponential strategies
 
 ### Monitor Retry Patterns
 
@@ -301,7 +376,7 @@ The retry mechanism:
 - Retry policies apply to all nodes in a graph uniformly
 - Individual node-level retry policies are not supported
 - Retry delays are calculated in milliseconds
-- Maximum delay is not capped (consider using reasonable `backoff_factor` and `exponent` values)
+- Maximum delay can be capped using the `max_delay` parameter (recommended for long-running workflows)
 
 ## Error Handling
 

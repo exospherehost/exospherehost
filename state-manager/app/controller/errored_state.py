@@ -26,7 +26,13 @@ async def errored_state(namespace_name: str, state_id: PydanticObjectId, body: E
         if state.status == StateStatusEnum.EXECUTED:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="State is already executed")
         
-        graph_template = await GraphTemplate.get(namespace_name, state.graph_name)
+        try:
+            graph_template = await GraphTemplate.get(namespace_name, state.graph_name)
+        except Exception as e:
+            logger.error(f"Error getting graph template {state.graph_name} for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id, error=e)
+            if "Graph template not found" in str(e):
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Graph template not found")
+            raise e
 
         retry_created = False
 
