@@ -86,6 +86,39 @@ Runtime(
 ).start()
 ```
 
+### Note on blocking behavior of `Runtime.start()`
+
+By design, `Runtime.start()` runs the runtime loop indefinitely and will block the main thread when no asyncio event loop is running (e.g., normal Python scripts). In interactive environments that already have an event loop (like Jupyter notebooks), `Runtime.start()` returns an `asyncio.Task` and does not block.
+
+- If you're in an async/interactive environment (e.g., Jupyter/REPL with a running loop):
+
+  ```python
+  # Jupyter/async environment
+  runtime = Runtime(namespace="MyProject", name="DataProcessor", nodes=[SampleNode])
+  task = runtime.start()  # task is an asyncio.Task running in the background
+  # You can continue interacting, and optionally await/cancel the task later
+  # await task  # if you want to wait on it
+  ```
+
+- If you need a non-blocking start from a regular sync script, run it in a background thread:
+
+  ```python
+  from threading import Thread
+
+  runtime = Runtime(namespace="MyProject", name="DataProcessor", nodes=[SampleNode])
+  Thread(target=runtime.start, daemon=True).start()
+  # continue with other work in the main thread
+  ```
+
+- Alternatively, from an async context you can offload to a thread:
+
+  ```python
+  import asyncio
+
+  runtime = Runtime(namespace="MyProject", name="DataProcessor", nodes=[SampleNode])
+  await asyncio.to_thread(runtime.start)
+  ```
+
 ## Next Steps
 
 Now that you have the basics, explore:

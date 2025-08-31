@@ -71,6 +71,15 @@ This allows developers to deploy production agents that can scale beautifully to
    ).start()
   ```
 
+  Note: `Runtime.start()` will block the main thread in normal scripts (no running event loop). In interactive environments with an active loop (e.g., Jupyter), it returns an `asyncio.Task` and does not block. For non-blocking usage from a sync script, you can run it in a background thread:
+
+  ```python
+  from threading import Thread
+
+  runtime = Runtime(name="my-first-runtime", namespace="hello-world", nodes=[MyFirstNode])
+  Thread(target=runtime.start, daemon=True).start()
+  ```
+
 - ### Define your first graph
   
   Graphs are then described connecting nodes with relationships in json objects. Exosphere runs graph as per defined trigger conditions. See [Graph definitions](https://docs.exosphere.host/exosphere/create-graph/) to see more examples.

@@ -59,6 +59,36 @@ Runtime(
 ).start()
 ```
 
+### Note on blocking behavior of `Runtime.start()`
+
+`Runtime.start()` blocks the main thread when no asyncio event loop is running (typical Python scripts). In environments with an active event loop (e.g., Jupyter), it returns an `asyncio.Task` and does not block.
+
+- Jupyter/interactive (non-blocking):
+
+  ```python
+  runtime = Runtime(namespace="MyProject", name="DataProcessor", nodes=[SampleNode])
+  task = runtime.start()  # background asyncio.Task
+  # await task  # optionally wait on it later
+  ```
+
+- Regular sync script (non-blocking via thread):
+
+  ```python
+  from threading import Thread
+
+  runtime = Runtime(namespace="MyProject", name="DataProcessor", nodes=[SampleNode])
+  Thread(target=runtime.start, daemon=True).start()
+  ```
+
+- From async code (offload to a thread):
+
+  ```python
+  import asyncio
+
+  runtime = Runtime(namespace="MyProject", name="DataProcessor", nodes=[SampleNode])
+  await asyncio.to_thread(runtime.start)
+  ```
+
 ## Environment Configuration
 
 The SDK requires the following environment variables for authentication with ExosphereHost:
