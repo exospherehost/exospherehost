@@ -1,5 +1,4 @@
 import pytest
-import random
 from app.models.retry_policy_model import RetryPolicyModel, RetryStrategy
 
 
@@ -288,7 +287,7 @@ class TestRetryPolicyModel:
     def test_model_validation(self):
         """Test Pydantic model validation"""
         # Test valid model
-        policy = RetryPolicyModel(
+        RetryPolicyModel(
             max_retries=5,
             strategy=RetryStrategy.EXPONENTIAL,
             backoff_factor=1000,
