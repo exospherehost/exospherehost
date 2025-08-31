@@ -51,7 +51,13 @@ One can define a graph on Exosphere through a simple json config, which specifie
       },
       "next_nodes": []
     }
-  ]
+  ],
+  "retry_policy": {
+    "max_retries": 3,
+    "strategy": "EXPONENTIAL",
+    "backoff_factor": 2000,
+    "exponent": 2
+  }
 }
 ```
 
@@ -126,6 +132,23 @@ Use the `${{ ... }}` syntax to map outputs from previous nodes:
 - **`${{ node_identifier.outputs.field_name }}`**: Maps output from a specific node
 - **`initial`**: Static value provided when the graph is triggered
 - **Direct values**: String values. In v1, numbers/booleans must be string-encoded (e.g., "42", "true").
+
+### Retry Policy
+
+Graphs can include a retry policy to handle transient failures automatically. The retry policy is configured at the graph level and applies to all nodes within the graph.
+
+```json
+{
+  "retry_policy": {
+    "max_retries": 3,
+    "strategy": "EXPONENTIAL",
+    "backoff_factor": 2000,
+    "exponent": 2
+  }
+}
+```
+
+For detailed information about retry policies, including all available strategies and configuration options, see the [Retry Policy](retry-policy.md) documentation.
 ## Creating Graph Templates
 
 The recommended way to create graph templates is using the Exosphere Python SDK, which provides a clean interface to the State Manager API.

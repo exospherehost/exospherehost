@@ -101,6 +101,7 @@ plugins:
           - exosphere/register-node.md
           - exosphere/create-runtime.md
           - exosphere/create-graph.md
+          - exosphere/retry-policy.md
           - exosphere/trigger-graph.md
           - exosphere/dashboard.md
           - exosphere/signals.md
@@ -129,6 +130,7 @@ nav:
   - Register Node: exosphere/register-node.md 
   - Create Runtime: exosphere/create-runtime.md
   - Create Graph: exosphere/create-graph.md
+  - Retry Policy: exosphere/retry-policy.md
   - Trigger Graph: exosphere/trigger-graph.md  
   - Dashboard: exosphere/dashboard.md
   - Signals: exosphere/signals.md
