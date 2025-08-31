@@ -77,6 +77,6 @@ class State(BaseDatabaseModel):
                     ("namespace_name", 1),
                     ("node_name", 1),
                 ],
-                name="idx_enqueue_after"
+                name="enqueue_query"
             )
         ]
