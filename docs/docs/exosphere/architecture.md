@@ -94,7 +94,7 @@ The `unites` keyword supports different strategies to control when the uniting n
 
 You can specify the strategy in your unites configuration:
 
-```json hl_lines="22-26"
+```json hl_lines="22-25"
 {
   "nodes": [
     {
