@@ -142,13 +142,14 @@ Graphs can include a retry policy to handle transient failures automatically. Th
   "retry_policy": {
     "max_retries": 3,
     "strategy": "EXPONENTIAL",
-    "backoff_factor": 2000,
+    "backoff_factor": 2000, // milliseconds
     "exponent": 2
   }
 }
 ```
 
 For detailed information about retry policies, including all available strategies and configuration options, see the [Retry Policy](retry-policy.md) documentation.
+
 ## Creating Graph Templates
 
 The recommended way to create graph templates is using the Exosphere Python SDK, which provides a clean interface to the State Manager API.
@@ -179,7 +180,13 @@ async def create_graph_template():
         result = await state_manager.upsert_graph(
             graph_name="my-workflow",
             graph_nodes=graph_nodes,
-            secrets=secrets
+            secrets=secrets,
+            retry_policy={
+                "max_retries": 3,
+                "strategy": "EXPONENTIAL",
+                "backoff_factor": 2000,
+                "exponent": 2
+            }
         )
         print("Graph template created successfully!")
         print(f"Validation status: {result['validation_status']}")
@@ -291,7 +298,13 @@ The state manager validates your graph template:
             result = await state_manager.upsert_graph(
                 graph_name="my-workflow",
                 graph_nodes=updated_nodes,
-                secrets=updated_secrets
+                secrets=updated_secrets,
+                retry_policy={
+                    "max_retries": 3,
+                    "strategy": "EXPONENTIAL",
+                    "backoff_factor": 2000,
+                    "exponent": 2
+                }
             )
             print("Graph template updated successfully!")
             print(f"Validation status: {result['validation_status']}")

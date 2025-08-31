@@ -41,24 +41,28 @@ Retry policies are defined in your graph template configuration:
 ## Parameters
 
 ### max_retries
+
 - **Type**: `int`
 - **Default**: `3`
 - **Description**: The maximum number of retry attempts before giving up
 - **Constraints**: Must be >= 0
 
 ### strategy
+
 - **Type**: `string`
 - **Default**: `"EXPONENTIAL"`
 - **Description**: The retry strategy to use for calculating delays
 - **Options**: See [Retry Strategies](#retry-strategies) below
 
 ### backoff_factor
-- **Type**: `int`
+
+- **Type**: `int` (milliseconds)
 - **Default**: `2000` (2 seconds)
 - **Description**: The base delay factor in milliseconds
 - **Constraints**: Must be > 0
 
 ### exponent
+
 - **Type**: `int`
 - **Default**: `2`
 - **Description**: The exponent used for exponential strategies
@@ -73,31 +77,41 @@ Exosphere supports three main categories of retry strategies, each with jitter v
 Exponential strategies increase the delay exponentially with each retry attempt.
 
 #### EXPONENTIAL
+
 Standard exponential backoff without jitter.
 
-**Formula**: `backoff_factor * (exponent ^ retry_count)`
+**Formula**: `backoff_factor * (exponent ^ (retry_count - 1))`
 
 **Example**:
+
 - Retry 1: 2000ms (2 seconds)
 - Retry 2: 4000ms (4 seconds)
 - Retry 3: 8000ms (8 seconds)
 
 #### EXPONENTIAL_FULL_JITTER
+
 Exponential backoff with full jitter (random delay between 0 and calculated delay).
 
-**Formula**: `random(0, backoff_factor * (exponent ^ retry_count))`
+**Formula**: `random(0, backoff_factor * (exponent ^ (retry_count - 1)))`
+
+*Note: `random(a, b)` denotes a uniform random draw over the inclusive range [a, b].*
 
 **Example**:
+
 - Retry 1: 0-2000ms (random)
 - Retry 2: 0-4000ms (random)
 - Retry 3: 0-8000ms (random)
 
 #### EXPONENTIAL_EQUAL_JITTER
+
 Exponential backoff with equal jitter (random delay around half the calculated delay).
 
-**Formula**: `(backoff_factor * (exponent ^ retry_count)) / 2 + random(0, (backoff_factor * (exponent ^ retry_count)) / 2)`
+**Formula**: `(backoff_factor * (exponent ^ (retry_count - 1))) / 2 + random(0, (backoff_factor * (exponent ^ (retry_count - 1))) / 2)`
+
+*Note: `random(a, b)` denotes a uniform random draw over the inclusive range [a, b].*
 
 **Example**:
+
 - Retry 1: 1000-2000ms (random)
 - Retry 2: 2000-4000ms (random)
 - Retry 3: 4000-8000ms (random)
@@ -107,31 +121,41 @@ Exponential backoff with equal jitter (random delay around half the calculated d
 Linear strategies increase the delay linearly with each retry attempt.
 
 #### LINEAR
+
 Standard linear backoff without jitter.
 
 **Formula**: `backoff_factor * retry_count`
 
 **Example**:
+
 - Retry 1: 2000ms (2 seconds)
 - Retry 2: 4000ms (4 seconds)
 - Retry 3: 6000ms (6 seconds)
 
 #### LINEAR_FULL_JITTER
+
 Linear backoff with full jitter.
 
 **Formula**: `random(0, backoff_factor * retry_count)`
 
+*Note: `random(a, b)` denotes a uniform random draw over the inclusive range [a, b].*
+
 **Example**:
+
 - Retry 1: 0-2000ms (random)
 - Retry 2: 0-4000ms (random)
 - Retry 3: 0-6000ms (random)
 
 #### LINEAR_EQUAL_JITTER
+
 Linear backoff with equal jitter.
 
 **Formula**: `(backoff_factor * retry_count) / 2 + random(0, (backoff_factor * retry_count) / 2)`
 
+*Note: `random(a, b)` denotes a uniform random draw over the inclusive range [a, b].*
+
 **Example**:
+
 - Retry 1: 1000-2000ms (random)
 - Retry 2: 2000-4000ms (random)
 - Retry 3: 3000-6000ms (random)
@@ -141,31 +165,41 @@ Linear backoff with equal jitter.
 Fixed strategies use a constant delay for all retry attempts.
 
 #### FIXED
+
 Standard fixed delay without jitter.
 
 **Formula**: `backoff_factor`
 
 **Example**:
+
 - Retry 1: 2000ms (2 seconds)
 - Retry 2: 2000ms (2 seconds)
 - Retry 3: 2000ms (2 seconds)
 
 #### FIXED_FULL_JITTER
+
 Fixed delay with full jitter.
 
 **Formula**: `random(0, backoff_factor)`
 
+*Note: `random(a, b)` denotes a uniform random draw over the inclusive range [a, b].*
+
 **Example**:
+
 - Retry 1: 0-2000ms (random)
 - Retry 2: 0-2000ms (random)
 - Retry 3: 0-2000ms (random)
 
 #### FIXED_EQUAL_JITTER
+
 Fixed delay with equal jitter.
 
 **Formula**: `backoff_factor / 2 + random(0, backoff_factor / 2)`
 
+*Note: `random(a, b)` denotes a uniform random draw over the inclusive range [a, b].*
+
 **Example**:
+
 - Retry 1: 1000-2000ms (random)
 - Retry 2: 1000-2000ms (random)
 - Retry 3: 1000-2000ms (random)
@@ -173,6 +207,7 @@ Fixed delay with equal jitter.
 ## Usage Examples
 
 ### Basic Exponential Retry
+
 ```json
 {
   "retry_policy": {
@@ -185,6 +220,7 @@ Fixed delay with equal jitter.
 ```
 
 ### Aggressive Retry with Jitter
+
 ```json
 {
   "retry_policy": {
@@ -197,6 +233,7 @@ Fixed delay with equal jitter.
 ```
 
 ### Conservative Linear Retry
+
 ```json
 {
   "retry_policy": {
@@ -208,6 +245,7 @@ Fixed delay with equal jitter.
 ```
 
 ### Fixed Retry for Rate Limiting
+
 ```json
 {
   "retry_policy": {
@@ -227,6 +265,7 @@ Retries are automatically triggered when:
 3. The state status is `QUEUED` or `EXECUTED`
 
 The retry mechanism:
+
 - Creates a new state with `retry_count` incremented by 1
 - Sets `enqueue_after` to the current time plus the calculated delay
 - Sets the original state status to `ERRORED` with the error message
@@ -234,21 +273,25 @@ The retry mechanism:
 ## Best Practices
 
 ### Choose the Right Strategy
+
 - **EXPONENTIAL**: Best for most transient failures (network issues, temporary service unavailability)
 - **LINEAR**: Good for predictable, consistent delays
 - **FIXED**: Useful for rate limiting scenarios
 
 ### Use Jitter for High Concurrency
+
 - **FULL_JITTER**: Best for high concurrency to prevent thundering herd
 - **EQUAL_JITTER**: Good balance between predictability and randomization
 - **No Jitter**: Use only when you need deterministic behavior
 
 ### Set Appropriate Limits
+
 - **max_retries**: Consider the nature of your failures and downstream dependencies
 - **backoff_factor**: Balance between responsiveness and resource usage
 - **exponent**: Higher values create more aggressive backoff
 
 ### Monitor Retry Patterns
+
 - Track retry counts in your monitoring system
 - Set up alerts for graphs with high retry rates
 - Analyze retry patterns to identify systemic issues
@@ -263,14 +306,15 @@ The retry mechanism:
 ## Error Handling
 
 If a retry policy configuration is invalid:
+
 - The graph template validation will fail
 - An error will be returned during graph creation
 - The graph will not be saved until the configuration is corrected
 
 ## Integration with Signals
 
-Retry policies work alongside Exosphere's signal system:
+Retry policies work alongside Exosphere's signaling system:
 
 - Nodes can still raise `PruneSignal` to stop retries immediately
-- Nodes can raise `ReQueueAfterSignal` to re-queue after sometime, this will not mark nodes as failure.
-- The retry count is preserved when using signals 
+- Nodes can raise `ReQueueAfterSignal` to re-queue after some time. This will not mark nodes as failures.
+- The retry count is preserved when using signals. 
