@@ -88,7 +88,7 @@ The `unites` keyword supports different strategies to control when the uniting n
 
 - **`ALL_SUCCESS`** (default): The uniting node executes only when all states with the specified identifier have reached `SUCCESS` status. If any state fails or is still processing, the uniting node will wait.
 
-- **`ALL_DONE`**: The uniting node executes when all states with the specified identifier have completed their execution (reached `SUCCESS`, `ERRORED`, or any terminal status). This strategy allows the uniting node to proceed even if some states have failed.
+- **`ALL_DONE`**: The uniting node executes when all states with the specified identifier have reached any terminal status (`SUCCESS`, `ERRORED`, `CANCELLED`, `NEXT_CREATED_ERROR`, or `PRUNED`). This strategy allows the uniting node to proceed even if some states have failed.
 
 #### Strategy Configuration
 
@@ -128,7 +128,7 @@ You can specify the strategy in your unites configuration:
 
 #### Use Cases
 
-- **`ALL_SUCCESS`**: Use when you need all parallel processes to complete successfully before proceeding. Ideal for data processing workflows where partial failures are not acceptable.
+- **`ALL_SUCCESS`**: Use when you need all parallel processes to complete successfully before proceeding. Ideal for data processing workflows where partial failures are not acceptable. **Caution**: This strategy can block indefinitely if any parallel branch never reaches a SUCCESS terminal state. Consider adding timeouts, explicit failure-to-success fallbacks, or using ALL_DONE when partial results are acceptable. Implement watchdogs or retry/timeout policies in workflows to prevent permanent blocking.
 
 - **`ALL_DONE`**: Use when you want to proceed with partial results or when you have error handling logic in the uniting node. Useful for scenarios where you want to aggregate results from successful processes while handling failures separately.
 
@@ -147,7 +147,7 @@ You can specify the strategy in your unites configuration:
       "identifier": "processor_1",
       "inputs":{
         "x":"${{data_splitter.outputs.data_chunk}}"
-      }
+      },
       "next_nodes": ["result_merger"]
     },    
     {
@@ -155,7 +155,7 @@ You can specify the strategy in your unites configuration:
       "identifier": "result_merger",
       "inputs":{
         "x_processed":"${{processor_1.outputs.processed_data}}"
-      }
+      },
       "unites": {
         "identifier": "data_splitter"
       },

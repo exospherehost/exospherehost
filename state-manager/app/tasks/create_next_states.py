@@ -31,26 +31,29 @@ async def check_unites_satisfied(namespace: str, graph_name: str, node_template:
     if not unites_id:
         raise ValueError(f"Unit identifier not found in parents: {node_template.unites.identifier}")
     else:
-        if node_template.unites.strategy == UnitesStrategyEnum.ALL_SUCCESS and await State.find(
+        if node_template.unites.strategy == UnitesStrategyEnum.ALL_SUCCESS:
+            any_one_pending = await State.find_one(
                 State.namespace_name == namespace,
                 State.graph_name == graph_name,
                 NE(State.status, StateStatusEnum.SUCCESS),
                 {
                     f"parents.{node_template.unites.identifier}": unites_id
                 }
-            ).count() > 0:
+            )
+            if any_one_pending:
                 return False
         
-        if node_template.unites.strategy == UnitesStrategyEnum.ALL_DONE and await State.find(
+        if node_template.unites.strategy == UnitesStrategyEnum.ALL_DONE:
+            any_one_pending = await State.find_one(
                 State.namespace_name == namespace,
                 State.graph_name == graph_name,
                 In(State.status, [StateStatusEnum.CREATED, StateStatusEnum.QUEUED, StateStatusEnum.EXECUTED]),
                 {
                     f"parents.{node_template.unites.identifier}": unites_id
                 }
-            ).count() > 0:
+            )
+            if any_one_pending:
                 return False
-        
         
     return True
 
