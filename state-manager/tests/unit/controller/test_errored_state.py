@@ -34,6 +34,16 @@ class TestErroredState:
         state = MagicMock()
         state.id = PydanticObjectId()
         state.status = StateStatusEnum.QUEUED
+        state.graph_name = "test_graph"
+        state.retry_count = 0
+        state.node_name = "test_node"
+        state.namespace_name = "test_namespace"
+        state.identifier = "test_identifier"
+        state.run_id = "test_run_id"
+        state.inputs = {}
+        state.parents = []
+        state.does_unites = False
+        state.fanout_id = None
         return state
 
     @pytest.fixture
@@ -41,11 +51,23 @@ class TestErroredState:
         state = MagicMock()
         state.id = PydanticObjectId()
         state.status = StateStatusEnum.EXECUTED
+        state.graph_name = "test_graph"
+        state.retry_count = 0
+        state.node_name = "test_node"
+        state.namespace_name = "test_namespace"
+        state.identifier = "test_identifier"
+        state.run_id = "test_run_id"
+        state.inputs = {}
+        state.parents = []
+        state.does_unites = False
+        state.fanout_id = None
         return state
 
     @patch('app.controller.errored_state.State')
+    @patch('app.controller.errored_state.GraphTemplate')
     async def test_errored_state_success_queued(
         self,
+        mock_graph_template_class,
         mock_state_class,
         mock_namespace,
         mock_state_id,
@@ -55,10 +77,18 @@ class TestErroredState:
     ):
         """Test successful error marking of queued state"""      
         
-        mock_state_queued.save = AsyncMock()     
+        # Mock GraphTemplate.get to return a valid graph template
+        mock_graph_template = MagicMock()
+        mock_graph_template.retry_policy.max_retries = 3
+        mock_graph_template.retry_policy.compute_delay = MagicMock(return_value=1000)
+        mock_graph_template_class.get = AsyncMock(return_value=mock_graph_template)
         
-        mock_state_queued.status = StateStatusEnum.QUEUED
-        mock_state_queued.save = AsyncMock()
+        # Mock State constructor and insert method
+        mock_retry_state = MagicMock()
+        mock_retry_state.insert = AsyncMock(return_value=mock_retry_state)
+        mock_state_class.return_value = mock_retry_state
+        
+        mock_state_queued.save = AsyncMock()     
         mock_state_class.find_one = AsyncMock(return_value=mock_state_queued)
 
         # Act
@@ -75,8 +105,10 @@ class TestErroredState:
         
 
     @patch('app.controller.errored_state.State')
+    @patch('app.controller.errored_state.GraphTemplate')
     async def test_errored_state_success_executed(
         self,
+        mock_graph_template_class,
         mock_state_class,
         mock_namespace,
         mock_state_id,
@@ -84,26 +116,22 @@ class TestErroredState:
         mock_state_executed,
         mock_request_id
     ):
-        """Test successful error marking of executed state"""
-      
-        mock_state_executed.save = AsyncMock() 
-
-        mock_state_executed.status = StateStatusEnum.QUEUED
-        mock_state_executed.save = AsyncMock()
+        """Test that executed states cannot be marked as errored"""
+        # Arrange
+        mock_state_executed.status = StateStatusEnum.EXECUTED
         mock_state_class.find_one = AsyncMock(return_value=mock_state_executed)
 
-        # Act
-        result = await errored_state(
-            mock_namespace,
-            mock_state_id,
-            mock_errored_request,
-            mock_request_id
-        )
-
-        # Assert
-        assert result.status == StateStatusEnum.ERRORED
-        assert mock_state_class.find_one.call_count == 1  # Called once for finding
+        # Act & Assert
+        with pytest.raises(HTTPException) as exc_info:
+            await errored_state(
+                mock_namespace,
+                mock_state_id,
+                mock_errored_request,
+                mock_request_id
+            )
         
+        assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
+        assert exc_info.value.detail == "State is already executed"
 
     @patch('app.controller.errored_state.State')
     async def test_errored_state_not_found(
@@ -197,6 +225,7 @@ class TestErroredState:
         # Arrange
         mock_state = MagicMock()
         mock_state.status = StateStatusEnum.EXECUTED
+        mock_state.graph_name = "test_graph"
         mock_state_class.find_one = AsyncMock(return_value=mock_state)
 
         # Act & Assert
@@ -222,7 +251,7 @@ class TestErroredState:
     ):
         """Test handling of database errors"""
         # Arrange
-        mock_state_class.find_one = MagicMock(side_effect=Exception("Database error"))
+        mock_state_class.find_one = AsyncMock(side_effect=Exception("Database error"))
 
         # Act & Assert
         with pytest.raises(Exception) as exc_info:
@@ -236,31 +265,42 @@ class TestErroredState:
         assert str(exc_info.value) == "Database error"
 
     @patch('app.controller.errored_state.State')
+    @patch('app.controller.errored_state.GraphTemplate')
     async def test_errored_state_with_different_error_message(
         self,
+        mock_graph_template_class,
         mock_state_class,
         mock_namespace,
         mock_state_id,
+        mock_errored_request,
         mock_state_queued,
         mock_request_id
     ):
         """Test error marking with different error message"""
         # Arrange
-        errored_request = ErroredRequestModel(
+        different_error_request = ErroredRequestModel(
             error="Different error message"
-        )       
+        )
+        
+        # Mock GraphTemplate.get to return a valid graph template
+        mock_graph_template = MagicMock()
+        mock_graph_template.retry_policy.max_retries = 3
+        mock_graph_template.retry_policy.compute_delay = MagicMock(return_value=1000)
+        mock_graph_template_class.get = AsyncMock(return_value=mock_graph_template)
+        
+        # Mock State constructor and insert method
+        mock_retry_state = MagicMock()
+        mock_retry_state.insert = AsyncMock(return_value=mock_retry_state)
+        mock_state_class.return_value = mock_retry_state
         
         mock_state_queued.save = AsyncMock()
-
-        mock_state_queued.status = StateStatusEnum.QUEUED
-        mock_state_queued.set = AsyncMock()
         mock_state_class.find_one = AsyncMock(return_value=mock_state_queued)
 
         # Act
         result = await errored_state(
             mock_namespace,
             mock_state_id,
-            errored_request,
+            different_error_request,
             mock_request_id
         )
 

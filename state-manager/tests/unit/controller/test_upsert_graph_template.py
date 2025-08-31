@@ -7,6 +7,7 @@ from app.controller.upsert_graph_template import upsert_graph_template
 from app.models.graph_models import UpsertGraphTemplateRequest
 from app.models.graph_template_validation_status import GraphTemplateValidationStatus
 from app.models.node_template_model import NodeTemplate
+from app.models.retry_policy_model import RetryPolicyModel
 
 
 class TestUpsertGraphTemplate:
@@ -74,6 +75,14 @@ class TestUpsertGraphTemplate:
         template.updated_at = datetime(2023, 1, 2, 12, 0, 0)
         template.get_secrets.return_value = mock_secrets
         template.set_secrets.return_value = template
+        
+        # Add proper retry_policy using real RetryPolicyModel
+        template.retry_policy = RetryPolicyModel(
+            max_retries=3,
+            backoff_factor=1000,
+            max_delay=30000
+        )
+        
         return template
 
     @patch('app.controller.upsert_graph_template.GraphTemplate')
@@ -147,6 +156,14 @@ class TestUpsertGraphTemplate:
         mock_new_template.updated_at = datetime(2023, 1, 1, 12, 0, 0)
         mock_new_template.get_secrets.return_value = mock_upsert_request.secrets
         mock_new_template.set_secrets.return_value = mock_new_template
+        
+        # Add proper retry_policy mock
+        mock_retry_policy = RetryPolicyModel(
+            max_retries=3,
+            backoff_factor=1000,
+            max_delay=30000
+        )
+        mock_new_template.retry_policy = mock_retry_policy
         
         mock_graph_template_class.insert = AsyncMock(return_value=mock_new_template)
 
@@ -225,6 +242,14 @@ class TestUpsertGraphTemplate:
         mock_existing_template.get_secrets.return_value = {}
         mock_existing_template.set_secrets.return_value = mock_existing_template
         
+        # Add proper retry_policy mock
+        mock_retry_policy = RetryPolicyModel(
+            max_retries=3,
+            backoff_factor=1000,
+            max_delay=30000
+        )
+        mock_existing_template.retry_policy = mock_retry_policy
+        
         mock_existing_template.update = AsyncMock()
 
         mock_graph_template_class.find_one = AsyncMock(return_value=mock_existing_template)
@@ -268,6 +293,14 @@ class TestUpsertGraphTemplate:
         mock_existing_template.updated_at = datetime(2023, 1, 2, 12, 0, 0)
         mock_existing_template.get_secrets.return_value = mock_upsert_request.secrets
         mock_existing_template.set_secrets.return_value = mock_existing_template
+
+        # Add proper retry_policy mock
+        mock_retry_policy = RetryPolicyModel(
+            max_retries=3,
+            backoff_factor=1000,
+            max_delay=30000
+        )
+        mock_existing_template.retry_policy = mock_retry_policy
 
         mock_existing_template.update = AsyncMock()
         
