@@ -22,15 +22,18 @@ class RetryPolicyModel(BaseModel):
     exponent: int = Field(default=2, description="The exponent for the exponential retry strategy", gt=0)
 
     def compute_delay(self, retry_count: int) -> int:
+        if retry_count < 1:
+            raise ValueError(f"Retry count must be greater than 1, got {retry_count}")
+        
         if self.strategy == RetryStrategy.EXPONENTIAL:
-            return (self.backoff_factor * (self.exponent ** retry_count))
+            return (self.backoff_factor * (self.exponent ** (retry_count - 1)))
         
         elif self.strategy == RetryStrategy.EXPONENTIAL_FULL_JITTER:
-            base = self.backoff_factor * (self.exponent ** retry_count)
+            base = self.backoff_factor * (self.exponent ** (retry_count - 1))
             return int(random.uniform(0, base))
         
         elif self.strategy == RetryStrategy.EXPONENTIAL_EQUAL_JITTER:
-            base = self.backoff_factor * (self.exponent ** retry_count)
+            base = self.backoff_factor * (self.exponent ** (retry_count - 1))
             return int(base/2 + random.uniform(0, base / 2))
         
         elif self.strategy == RetryStrategy.LINEAR:
@@ -56,4 +59,4 @@ class RetryPolicyModel(BaseModel):
             return int(base/2 + random.uniform(0, base / 2))
 
         else:
-            raise Exception("Invalid retry strategy")
+            raise ValueError(f"Invalid retry strategy: {self.strategy}")

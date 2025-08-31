@@ -5,6 +5,8 @@ import asyncio
 from pymongo import IndexModel
 from pydantic import Field, field_validator, PrivateAttr, model_validator
 from typing import List, Self, Dict
+from fastapi.exceptions import HTTPException
+from fastapi import status
 
 from .base import BaseDatabaseModel
 from ..graph_template_validation_status import GraphTemplateValidationStatus
@@ -303,7 +305,7 @@ class GraphTemplate(BaseDatabaseModel):
     async def get(namespace: str, graph_name: str) -> "GraphTemplate":
         graph_template = await GraphTemplate.find_one(GraphTemplate.namespace == namespace, GraphTemplate.name == graph_name)
         if not graph_template:
-            raise ValueError(f"Graph template not found for namespace: {namespace} and graph name: {graph_name}")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Graph template not found")
         return graph_template
     
     @staticmethod
