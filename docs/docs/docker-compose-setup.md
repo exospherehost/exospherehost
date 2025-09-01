@@ -78,7 +78,7 @@ docker compose -f docker-compose.yml up -d
 ```bash
 # Download and modify for beta with local MongoDB
 curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose-with-mongodb.yml
-sed -i 's/:latest/:beta-latest/g' docker-compose-with-mongodb.yml
+perl -pi -e 's/:latest/:beta-latest/g' docker-compose-with-mongodb.yml
 docker compose -f docker-compose-with-mongodb.yml up -d
 ```
 
