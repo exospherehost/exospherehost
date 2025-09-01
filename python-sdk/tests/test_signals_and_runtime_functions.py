@@ -105,10 +105,29 @@ class TestPruneSignal:
         data = {"reason": "test_prune"}
         signal = PruneSignal(data)
         
-        mock_session, mock_post_response, _, _ = create_mock_aiohttp_session()
-        mock_post_response.status = 500
-        
-        with patch('exospherehost.signals.ClientSession', return_value=mock_session):
+        class _FakeResponse:
+            def __init__(self, status: int):
+                self.status = status
+
+        class _FakePostCtx:
+            def __init__(self, status: int):
+                self._status = status
+            async def __aenter__(self):
+                return _FakeResponse(self._status)
+            async def __aexit__(self, exc_type, exc, tb):
+                return None
+
+        class _FakeSession:
+            def __init__(self, status: int):
+                self._status = status
+            def post(self, *args, **kwargs):
+                return _FakePostCtx(self._status)
+            async def __aenter__(self):
+                return self
+            async def __aexit__(self, exc_type, exc, tb):
+                return None
+
+        with patch('exospherehost.signals.ClientSession', return_value=_FakeSession(500)):
             with pytest.raises(Exception, match="Failed to send prune signal"):
                 await signal.send("http://test-endpoint/prune", "test-api-key")
 
@@ -177,10 +196,29 @@ class TestReQueueAfterSignal:
         delta = timedelta(seconds=30)
         signal = ReQueueAfterSignal(delta)
         
-        mock_session, mock_post_response, _, _ = create_mock_aiohttp_session()
-        mock_post_response.status = 400
-        
-        with patch('exospherehost.signals.ClientSession', return_value=mock_session):
+        class _FakeResponse:
+            def __init__(self, status: int):
+                self.status = status
+
+        class _FakePostCtx:
+            def __init__(self, status: int):
+                self._status = status
+            async def __aenter__(self):
+                return _FakeResponse(self._status)
+            async def __aexit__(self, exc_type, exc, tb):
+                return None
+
+        class _FakeSession:
+            def __init__(self, status: int):
+                self._status = status
+            def post(self, *args, **kwargs):
+                return _FakePostCtx(self._status)
+            async def __aenter__(self):
+                return self
+            async def __aexit__(self, exc_type, exc, tb):
+                return None
+
+        with patch('exospherehost.signals.ClientSession', return_value=_FakeSession(400)):
             with pytest.raises(Exception, match="Failed to send requeue after signal"):
                 await signal.send("http://test-endpoint/requeue", "test-api-key")
 

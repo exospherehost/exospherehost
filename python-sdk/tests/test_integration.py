@@ -219,7 +219,7 @@ class TestStateManagerGraphIntegration:
                 inputs={"user_id": "123", "action": "login"}
             )
             
-            trigger_result = await sm.trigger("test_graph", state=trigger_state)
+            trigger_result = await sm.trigger("test_graph", inputs=trigger_state.inputs)
             assert trigger_result == {"status": "triggered"}
 
 
@@ -451,7 +451,7 @@ class TestErrorHandlingIntegration:
             trigger_state = TriggerState(identifier="test", inputs={"key": "value"})
             
             with pytest.raises(Exception, match="Failed to trigger state: 404 Graph not found"):
-                await sm.trigger("nonexistent_graph", state=trigger_state)
+                await sm.trigger("nonexistent_graph", inputs=trigger_state.inputs)
 
 
 class TestConcurrencyIntegration:

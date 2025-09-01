@@ -127,7 +127,7 @@ class TestStateManagerTrigger:
             sm = StateManager(**state_manager_config)
             state = TriggerState(identifier="test", inputs={"key": "value"})
             
-            result = await sm.trigger("test_graph", state=state)
+            result = await sm.trigger("test_graph", inputs=state.inputs)
             
             assert result == {"status": "success"}
 
@@ -147,7 +147,8 @@ class TestStateManagerTrigger:
                 TriggerState(identifier="test2", inputs={"key2": "value2"})
             ]
             
-            result = await sm.trigger("test_graph", states=states)
+            merged_inputs = {**states[0].inputs, **states[1].inputs}
+            result = await sm.trigger("test_graph", inputs=merged_inputs)
             
             assert result == {"status": "success"}
 
@@ -165,26 +166,7 @@ class TestStateManagerTrigger:
             state = TriggerState(identifier="test", inputs={"key": "value"})
             
             with pytest.raises(Exception, match="Failed to trigger state: 400 Bad request"):
-                await sm.trigger("test_graph", state=state)
-
-    def test_trigger_validation_no_state_or_states(self, state_manager_config):
-        sm = StateManager(**state_manager_config)
-        
-        with pytest.raises(ValueError, match="Either state or states must be provided"):
-            asyncio.run(sm.trigger("test_graph"))
-
-    def test_trigger_validation_both_state_and_states(self, state_manager_config):
-        sm = StateManager(**state_manager_config)
-        state = TriggerState(identifier="test", inputs={"key": "value"})
-        
-        with pytest.raises(ValueError, match="Only one of state or states must be provided"):
-            asyncio.run(sm.trigger("test_graph", state=state, states=[state]))
-
-    def test_trigger_validation_empty_states_list(self, state_manager_config):
-        sm = StateManager(**state_manager_config)
-        
-        with pytest.raises(ValueError, match="States must be a non-empty list"):
-            asyncio.run(sm.trigger("test_graph", states=[]))
+                await sm.trigger("test_graph", inputs=state.inputs)
 
 
 class TestStateManagerGetGraph:
