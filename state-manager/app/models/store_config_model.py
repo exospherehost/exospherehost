@@ -8,13 +8,54 @@ class StoreConfig(BaseModel):
     def validate_required_keys(cls, v: list[str]) -> list[str]:
         errors = []
         keys = set()
+        trimmed_keys = []
+        
         for key in v:
-            if key == "" or key is None:
-                errors.append("Key cannot be empty")
-            elif key in keys:
-                errors.append(f"Key {key} is duplicated")
-            else:
-                keys.add(key)
+            trimmed_key = key.strip() if key is not None else ""
+            
+            if trimmed_key == "":
+                errors.append("Key cannot be empty or contain only whitespace")
+                continue
+                
+            if '.' in trimmed_key:
+                errors.append(f"Key '{trimmed_key}' cannot contain '.' character")
+                continue
+                
+            if trimmed_key in keys:
+                errors.append(f"Key '{trimmed_key}' is duplicated")
+                continue
+                
+            keys.add(trimmed_key)
+            trimmed_keys.append(trimmed_key)
+        
         if len(errors) > 0:
             raise ValueError("\n".join(errors))
-        return v
+        return trimmed_keys
+
+    @field_validator("default_values")
+    def validate_default_values(cls, v: dict[str, str]) -> dict[str, str]:
+        errors = []
+        keys = set()
+        normalized_dict = {}
+        
+        for key, value in v.items():
+            trimmed_key = key.strip() if key is not None else ""
+            
+            if trimmed_key == "":
+                errors.append("Key cannot be empty or contain only whitespace")
+                continue
+                
+            if '.' in trimmed_key:
+                errors.append(f"Key '{trimmed_key}' cannot contain '.' character")
+                continue
+                
+            if trimmed_key in keys:
+                errors.append(f"Key '{trimmed_key}' is duplicated")
+                continue
+                
+            keys.add(trimmed_key)
+            normalized_dict[trimmed_key] = str(value)
+        
+        if len(errors) > 0:
+            raise ValueError("\n".join(errors))
+        return normalized_dict

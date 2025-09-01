@@ -121,26 +121,28 @@ class GraphTemplate(BaseDatabaseModel):
     @field_validator('name')
     @classmethod
     def validate_name(cls, v: str) -> str:
-        if v == "" or v is None:
+        trimmed_v = v.strip()
+        if trimmed_v == "" or trimmed_v is None:
             raise ValueError("Name cannot be empty")
-        return v
+        return trimmed_v
     
     @field_validator('namespace')
     @classmethod
     def validate_namespace(cls, v: str) -> str:
-        if v == "" or v is None:
+        trimmed_v = v.strip()
+        if trimmed_v == "" or trimmed_v is None:
             raise ValueError("Namespace cannot be empty")
-        return v
+        return trimmed_v
 
     @field_validator('secrets')
     @classmethod
     def validate_secrets(cls, v: Dict[str, str]) -> Dict[str, str]:
-        for secret_name, secret_value in v.items():
+        trimmed_v = {key.strip(): value.strip() for key, value in v.items()}
+        for secret_name, secret_value in trimmed_v.items():
             if not secret_name or not secret_value:
                 raise ValueError("Secrets cannot be empty")
             cls._validate_secret_value(secret_value)
-            
-        return v
+        return trimmed_v
     
     @field_validator('nodes')
     @classmethod
@@ -238,8 +240,14 @@ class GraphTemplate(BaseDatabaseModel):
                         continue
 
                     dependent_string = DependentString.create_dependent_string(input_value)
-                    dependent_identifiers = set([identifier for identifier, _ in dependent_string.get_identifier_field()])
-                    store_fields = set([field for identifier, field in dependent_string.get_identifier_field() if identifier == "store"])
+                    dependent_identifiers = set()
+                    store_fields = set()
+
+                    for key, field in dependent_string.get_identifier_field():
+                        if key == "store":
+                            store_fields.add(field)
+                        else:
+                            dependent_identifiers.add(key)
 
                     for identifier in dependent_identifiers:
                         if identifier == "store":

@@ -25,47 +25,55 @@ class NodeTemplate(BaseModel):
     @field_validator('node_name')
     @classmethod
     def validate_node_name(cls, v: str) -> str:
-        if v == "" or v is None:
+        trimmed_v = v.strip()
+        if trimmed_v == "" or trimmed_v is None:
             raise ValueError("Node name cannot be empty")
-        return v
+        return trimmed_v
     
     @field_validator('identifier')
     @classmethod
     def validate_identifier(cls, v: str) -> str:
-        if v == "" or v is None:
+        trimmed_v = v.strip()
+        if trimmed_v == "" or trimmed_v is None:
             raise ValueError("Node identifier cannot be empty")
-        elif v.strip() == "store":
+        elif trimmed_v == "store":
             raise ValueError("Node identifier cannot be reserved word 'store'")
-        return v
+        return trimmed_v
     
     @field_validator('next_nodes')
     @classmethod
     def validate_next_nodes(cls, v: Optional[List[str]]) -> Optional[List[str]]:
         identifiers = set()
         errors = []
+        trimmed_v = []
+
         if v is not None:
             for next_node_identifier in v:
+                trimmed_next_node_identifier = next_node_identifier.strip()
                 
-                if next_node_identifier == "" or next_node_identifier is None:
+                if trimmed_next_node_identifier == "" or trimmed_next_node_identifier is None:
                     errors.append("Next node identifier cannot be empty")
                     continue
 
-                if next_node_identifier in identifiers:
-                    errors.append(f"Next node identifier {next_node_identifier} is not unique")
+                if trimmed_next_node_identifier in identifiers:
+                    errors.append(f"Next node identifier {trimmed_next_node_identifier} is not unique")
                     continue
 
-                identifiers.add(next_node_identifier)
+                identifiers.add(trimmed_next_node_identifier)
+                trimmed_v.append(trimmed_next_node_identifier)
         if errors:
             raise ValueError("\n".join(errors))
-        return v
+        return trimmed_v
     
     @field_validator('unites')
     @classmethod
     def validate_unites(cls, v: Optional[Unites]) -> Optional[Unites]:
+        trimmed_v = v
         if v is not None:
-            if v.identifier == "" or v.identifier is None:
+            trimmed_v = Unites(identifier=v.identifier.strip(), strategy=v.strategy)
+            if trimmed_v.identifier == "" or trimmed_v.identifier is None:
                 raise ValueError("Unites identifier cannot be empty")
-        return v
+        return trimmed_v
     
     def get_dependent_strings(self) -> list[DependentString]:
         dependent_strings = []

@@ -12,30 +12,16 @@ import uuid
 logger = LogsManager().get_logger()
 
 def check_required_store_keys(graph_template: GraphTemplate, store: dict[str, str]) -> None:
-    errors = []
-    keys = set()
-    
-    for secret in graph_template.secrets.keys():
-        if secret not in store.keys():
-            errors.append(f"Missing store key: {secret}")
-    
-    for key in store.keys():
-        if key in keys:
-            errors.append(f"Duplicate store keys: {key}")
-        keys.add(key)
-    
-    if errors:
-        raise HTTPException(status_code=400, detail=f"Errors: {errors}")
+    required_keys = set(graph_template.store_config.required_keys)
+    provided_keys = set(store.keys())
+
+    missing_keys = required_keys - provided_keys
+    if missing_keys:
+        raise HTTPException(status_code=400, detail=f"Missing store keys: {missing_keys}")
     
 
 def construct_inputs(node: NodeTemplate, inputs: dict[str, str]) -> dict[str, str]:
-    constructed_inputs = {}
-    for key, value in node.inputs.items():
-        if key in inputs.keys():
-            constructed_inputs[key] = inputs[key]
-        else:
-            constructed_inputs[key] = value
-    return constructed_inputs
+    return {key: inputs.get(key, value) for key, value in node.inputs.items()}
     
 
 async def trigger_graph(namespace_name: str, graph_name: str, body: TriggerGraphRequestModel, x_exosphere_request_id: str) -> TriggerGraphResponseModel:
@@ -43,20 +29,29 @@ async def trigger_graph(namespace_name: str, graph_name: str, body: TriggerGraph
         run_id = str(uuid.uuid4())
         logger.info(f"Triggering graph {graph_name} with run_id {run_id}", x_exosphere_request_id=x_exosphere_request_id)
 
-        graph_template = await GraphTemplate.get(namespace_name, graph_name)
+        try:
+            graph_template = await GraphTemplate.get(namespace_name, graph_name)
+        except ValueError as e:
+            logger.error(f"Graph template not found for namespace {namespace_name} and graph {graph_name}", x_exosphere_request_id=x_exosphere_request_id)
+            if "Graph template not found" in str(e):
+                raise HTTPException(status_code=404, detail=f"Graph template not found for namespace {namespace_name} and graph {graph_name}")
+            else:
+                raise e
+            
+        if not graph_template.is_valid():
+            raise HTTPException(status_code=400, detail=f"Graph template is not valid")
 
         check_required_store_keys(graph_template, body.store)
 
-        new_stores = []
-        for key, value in body.store.items():
-            new_store = Store(
+        new_stores = [
+            Store(
                 run_id=run_id,
                 namespace=namespace_name,
                 graph_name=graph_name,
                 key=key,
                 value=value
-            )
-            new_stores.append(new_store)
+            ) for key, value in body.store.items()
+        ]
 
         await Store.insert_many(new_stores)
         

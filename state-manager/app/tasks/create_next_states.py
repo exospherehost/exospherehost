@@ -13,6 +13,7 @@ from app.models.node_template_model import UnitesStrategyEnum
 from json_schema_to_pydantic import create_model
 from pydantic import BaseModel
 from typing import Type
+import asyncio
 
 logger = LogsManager().get_logger()
 
@@ -103,7 +104,7 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
         cached_registered_nodes: dict[tuple[str, str], RegisteredNode] = {}
         cached_input_models: dict[tuple[str, str], Type[BaseModel]] = {}
         cached_store_values: dict[tuple[str, str], str] = {}
-        new_states = []
+        new_states_coroutines = []
 
         async def get_registered_node(node_template: NodeTemplate) -> RegisteredNode:
             key = (node_template.namespace, node_template.node_name)
@@ -126,9 +127,8 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
                 store_value = await Store.get_value(run_id, namespace, graph_name, field)
                 
                 if store_value is None:
-                    if field in graph_template.store_config.default_values.keys():
-                        store_value = graph_template.store_config.default_values[field]
-                    else:
+                    store_value = graph_template.store_config.default_values.get(field)
+                    if store_value is None:
                         raise ValueError(f"Store value not found for field '{field}' in namespace '{namespace}' and graph '{graph_name}'")
 
                 cached_store_values[key] = store_value
@@ -204,14 +204,14 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
             validate_dependencies(next_state_node_template, next_state_input_model, identifier, parents)
 
             for current_state in current_states:                
-                new_states.append(generate_next_state(next_state_input_model, next_state_node_template, parents, current_state))
+                new_states_coroutines.append(generate_next_state(next_state_input_model, next_state_node_template, parents, current_state))
         
-        if len(new_states) > 0:
-            await State.insert_many(new_states)
+        if len(new_states_coroutines) > 0:
+            await State.insert_many(await asyncio.gather(*new_states_coroutines))
         await mark_success_states(state_ids)
 
         # handle unites
-        new_unit_states = []
+        new_unit_states_coroutines = []
         for pending_unites_identifier in pending_unites:
             next_state_node_template = graph_template.get_node_by_identifier(pending_unites_identifier)
             if not next_state_node_template:
@@ -226,16 +226,16 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
             assert next_state_node_template.unites is not None
             parent_state = parents[next_state_node_template.unites.identifier]
 
-            new_unit_states.append(generate_next_state(next_state_input_model, next_state_node_template, parents, parent_state))
+            new_unit_states_coroutines.append(generate_next_state(next_state_input_model, next_state_node_template, parents, parent_state))
         
         try:
-            if len(new_unit_states) > 0:
-                await State.insert_many(new_unit_states)
+            if len(new_unit_states_coroutines) > 0:
+                await State.insert_many(await asyncio.gather(*new_unit_states_coroutines))
         except (DuplicateKeyError, BulkWriteError):
             logger.warning(
                 f"Caught duplicate key error for new unit states in namespace={namespace}, "
                 f"graph={graph_name}, likely due to a race condition. "
-                f"Attempted to insert {len(new_unit_states)} states"
+                f"Attempted to insert {len(new_unit_states_coroutines)} states"
             )
             
     except Exception as e:
