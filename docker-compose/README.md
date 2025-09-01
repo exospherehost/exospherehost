@@ -70,7 +70,7 @@ To run the latest beta version of Exosphere with the newest features, replace co
 ```bash
 # Download and modify for beta with cloud MongoDB
 curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose.yml
-sed -i 's/:latest/:beta-latest/g' docker-compose.yml
+perl -pi -e 's/:latest/:beta-latest/g' docker-compose.yml
 # Set your MONGO_URI in .env file, then:
 docker compose -f docker-compose.yml up -d
 ```
