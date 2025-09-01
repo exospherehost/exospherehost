@@ -1,5 +1,4 @@
 import pytest
-import asyncio
 from unittest.mock import AsyncMock, patch, MagicMock
 from exospherehost.statemanager import StateManager, TriggerState
 
