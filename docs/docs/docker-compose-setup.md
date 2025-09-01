@@ -275,4 +275,4 @@ Once your Exosphere instance is running:
 
 - [Documentation](https://docs.exosphere.host)
 - [Discord Community](https://discord.com/invite/zT92CAgvkj)
-- [GitHub Issues](https://github.com/exospherehost/exospherehost/issues) 
+- [GitHub Issues](https://github.com/exospherehost/exospherehost/issues)
