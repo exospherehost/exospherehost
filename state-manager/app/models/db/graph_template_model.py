@@ -250,10 +250,7 @@ class GraphTemplate(BaseDatabaseModel):
                             dependent_identifiers.add(key)
 
                     for identifier in dependent_identifiers:
-                        if identifier == "store":
-                            continue
-
-                        elif identifier not in self.get_parents_by_identifier(node.identifier):
+                        if identifier not in self.get_parents_by_identifier(node.identifier):
                             errors.append(f"Input {input_value} depends on {identifier} but {identifier} is not a parent of {node.identifier}")
 
                     for field in store_fields:
