@@ -50,6 +50,7 @@ def test_runtime_missing_config_raises(monkeypatch):
 		Runtime(namespace="ns", name="rt", nodes=[GoodNode])
 
 
+@pytest.mark.filterwarnings("ignore:.*coroutine.*was never awaited.*:RuntimeWarning")
 def test_runtime_with_env_ok(monkeypatch):
 	monkeypatch.setenv("EXOSPHERE_STATE_MANAGER_URI", "http://sm")
 	monkeypatch.setenv("EXOSPHERE_API_KEY", "k")

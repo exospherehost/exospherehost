@@ -247,6 +247,8 @@ class TestRuntimeSignalHandling:
         assert requeue_endpoint == expected_requeue
 
     @pytest.mark.asyncio
+    @pytest.mark.filterwarnings("ignore:.*coroutine.*was never awaited.*:RuntimeWarning")
+    @pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
     async def test_signal_handling_direct(self):
         """Test signal handling by directly calling signal.send() with runtime endpoints."""
         runtime = Runtime(
