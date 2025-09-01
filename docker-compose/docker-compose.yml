@@ -1,0 +1,34 @@
+services:
+  exosphere-state-manager:
+    image: ghcr.io/exospherehost/exosphere-state-manager:latest
+    container_name: whatpeoplewant-state-manager
+    restart: unless-stopped
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - STATE_MANAGER_SECRET=${STATE_MANAGER_SECRET:-exosphere@123}
+      - MONGO_DATABASE_NAME=${MONGO_DATABASE_NAME:-exosphere}
+      - SECRETS_ENCRYPTION_KEY=${SECRETS_ENCRYPTION_KEY:-YTzpUlBGLSwm-3yKJRJTZnb0_aQuQQHyz64s8qAERVU=}
+    ports:
+      - "8000:8000"
+    networks:
+      - exosphere-network
+
+  exosphere-dashboard:
+    image: ghcr.io/exospherehost/exosphere-dashboard:latest
+    container_name: whatpeoplewant-dashboard
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL=${NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL:-http://exosphere-state-manager:8000}
+      - NEXT_PUBLIC_DEFAULT_NAMESPACE=${NEXT_PUBLIC_DEFAULT_NAMESPACE:-WhatPeopleWant}
+      - NEXT_PUBLIC_DEFAULT_API_KEY=${NEXT_PUBLIC_DEFAULT_API_KEY:-exosphere@123}
+    depends_on:
+      - exosphere-state-manager
+    ports:
+      - "3000:3000"
+    networks:
+      - exosphere-network
+
+networks:
+  exosphere-network:
+    driver: bridge
+    attachable: true

@@ -94,11 +94,32 @@ This allows developers to deploy production agents that can scale beautifully to
   }
   ```
 
+## Quick Start with Docker Compose
+
+Get Exosphere running locally in under 2 minutes:
+
+```bash
+# Option 1: With cloud MongoDB (recommended)
+echo "MONGO_URI=your-mongodb-connection-string" > .env
+curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose.yml
+docker compose up -d
+
+# Option 2: With local MongoDB (development)
+curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose-with-mongodb.yml
+docker compose -f docker-compose-with-mongodb.yml up -d
+```
+
+Access your services:
+- **Dashboard**: http://localhost:3000
+- **API**: http://localhost:8000
+
+> **📝 Note**: This configuration is for **development and testing only**. For production deployments, environment variable customization, and advanced configuration options, please read the complete **[Docker Compose Setup Guide](https://docs.exosphere.host/docker-compose-setup)**.
+
 ## Documentation
 
 For comprehensive documentation and guides, check out:
 
-
+- **[Docker Compose Setup](https://docs.exosphere.host/docker-compose-setup)**: Complete guide for running Exosphere locally with Docker Compose.
 - **[Getting Started Guide](https://docs.exosphere.host/getting-started)**
 - **[State Manager Setup Guide](https://docs.exosphere.host/exosphere/state-manager-setup)**: Step-by-step instructions for running the Exosphere backend locally or in production.
 - **[Dashboard Guide](https://docs.exosphere.host/exosphere/dashboard)**: Learn how to set up and use the Exosphere web dashboard.
