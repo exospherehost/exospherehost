@@ -12,6 +12,7 @@ from ..node_template_model import NodeTemplate
 from app.utils.encrypter import get_encrypter
 from app.models.dependent_string import DependentString
 from app.models.retry_policy_model import RetryPolicyModel
+from app.models.store_config_model import StoreConfig
 
 class GraphTemplate(BaseDatabaseModel):
     name: str = Field(..., description="Name of the graph")
@@ -21,6 +22,7 @@ class GraphTemplate(BaseDatabaseModel):
     validation_errors: List[str] = Field(default_factory=list, description="Validation errors of the graph")
     secrets: Dict[str, str] = Field(default_factory=dict, description="Secrets of the graph")
     retry_policy: RetryPolicyModel = Field(default_factory=RetryPolicyModel, description="Retry policy of the graph")
+    store_config: StoreConfig = Field(default_factory=StoreConfig, description="Store config of the graph")
 
     _node_by_identifier: Dict[str, NodeTemplate] | None = PrivateAttr(default=None)
     _parents_by_identifier: Dict[str, set[str]] | None = PrivateAttr(default=None) # type: ignore
@@ -237,10 +239,18 @@ class GraphTemplate(BaseDatabaseModel):
 
                     dependent_string = DependentString.create_dependent_string(input_value)
                     dependent_identifiers = set([identifier for identifier, _ in dependent_string.get_identifier_field()])
+                    store_fields = set([field for identifier, field in dependent_string.get_identifier_field() if identifier == "store"])
 
                     for identifier in dependent_identifiers:
-                        if identifier not in self.get_parents_by_identifier(node.identifier):
+                        if identifier == "store":
+                            continue
+
+                        elif identifier not in self.get_parents_by_identifier(node.identifier):
                             errors.append(f"Input {input_value} depends on {identifier} but {identifier} is not a parent of {node.identifier}")
+
+                    for field in store_fields:
+                        if field not in self.store_config.required_keys and field not in self.store_config.default_values:
+                            errors.append(f"Input {input_value} depends on {field} but {field} is not a required key or a default value")
 
                 except Exception as e:
                     errors.append(f"Error creating dependent string for input {input_value} check syntax string: {str(e)}")

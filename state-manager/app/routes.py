@@ -9,8 +9,8 @@ from .models.enqueue_response import EnqueueResponseModel
 from .models.enqueue_request import EnqueueRequestModel
 from .controller.enqueue_states import enqueue_states
 
-from .models.create_models import CreateRequestModel, CreateResponseModel, TriggerGraphRequestModel, TriggerGraphResponseModel
-from .controller.create_states import create_states, trigger_graph
+from .models.trigger_model import TriggerGraphRequestModel, TriggerGraphResponseModel
+from .controller.trigger_graph import trigger_graph
 
 from .models.executed_models import ExecutedRequestModel, ExecutedResponseModel
 from .controller.executed_state import executed_state
@@ -91,27 +91,6 @@ async def trigger_graph_route(namespace_name: str, graph_name: str, body: Trigge
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
 
     return await trigger_graph(namespace_name, graph_name, body, x_exosphere_request_id)
-
-
-@router.post(
-    "/graph/{graph_name}/states/create",
-    response_model=CreateResponseModel,
-    status_code=status.HTTP_200_OK,
-    response_description="States created successfully",
-    tags=["state"]
-)
-async def create_state(namespace_name: str, graph_name: str, body: CreateRequestModel, request: Request, api_key: str = Depends(check_api_key)):
-
-    x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
-
-    if api_key:
-        logger.info(f"API key is valid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
-    else:
-        logger.error(f"API key is invalid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
-
-    return await create_states(namespace_name, graph_name, body, x_exosphere_request_id)
-
 
 @router.post(
     "/states/{state_id}/executed",

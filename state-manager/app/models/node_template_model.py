@@ -34,6 +34,8 @@ class NodeTemplate(BaseModel):
     def validate_identifier(cls, v: str) -> str:
         if v == "" or v is None:
             raise ValueError("Node identifier cannot be empty")
+        elif v.strip() == "store":
+            raise ValueError("Node identifier cannot be reserved word 'store'")
         return v
     
     @field_validator('next_nodes')

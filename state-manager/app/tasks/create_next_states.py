@@ -7,6 +7,7 @@ from app.models.db.state import State
 from app.models.state_status_enum import StateStatusEnum
 from app.models.node_template_model import NodeTemplate
 from app.models.db.registered_node import RegisteredNode
+from app.models.db.store import Store
 from app.models.dependent_string import DependentString
 from app.models.node_template_model import UnitesStrategyEnum
 from json_schema_to_pydantic import create_model
@@ -82,42 +83,6 @@ def validate_dependencies(next_state_node_template: NodeTemplate, next_state_inp
                     raise AttributeError(f"Output field '{dependent.field}' not found on state '{dependent.identifier}' for template '{next_state_node_template.identifier}'")
 
 
-def generate_next_state(next_state_input_model: Type[BaseModel], next_state_node_template: NodeTemplate, parents: dict[str, State], current_state: State) -> State:
-    next_state_input_data = {}
-
-    for field_name, _ in next_state_input_model.model_fields.items():
-        dependency_string = DependentString.create_dependent_string(next_state_node_template.inputs[field_name])
-
-        for identifier, field in dependency_string.get_identifier_field():
-            if identifier == current_state.identifier:
-                if field not in current_state.outputs:
-                    raise AttributeError(f"Output field '{field}' not found on current state '{current_state.identifier}' for template '{next_state_node_template.identifier}'")
-                dependency_string.set_value(identifier, field, current_state.outputs[field])
-            else:
-                dependency_string.set_value(identifier, field, parents[identifier].outputs[field])
-                
-        next_state_input_data[field_name] = dependency_string.generate_string()
-    
-    new_parents = {
-        **current_state.parents,
-        current_state.identifier: current_state.id
-    }
-
-    return State(
-        node_name=next_state_node_template.node_name,
-        identifier=next_state_node_template.identifier,
-        namespace_name=next_state_node_template.namespace,
-        graph_name=current_state.graph_name,
-        status=StateStatusEnum.CREATED,
-        parents=new_parents,
-        inputs=next_state_input_data,
-        outputs={},
-        does_unites=next_state_node_template.unites is not None,
-        run_id=current_state.run_id,
-        error=None
-    )
-
-
 async def create_next_states(state_ids: list[PydanticObjectId], identifier: str, namespace: str, graph_name: str, parents_ids: dict[str, PydanticObjectId]):
 
     try:
@@ -137,6 +102,7 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
         
         cached_registered_nodes: dict[tuple[str, str], RegisteredNode] = {}
         cached_input_models: dict[tuple[str, str], Type[BaseModel]] = {}
+        cached_store_values: dict[tuple[str, str], str] = {}
         new_states = []
 
         async def get_registered_node(node_template: NodeTemplate) -> RegisteredNode:
@@ -153,6 +119,60 @@ async def create_next_states(state_ids: list[PydanticObjectId], identifier: str,
             if key not in cached_input_models:
                 cached_input_models[key] = create_model((await get_registered_node(node_template)).inputs_schema)
             return cached_input_models[key]
+        
+        async def get_store_value(run_id: str, field: str) -> str:
+            key = (run_id, field)
+            if key not in cached_store_values:
+                store_value = await Store.get_value(run_id, namespace, graph_name, field)
+                
+                if store_value is None:
+                    if field in graph_template.store_config.default_values.keys():
+                        store_value = graph_template.store_config.default_values[field]
+                    else:
+                        raise ValueError(f"Store value not found for field '{field}' in namespace '{namespace}' and graph '{graph_name}'")
+
+                cached_store_values[key] = store_value
+            return cached_store_values[key]
+
+        async def generate_next_state(next_state_input_model: Type[BaseModel], next_state_node_template: NodeTemplate, parents: dict[str, State], current_state: State) -> State:
+            next_state_input_data = {}
+
+            for field_name, _ in next_state_input_model.model_fields.items():
+                dependency_string = DependentString.create_dependent_string(next_state_node_template.inputs[field_name])
+
+                for identifier, field in dependency_string.get_identifier_field():
+
+                    if identifier == "store":
+                        dependency_string.set_value(identifier, field, await get_store_value(current_state.run_id, field))
+
+                    elif identifier == current_state.identifier:
+                        if field not in current_state.outputs:
+                            raise AttributeError(f"Output field '{field}' not found on current state '{current_state.identifier}' for template '{next_state_node_template.identifier}'")
+                        dependency_string.set_value(identifier, field, current_state.outputs[field])
+                    
+                    else:
+                        dependency_string.set_value(identifier, field, parents[identifier].outputs[field])
+                        
+                next_state_input_data[field_name] = dependency_string.generate_string()
+            
+            new_parents = {
+                **current_state.parents,
+                current_state.identifier: current_state.id
+            }
+
+            return State(
+                node_name=next_state_node_template.node_name,
+                identifier=next_state_node_template.identifier,
+                namespace_name=next_state_node_template.namespace,
+                graph_name=current_state.graph_name,
+                status=StateStatusEnum.CREATED,
+                parents=new_parents,
+                inputs=next_state_input_data,
+                outputs={},
+                does_unites=next_state_node_template.unites is not None,
+                run_id=current_state.run_id,
+                error=None
+            )
 
         current_states = await State.find(
             In(State.id, state_ids)
