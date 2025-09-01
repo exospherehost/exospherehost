@@ -80,7 +80,6 @@ class TestModelValidation:
 
     def test_trigger_graph_request_model_validation(self):
         """Test TriggerGraphRequestModel validation"""
-        from app.models.trigger_model import TriggerGraphRequestModel
         valid_data = {
             "store": {"s1": "v1"},
             "inputs": {"input1": "value1"}
@@ -416,7 +415,6 @@ class TestRouteHandlerAPIKeyValidation:
     async def test_trigger_graph_route_with_valid_api_key(self, mock_trigger_graph, mock_request):
         """Test trigger_graph_route with valid API key"""
         from app.routes import trigger_graph_route
-        from app.models.trigger_model import TriggerGraphRequestModel
         
         # Arrange
         mock_trigger_graph.return_value = MagicMock()
@@ -433,7 +431,6 @@ class TestRouteHandlerAPIKeyValidation:
     async def test_trigger_graph_route_with_invalid_api_key(self, mock_trigger_graph, mock_request):
         """Test trigger_graph_route with invalid API key"""
         from app.routes import trigger_graph_route
-        from app.models.trigger_model import TriggerGraphRequestModel
         from fastapi import HTTPException
         
         # Arrange
