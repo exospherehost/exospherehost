@@ -66,19 +66,60 @@ This will start:
 To run the latest beta version of Exosphere with the newest features, replace container tags with `beta-latest`:
 
 ### Quick Beta Setup with Cloud MongoDB
+
+**Option 1: Environment Variable Approach (Recommended)**
+```bash
+# Download compose file
+curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose.yml
+# Set image tag via environment variable
+export EXOSPHERE_TAG=beta-latest
+# Set your MONGO_URI in .env file, then:
+docker compose -f docker-compose.yml up -d
+```
+
+**Option 2: In-place File Editing**
 ```bash
 # Download and modify for beta with cloud MongoDB
 curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose.yml
-perl -pi -e 's/:latest/:beta-latest/g' docker-compose.yml
+
+# Portable approach (works on all platforms):
+perl -pi -e 's|(ghcr\.io/exospherehost/[^:]+):latest|\1:beta-latest|g' docker-compose.yml
+
+# Platform-specific alternatives:
+# Linux/GNU sed:
+# sed -i 's|(ghcr\.io/exospherehost/[^:]+):latest|\1:beta-latest|g' docker-compose.yml
+# macOS/BSD sed:
+# sed -i '' 's|(ghcr\.io/exospherehost/[^:]+):latest|\1:beta-latest|g' docker-compose.yml
+
 # Set your MONGO_URI in .env file, then:
 docker compose -f docker-compose.yml up -d
 ```
 
 ### Quick Beta Setup with Local MongoDB
+
+**Option 1: Environment Variable Approach (Recommended)**
+```bash
+# Download compose file
+curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose-with-mongodb.yml
+# Set image tag via environment variable
+export EXOSPHERE_TAG=beta-latest
+docker compose -f docker-compose-with-mongodb.yml up -d
+```
+
+**Option 2: In-place File Editing**
 ```bash
 # Download and modify for beta with local MongoDB
 curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose-with-mongodb.yml
-perl -pi -e 's/:latest/:beta-latest/g' docker-compose-with-mongodb.yml
+
+# Portable approach (works on all platforms):
+perl -pi -e 's|(ghcr\.io/exospherehost/[^:]+):latest|\1:beta-latest|g' docker-compose-with-mongodb.yml
+
+# Platform-specific alternatives:
+# Linux/GNU sed:
+# sed -i 's|(ghcr\.io/exospherehost/[^:]+):latest|\1:beta-latest|g' docker-compose-with-mongodb.yml
+# macOS/BSD sed:
+# sed -i '' 's|(ghcr\.io/exospherehost/[^:]+):latest|\1:beta-latest|g' docker-compose-with-mongodb.yml
+
 docker compose -f docker-compose-with-mongodb.yml up -d
 ```
 
@@ -115,8 +156,14 @@ docker compose -f docker-compose-with-mongodb.yml up -d
 | Variable | Description | Default Value |
 |----------|-------------|---------------|
 | `NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL` | State manager API URL | `http://exosphere-state-manager:8000` |
-| `NEXT_PUBLIC_DEFAULT_NAMESPACE` | Default namespace for workflows | `WhatPeopleWant` |
-| `NEXT_PUBLIC_DEFAULT_API_KEY` | Default API key for dashboard | `exosphere@123` |
+| `NEXT_PUBLIC_DEFAULT_NAMESPACE` | Default namespace for workflows | `default` |
+| `NEXT_PUBLIC_DEFAULT_API_KEY` | Default API key for dashboard | `<your-api-key>` (dev-only example) |
+
+> **⚠️ Security Warning**: `NEXT_PUBLIC_*` variables are embedded in client bundles and visible to end users. **Never put real secrets in NEXT_PUBLIC_ variables**. For production:
+> - Use server-side environment variables (without NEXT_PUBLIC_ prefix) for real secrets
+> - Implement server-side token exchange or API proxy for secret operations  
+> - Store sensitive data in secure vaults, not client-accessible variables
+> - The defaults shown above are development examples only
 
 ### MongoDB Local Setup Variables (for docker-compose-with-mongodb.yml only)
 
@@ -182,6 +229,27 @@ docker compose -f docker-compose-with-mongodb.yml up -d
 
 **Note**: The docker-compose files now automatically use `.env` files in the same directory and provide sensible defaults for all optional variables.
 
+### Legacy Docker Compose v1 Compatibility
+
+If you have the legacy `docker-compose` (v1) binary instead of the newer `docker compose` (v2) plugin, you can use the hyphenated command format:
+
+```bash
+# Legacy v1 commands (replace "docker compose" with "docker-compose"):
+docker-compose -f docker-compose.yml up -d
+docker-compose -f docker-compose-with-mongodb.yml up -d
+docker-compose -f docker-compose-with-mongodb.yml logs -f
+docker-compose -f docker-compose-with-mongodb.yml down
+```
+
+**Creating an alias** (optional): To use the same commands as shown in this guide, create an alias:
+```bash
+# Add to your shell profile (~/.bashrc, ~/.zshrc, etc.):
+alias 'docker compose'='docker-compose'
+
+# Or install the v2 plugin:
+# https://docs.docker.com/compose/install/
+```
+
 ### Generating a New Encryption Key
 
 To generate a secure encryption key for `SECRETS_ENCRYPTION_KEY`:
@@ -198,10 +266,10 @@ openssl rand -base64 32
 
 After running the Docker Compose command:
 
-- **Exosphere Dashboard**: http://localhost:3000
-- **State Manager API**: http://localhost:8000
-- **MongoDB** (if using with-mongodb): http://localhost:27017
-- **API Documentation**: http://localhost:8000/docs
+- **Exosphere Dashboard**: `http://localhost:3000`
+- **State Manager API**: `http://localhost:8000`
+- **MongoDB** (if using with-mongodb): `mongodb://localhost:27017` (not HTTP - use MongoDB clients like MongoDB Compass or mongosh)
+- **API Documentation**: `http://localhost:8000/docs`
 
 ## Development Commands
 
@@ -244,7 +312,27 @@ docker compose -f docker-compose-with-mongodb.yml logs exosphere-state-manager
 
 1. **Port already in use**: Change the port mappings in the docker-compose file if ports 3000, 8000, or 27017 are already in use.
 
-2. **MongoDB connection issues**: Ensure MongoDB is fully started before the state manager. The `depends_on` configuration handles this automatically.
+2. **MongoDB connection issues**: Ensure MongoDB is fully started before the state manager. Note that `depends_on` only waits for container startup, not readiness. For proper health-aware startup, add a healthcheck to the MongoDB service:
+
+   ```yaml
+   mongodb:
+     # ... other config ...
+     healthcheck:
+       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+       interval: 5s
+       timeout: 3s
+       retries: 20
+       start_period: 30s
+   ```
+
+   Then update the state manager dependency to wait for health:
+   ```yaml
+   exosphere-state-manager:
+     # ... other config ...
+     depends_on:
+       mongodb:
+         condition: service_healthy
+   ```
 
 3. **Authentication errors**: Verify your `STATE_MANAGER_SECRET` matches between the state manager and dashboard configuration.
 
@@ -267,9 +355,9 @@ Once your Exosphere instance is running:
 
 3. **Create your first workflow** following the [Getting Started Guide](https://docs.exosphere.host/getting-started)
 
-4. **Explore the dashboard** at http://localhost:3000
+4. **Explore the dashboard** at `http://localhost:3000`
 
-5. **Check out the API documentation** at http://localhost:8000/docs
+5. **Check out the API documentation** at `http://localhost:8000/docs`
 
 ## Support
 

@@ -109,9 +109,16 @@ curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docke
 docker compose -f docker-compose-with-mongodb.yml up -d
 ```
 
+**Environment Configuration:**
+- Docker Compose automatically loads `.env` files from the working directory
+- Create your `.env` file in the same directory as your docker-compose file
+
+> **⚠️ Security Note**: Variables prefixed with `NEXT_PUBLIC_` are embedded in client bundles and visible to browsers. Never store real secrets in `NEXT_PUBLIC_` variables - use server-side environment variables instead.
+
 Access your services:
-- **Dashboard**: http://localhost:3000
-- **API**: http://localhost:8000
+
+- **Dashboard**: `http://localhost:3000`
+- **API**: `http://localhost:8000`
 
 > **📝 Note**: This configuration is for **development and testing only**. For production deployments, environment variable customization, and advanced configuration options, please read the complete **[Docker Compose Setup Guide](https://docs.exosphere.host/docker-compose-setup)**.
 
