@@ -308,29 +308,71 @@ curl http://localhost:8000/health
 docker compose -f docker-compose-with-mongodb.yml logs exosphere-state-manager
 ```
 
+### Testing Your Setup
+
+You can validate your docker-compose configuration before starting services:
+
+```bash
+# Test configuration syntax
+docker compose -f docker-compose-with-mongodb.yml config
+
+# Pull all required images
+docker compose -f docker-compose-with-mongodb.yml pull
+
+# Start with health monitoring (--wait waits for all health checks)
+docker compose -f docker-compose-with-mongodb.yml up -d --wait
+```
+
+The `--wait` flag ensures all services pass their health checks before returning. The startup sequence will be:
+1. MongoDB starts and passes health check (~10-30 seconds)
+2. State Manager starts and passes health check (~10-30 seconds)  
+3. Dashboard starts and passes health check (~10-30 seconds)
+
 ### Common Issues
 
 1. **Port already in use**: Change the port mappings in the docker-compose file if ports 3000, 8000, or 27017 are already in use.
 
-2. **MongoDB connection issues**: Ensure MongoDB is fully started before the state manager. Note that `depends_on` only waits for container startup, not readiness. For proper health-aware startup, add a healthcheck to the MongoDB service:
+2. **MongoDB connection issues**: Ensure MongoDB is fully started before the state manager. Note that `depends_on` only waits for container startup, not readiness. The provided docker-compose files include proper healthchecks:
 
+   **MongoDB healthcheck** (tests database connectivity):
    ```yaml
    mongodb:
      # ... other config ...
      healthcheck:
        test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-       interval: 5s
-       timeout: 3s
-       retries: 20
+       interval: 10s
+       timeout: 5s
+       retries: 5
        start_period: 30s
    ```
 
-   Then update the state manager dependency to wait for health:
+   **State Manager healthcheck** (tests HTTP API readiness):
    ```yaml
    exosphere-state-manager:
      # ... other config ...
+     healthcheck:
+       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+       interval: 10s
+       timeout: 5s
+       retries: 5
+       start_period: 30s
      depends_on:
        mongodb:
+         condition: service_healthy
+   ```
+
+   **Dashboard healthcheck** (tests Next.js app readiness):
+   ```yaml
+   exosphere-dashboard:
+     # ... other config ...
+     healthcheck:
+       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+       interval: 10s
+       timeout: 5s
+       retries: 5
+       start_period: 30s
+     depends_on:
+       exosphere-state-manager:
          condition: service_healthy
    ```
 
