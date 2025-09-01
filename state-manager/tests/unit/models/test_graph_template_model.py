@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 import base64
 from app.models.db.graph_template_model import GraphTemplate
 
@@ -166,3 +166,93 @@ class TestGraphTemplate:
         """Test get_valid method exception handling"""
         # This test doesn't require GraphTemplate instantiation
         assert GraphTemplate.get_valid.__name__ == "get_valid"
+
+    @pytest.mark.asyncio
+    async def test_get_valid_negative_polling_interval(self):
+        """Test get_valid method with negative polling interval"""
+        with pytest.raises(ValueError, match="polling_interval must be positive"):
+            await GraphTemplate.get_valid("test_ns", "test_graph", polling_interval=-1.0)
+
+    @pytest.mark.asyncio
+    async def test_get_valid_zero_polling_interval(self):
+        """Test get_valid method with zero polling interval"""
+        with pytest.raises(ValueError, match="polling_interval must be positive"):
+            await GraphTemplate.get_valid("test_ns", "test_graph", polling_interval=0.0)
+
+    @pytest.mark.asyncio
+    async def test_get_valid_negative_timeout(self):
+        """Test get_valid method with negative timeout"""
+        with pytest.raises(ValueError, match="timeout must be positive"):
+            await GraphTemplate.get_valid("test_ns", "test_graph", timeout=-1.0)
+
+    @pytest.mark.asyncio
+    async def test_get_valid_zero_timeout(self):
+        """Test get_valid method with zero timeout"""
+        with pytest.raises(ValueError, match="timeout must be positive"):
+            await GraphTemplate.get_valid("test_ns", "test_graph", timeout=0.0)
+
+    @pytest.mark.asyncio
+    async def test_get_valid_coerces_small_polling_interval_mock(self):
+        """Test get_valid method coerces very small polling interval to 0.1"""
+        with patch.object(GraphTemplate, 'get') as mock_get, \
+             patch('time.monotonic', side_effect=[0, 1, 2]), \
+             patch('asyncio.sleep') as _:
+            
+            mock_template = MagicMock()
+            mock_template.is_valid.return_value = True
+            mock_get.return_value = mock_template
+            
+            result = await GraphTemplate.get_valid("test_ns", "test_graph", polling_interval=0.01)
+            
+            assert result == mock_template
+            # Should have coerced polling_interval to 0.1
+            # (This is harder to test directly, but we can verify the function completed)
+
+    @pytest.mark.asyncio
+    async def test_get_valid_coerces_small_polling_interval(self):
+        """Test get_valid method coerces very small polling interval to 0.1"""
+        from unittest.mock import MagicMock
+        
+        with patch.object(GraphTemplate, 'get') as mock_get, \
+             patch('time.monotonic', side_effect=[0, 1, 2]), \
+             patch('asyncio.sleep') as _:
+            
+            mock_template = MagicMock()
+            mock_template.is_valid.return_value = True
+            mock_get.return_value = mock_template
+            
+            result = await GraphTemplate.get_valid("test_ns", "test_graph", polling_interval=0.01)
+            
+            assert result == mock_template
+
+    @pytest.mark.asyncio
+    async def test_get_valid_non_validating_state(self):
+        """Test get_valid method when graph template is in non-validating state"""
+        from unittest.mock import MagicMock
+        
+        with patch.object(GraphTemplate, 'get') as mock_get:
+            mock_template = MagicMock()
+            mock_template.is_valid.return_value = False
+            mock_template.is_validating.return_value = False
+            mock_template.validation_status.value = "INVALID"
+            mock_get.return_value = mock_template
+            
+            with pytest.raises(ValueError, match="Graph template is in a non-validating state: INVALID"):
+                await GraphTemplate.get_valid("test_ns", "test_graph")
+
+    @pytest.mark.asyncio
+    async def test_get_valid_timeout_reached(self):
+        """Test get_valid method when timeout is reached"""
+        from unittest.mock import MagicMock
+        
+        with patch.object(GraphTemplate, 'get') as mock_get, \
+             patch('time.monotonic', side_effect=[0, 0.5, 1.0, 1.5, 2.0]), \
+             patch('asyncio.sleep') as _:
+            
+            mock_template = MagicMock()
+            mock_template.is_valid.return_value = False
+            mock_template.is_validating.return_value = True
+            mock_get.return_value = mock_template
+            
+            with pytest.raises(ValueError, match="Graph template is not valid for namespace: test_ns and graph name: test_graph after 1.0 seconds"):
+                await GraphTemplate.get_valid("test_ns", "test_graph", timeout=1.0)

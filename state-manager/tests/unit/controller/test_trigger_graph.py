@@ -106,3 +106,18 @@ async def test_trigger_graph_missing_store_keys():
 
         assert exc_info.value.status_code == 400
         assert "Missing store keys" in exc_info.value.detail
+
+
+@pytest.mark.asyncio
+async def test_trigger_graph_value_error_not_graph_template_not_found(mock_request):
+    """Test trigger_graph handles ValueError that is not about graph template not found"""
+    namespace_name = "test_namespace"
+    graph_name = "test_graph"
+    x_exosphere_request_id = "test_request_id"
+
+    with patch('app.controller.trigger_graph.GraphTemplate') as mock_graph_template_cls:
+        # Simulate a ValueError that doesn't contain "Graph template not found"
+        mock_graph_template_cls.get.side_effect = ValueError("Some other validation error")
+        
+        with pytest.raises(ValueError, match="Some other validation error"):
+            await trigger_graph(namespace_name, graph_name, mock_request, x_exosphere_request_id)
