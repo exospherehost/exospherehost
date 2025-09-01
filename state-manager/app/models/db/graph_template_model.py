@@ -137,12 +137,11 @@ class GraphTemplate(BaseDatabaseModel):
     @field_validator('secrets')
     @classmethod
     def validate_secrets(cls, v: Dict[str, str]) -> Dict[str, str]:
-        trimmed_v = {key.strip(): value.strip() for key, value in v.items()}
-        for secret_name, secret_value in trimmed_v.items():
+        for secret_name, secret_value in v.items():
             if not secret_name or not secret_value:
                 raise ValueError("Secrets cannot be empty")
             cls._validate_secret_value(secret_value)
-        return trimmed_v
+        return v
     
     @field_validator('nodes')
     @classmethod
