@@ -120,23 +120,26 @@ If you're working in a Jupyter notebook or Python REPL, consider these alternati
 === "Asyncio Task"
 
     ```python
-    import asyncio
-    
-    # Create the runtime
-    runtime = Runtime(
-        namespace="MyProject",
-        name="DataProcessor",
-        nodes=[SampleNode]
-    )
-    
-    # Run as an asyncio task (if you're in an async context)
-    async def main():
-        task = runtime.start()  # Returns a task when in an existing event loop
-        # You can now do other async work while the runtime runs
-        await asyncio.sleep(1)  # Example: do other work
-        return task
-    
-    # In Jupyter: await main()
+import asyncio
+
+# Create the runtime
+runtime = Runtime(
+    namespace="MyProject",
+    name="DataProcessor",
+    nodes=[SampleNode]
+)
+
+# In an async context (like a Jupyter notebook),
+# runtime.start() returns a task that runs in the background.
+runtime_task = runtime.start()
+
+# Your interactive session can continue.
+print("Runtime is running in the background!")
+
+# You can now do other async work while the runtime runs.
+# For example:
+# await asyncio.sleep(10)
+# print("Finished waiting.")
     ```
 
 === "Production Script"
