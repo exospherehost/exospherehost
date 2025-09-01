@@ -1,7 +1,7 @@
 services:
   exosphere-state-manager:
     image: ghcr.io/exospherehost/exosphere-state-manager:latest
-    container_name: whatpeoplewant-state-manager
+    container_name: exosphere-state-manager
     restart: unless-stopped
     environment:
       - MONGO_URI=${MONGO_URI}
@@ -15,7 +15,7 @@ services:
 
   exosphere-dashboard:
     image: ghcr.io/exospherehost/exosphere-dashboard:latest
-    container_name: whatpeoplewant-dashboard
+    container_name: exosphere-dashboard
     restart: unless-stopped
     environment:
       - NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL=${NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL:-http://exosphere-state-manager:8000}
