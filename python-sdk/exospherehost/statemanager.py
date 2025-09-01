@@ -67,7 +67,7 @@ class StateManager:
     def _get_get_graph_endpoint(self, graph_name: str):
         return f"{self._state_manager_uri}/{self._state_manager_version}/namespace/{self._namespace}/graph/{graph_name}"
 
-    async def trigger(self, graph_name: str, state: TriggerState | None = None, states: list[TriggerState] | None = None):
+    async def trigger(self, graph_name: str, inputs: dict[str, str] | None = None, store: dict[str, str] | None = None):
         """
         Trigger a graph execution with one or more trigger states.
         
@@ -106,21 +106,14 @@ class StateManager:
             result = await state_manager.trigger("my-graph", states=states)
             ```
         """
-        if state is None and states is None:
-            raise ValueError("Either state or states must be provided")
-        if state is not None and states is not None:
-            raise ValueError("Only one of state or states must be provided")
-        if states is not None and len(states) == 0:
-            raise ValueError("States must be a non-empty list")
+        if inputs is None: 
+            inputs = {}
+        if store is None:
+            store = {}
         
-        states_list = []
-        if state is not None:
-            states_list.append(state)
-        if states is not None:
-            states_list.extend(states)
-
         body = {
-            "states": [state.model_dump() for state in states_list]
+            "inputs": inputs,
+            "store": store
         }
         headers = {
             "x-api-key": self._key
@@ -167,7 +160,7 @@ class StateManager:
                     raise Exception(f"Failed to get graph: {response.status} {await response.text()}")
                 return await response.json()
 
-    async def upsert_graph(self, graph_name: str, graph_nodes: list[dict[str, Any]], secrets: dict[str, str], validation_timeout: int = 60, polling_interval: int = 1):
+    async def upsert_graph(self, graph_name: str, graph_nodes: list[dict[str, Any]], secrets: dict[str, str], retry_policy: dict[str, Any] | None = None, store_config: dict[str, Any] | None = None, validation_timeout: int = 60, polling_interval: int = 1):
         """
         Create or update a graph in the state manager with validation.
         
@@ -203,7 +196,9 @@ class StateManager:
         }
         body = {
             "secrets": secrets,
-            "nodes": graph_nodes
+            "nodes": graph_nodes,
+            "retry_policy": retry_policy,
+            "store_config": store_config
         }
         async with aiohttp.ClientSession() as session:
             async with session.put(endpoint, json=body, headers=headers) as response: # type: ignore
