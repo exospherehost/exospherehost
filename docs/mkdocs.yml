@@ -138,6 +138,7 @@ extra_css:
 nav:
   - Introduction: index.md
   - Getting Started: getting-started.md
+  - Docker Compose: docker-compose-setup.md
   - State Manager Setup: exosphere/state-manager-setup.md
   - Register Node: exosphere/register-node.md
   - Create Runtime: exosphere/create-runtime.md

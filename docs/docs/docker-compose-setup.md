@@ -173,6 +173,10 @@ docker compose -f docker-compose-with-mongodb.yml up -d
 | `MONGO_INITDB_ROOT_PASSWORD` | MongoDB root password | `password` |
 | `MONGO_INITDB_DATABASE` | Initial MongoDB database | `exosphere` |
 
+> **⚠️ Development Only — Do Not Use in Production**
+>
+> The MongoDB credentials above (`MONGO_INITDB_ROOT_USERNAME`, `MONGO_INITDB_ROOT_PASSWORD`, and `MONGO_INITDB_DATABASE`) are intended **only for local development**. These default values must **never be used in production environments**. For production deployments, use environment variable overrides, secure secrets management systems, or generate strong, unique credentials. Always rotate these values before deploying to any non-development environment.
+
 ### SDK Environment Variables
 
 To use the Exosphere Python SDK with your running instance, set these environment variables in your development environment:
