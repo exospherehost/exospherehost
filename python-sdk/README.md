@@ -77,7 +77,7 @@ export EXOSPHERE_API_KEY="your-api-key"
 - **Async Support**: Native async/await support for high-performance operations
 - **Error Handling**: Built-in retry mechanisms and error recovery
 - **Scalability**: Designed for high-volume batch processing and workflows
-- **Graph Store (beta)**: Persist key-value pairs across nodes within a single run
+- **Graph Store (beta)**: Strings-only key-value store with per-run scope for sharing data across nodes (not durable across separate runs or clusters)
 
 ## Architecture
 
@@ -256,12 +256,15 @@ result = await state_manager.trigger(
 ```
 
 **Parameters:**
+
 - `graph_name` (str): Name of the graph to execute
 - `inputs` (dict[str, str] | None): Key/value inputs for the first node (strings only)
 - `store` (dict[str, str] | None): Graph-level key/value store (beta) persisted across nodes
 
 **Returns:**
+
 - `dict`: JSON payload from the state manager
 
 **Raises:**
+
 - `Exception`: If the HTTP request fails

@@ -189,10 +189,14 @@ class StateManager:
         }
         body = {
             "secrets": secrets,
-            "nodes": graph_nodes,
-            "retry_policy": retry_policy,
-            "store_config": store_config
+            "nodes": graph_nodes
         }
+
+        if retry_policy is not None:
+            body["retry_policy"] = retry_policy
+        if store_config is not None:
+            body["store_config"] = store_config
+
         async with aiohttp.ClientSession() as session:
             async with session.put(endpoint, json=body, headers=headers) as response: # type: ignore
                 if response.status not in [200, 201]:
