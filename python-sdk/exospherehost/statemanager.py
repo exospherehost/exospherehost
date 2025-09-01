@@ -69,41 +69,37 @@ class StateManager:
 
     async def trigger(self, graph_name: str, inputs: dict[str, str] | None = None, store: dict[str, str] | None = None):
         """
-        Trigger a graph execution with one or more trigger states.
+        Trigger execution of a graph.
         
-        This method sends trigger states to the specified graph endpoint to initiate
-        graph execution. It accepts either a single trigger state or a list of trigger
-        states, but not both simultaneously.
+        Beta: This method now supports an optional **store** parameter that lets you
+        pass a key-value map that is persisted for the lifetime of the graph run. All
+        keys **and** values must be strings in the current beta release – the schema
+        may change in future versions.
         
         Args:
-            graph_name (str): The name of the graph to trigger execution for.
-            state (TriggerState | None, optional): A single trigger state to send.
-                Must be provided if `states` is None.
-            states (list[TriggerState] | None, optional): A list of trigger states to send.
-                Must be provided if `state` is None. Cannot be an empty list.
+            graph_name (str): Name of the graph you want to run.
+            inputs (dict[str, str] | None): Optional inputs for the first node in the
+                graph. Strings only.
+            store (dict[str, str] | None): Optional key-value store that will be merged
+                into the graph-level store before execution (beta).
         
         Returns:
-            dict: The JSON response from the state manager API containing the
-                result of the trigger operation.
+            dict: JSON payload returned by the state-manager API.
         
         Raises:
-            ValueError: If neither `state` nor `states` is provided, if both are provided,
-                or if `states` is an empty list.
-            Exception: If the API request fails with a non-200 status code. The exception
-                message includes the HTTP status code and response text for debugging.
+            Exception: If the request fails.
         
         Example:
             ```python
-            # Trigger with a single state
-            state = TriggerState(identifier="my-trigger", inputs={"key": "value"})
-            result = await state_manager.trigger("my-graph", state=state)
-            
-            # Trigger with multiple states
-            states = [
-                TriggerState(identifier="trigger1", inputs={"key1": "value1"}),
-                TriggerState(identifier="trigger2", inputs={"key2": "value2"})
-            ]
-            result = await state_manager.trigger("my-graph", states=states)
+            # Trigger with inputs only
+            await state_manager.trigger("my-graph", inputs={"user_id": "123"})
+
+            # Trigger with inputs **and** a beta store
+            await state_manager.trigger(
+                "my-graph",
+                inputs={"user_id": "123"},
+                store={"cursor": "0"}  # beta
+            )
             ```
         """
         if inputs is None: 
@@ -162,33 +158,30 @@ class StateManager:
 
     async def upsert_graph(self, graph_name: str, graph_nodes: list[dict[str, Any]], secrets: dict[str, str], retry_policy: dict[str, Any] | None = None, store_config: dict[str, Any] | None = None, validation_timeout: int = 60, polling_interval: int = 1):
         """
-        Create or update a graph in the state manager with validation.
+        Create or update a graph definition.
+
+        Beta: `store_config` is a new field that allows you to configure a
+        namespaced key-value store that lives for the duration of a graph run. The
+        feature is in beta and the shape of `store_config` may change.
         
-        This method sends a graph definition to the state manager API for creation
-        or update. After submission, it polls the API to wait for graph validation
-        to complete, ensuring the graph is properly configured before returning.
+        After submitting the graph, this helper polls the state-manager until the
+        graph has been validated (or the timeout is hit).
         
         Args:
-            graph_name (str): The name of the graph to create or update.
-            graph_nodes (list[dict[str, Any]]): A list of node definitions that make up
-                the graph. Each node should contain the necessary configuration for
-                the graph execution engine.
-            secrets (dict[str, str]): A dictionary of secret values that will be
-                available to the graph during execution. Keys are secret names and
-                values are the secret values.
-            validation_timeout (int, optional): Maximum time in seconds to wait for
-                graph validation to complete. Defaults to 60.
-            polling_interval (int, optional): Time in seconds between validation
-                status checks. Defaults to 1.
-                
+            graph_name (str): Graph identifier.
+            graph_nodes (list[dict[str, Any]]): Graph node list.
+            secrets (dict[str, str]): Secrets available to all nodes.
+            retry_policy (dict[str, Any] | None): Optional per-node retry policy.
+            store_config (dict[str, Any] | None): Beta configuration for the
+                graph-level store (schema is subject to change).
+            validation_timeout (int): Seconds to wait for validation (default 60).
+            polling_interval (int): Polling interval in seconds (default 1).
+        
         Returns:
-            dict: The JSON response from the state manager API containing the
-                validated graph information.
-                
+            dict: Validated graph object returned by the API.
+        
         Raises:
-            Exception: If the API request fails with a non-201 status code, if graph
-                validation times out, or if validation fails. The exception message
-                includes relevant error details for debugging.
+            Exception: If validation fails or times out.
         """
         endpoint = self._get_upsert_graph_endpoint(graph_name)
         headers = {

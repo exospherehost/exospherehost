@@ -176,7 +176,7 @@ async def create_graph_template():
     }
     
     try:
-        # Create or update the graph template
+        # Create or update the graph template (with optional store, beta)
         result = await state_manager.upsert_graph(
             graph_name="my-workflow",
             graph_nodes=graph_nodes,
@@ -186,6 +186,9 @@ async def create_graph_template():
                 "strategy": "EXPONENTIAL",
                 "backoff_factor": 2000,
                 "exponent": 2
+            },
+            store_config={  # beta
+                "ttl": 7200  # seconds to keep key/values
             }
         )
         print("Graph template created successfully!")

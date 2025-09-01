@@ -16,20 +16,14 @@ The recommended way to trigger graphs is using the Exosphere Python SDK, which p
             state_manager_uri=EXOSPHERE_STATE_MANAGER_URI,
             key=EXOSPHERE_API_KEY
         )
-        
-        # Create trigger state
-        trigger_state = TriggerState(
-            identifier="data_loader",  # Must match a node identifier in your graph
-            inputs={
-                "source": "/path/to/data.csv",
-                "format": "csv",
-                "batch_size": "1000"
-            }
-        )
-        
+               
         try:
-            # Trigger the graph
-            result = await state_manager.trigger("my-graph", state=trigger_state)
+            # Trigger the graph with optional store (beta)
+            result = await state_manager.trigger(
+                "my-graph",
+                inputs={"user_id": "123"},
+                store={"cursor": "0"}  # persisted across nodes (beta)
+            )
             print(f"Graph triggered successfully!")
             print(f"Run ID: {result['run_id']}")
             return result

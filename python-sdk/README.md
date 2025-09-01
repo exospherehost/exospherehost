@@ -77,6 +77,7 @@ export EXOSPHERE_API_KEY="your-api-key"
 - **Async Support**: Native async/await support for high-performance operations
 - **Error Handling**: Built-in retry mechanisms and error recovery
 - **Scalability**: Designed for high-volume batch processing and workflows
+- **Graph Store (beta)**: Persist key-value pairs across nodes within a single run
 
 ## Architecture
 
@@ -241,95 +242,26 @@ trigger_state = TriggerState(
     }
 )
 
-# Trigger a single state
-result = await state_manager.trigger("my-graph", state=trigger_state)
-
-# Or trigger multiple states
-trigger_states = [
-    TriggerState(identifier="trigger1", inputs={"key1": "value1"}),
-    TriggerState(identifier="trigger2", inputs={"key2": "value2"})
-]
-
-result = await state_manager.trigger("my-graph", states=trigger_states)
+# Trigger the graph (beta store support)
+result = await state_manager.trigger(
+    "my-graph",
+    inputs={
+        "user_id": "12345",
+        "session_token": "abc123def456"
+    },
+    store={
+        "cursor": "0"  # persisted across nodes (beta)
+    }
+)
 ```
 
 **Parameters:**
-- `graph_name` (str): The name of the graph to trigger
-- `state` (TriggerState, optional): A single trigger state
-- `states` (list[TriggerState], optional): A list of trigger states
+- `graph_name` (str): Name of the graph to execute
+- `inputs` (dict[str, str] | None): Key/value inputs for the first node (strings only)
+- `store` (dict[str, str] | None): Graph-level key/value store (beta) persisted across nodes
 
 **Returns:**
-- `dict`: The JSON response from the state manager API
+- `dict`: JSON payload from the state manager
 
 **Raises:**
-- `ValueError`: If neither `state` nor `states` is provided, if both are provided, or if `states` is an empty list
-- `Exception`: If the API request fails with a non-200 status code
-
-### TriggerState Class
-
-The `TriggerState` class represents a trigger state for graph execution. It contains an identifier and a set of input parameters that will be passed to the graph when it is triggered.
-
-#### Creating Trigger States
-
-```python
-from exospherehost import TriggerState
-
-# Basic trigger state
-trigger_state = TriggerState(
-    identifier="data-processing",
-    inputs={
-        "file_path": "/path/to/data.csv",
-        "batch_size": "1000",
-        "priority": "high"
-    }
-)
-
-# Trigger state with complex data (serialized as JSON)
-import json
-
-complex_data = {
-    "filters": ["active", "verified"],
-    "date_range": {"start": "2024-01-01", "end": "2024-01-31"},
-    "options": {"include_metadata": True, "format": "json"}
-}
-
-trigger_state = TriggerState(
-    identifier="complex-processing",
-    inputs={
-        "config": json.dumps(complex_data),
-        "user_id": "12345"
-    }
-)
-```
-
-**Attributes:**
-- `identifier` (str): A unique identifier for this trigger state. Used to distinguish between different trigger states and may be used by the graph to determine how to process the trigger
-- `inputs` (dict[str, str]): A dictionary of input parameters that will be passed to the graph. The keys are parameter names and values are parameter values, both as strings
-
-## Integration with ExosphereHost Platform
-
-The Python SDK integrates seamlessly with the ExosphereHost platform, providing:
-
-- **Performance**: Optimized execution with intelligent resource allocation and parallel processing
-- **Reliability**: Built-in fault tolerance, automatic recovery, and failover capabilities
-- **Scalability**: Automatic scaling based on workload demands
-- **Monitoring**: Integrated logging and monitoring capabilities
-
-## Documentation
-
-For more detailed information, visit our [documentation](https://docs.exosphere.host).
-
-## Contributing
-
-We welcome contributions! Please see our [contributing guidelines](https://github.com/exospherehost/exospherehost/blob/main/CONTRIBUTING.md) for details.
-
-## Support
-
-For support and questions:
-- **Email**: [nivedit@exosphere.host](mailto:nivedit@exosphere.host)
-- **Documentation**: [https://docs.exosphere.host](https://docs.exosphere.host)
-- **GitHub Issues**: [https://github.com/exospherehost/exospherehost/issues](https://github.com/exospherehost/exospherehost/issues)
-
-## License
-
-This Python SDK is licensed under the MIT License. The main ExosphereHost project is licensed under the Elastic License 2.0.
+- `Exception`: If the HTTP request fails
