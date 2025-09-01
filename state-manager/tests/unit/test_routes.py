@@ -1,6 +1,6 @@
 from app.routes import router
 from app.models.enqueue_request import EnqueueRequestModel
-from app.models.create_models import TriggerGraphRequestModel, CreateRequestModel
+from app.models.trigger_model import TriggerGraphRequestModel
 from app.models.executed_models import ExecutedRequestModel
 from app.models.errored_models import ErroredRequestModel
 from app.models.graph_models import UpsertGraphTemplateRequest, UpsertGraphTemplateResponse
@@ -26,7 +26,7 @@ class TestRouteStructure:
         # State management routes
         assert any('/v0/namespace/{namespace_name}/states/enqueue' in path for path in paths)
         assert any('/v0/namespace/{namespace_name}/graph/{graph_name}/trigger' in path for path in paths)
-        assert any('/v0/namespace/{namespace_name}/graph/{graph_name}/states/create' in path for path in paths)
+        # Removed deprecated create states route assertion
         assert any('/v0/namespace/{namespace_name}/states/{state_id}/executed' in path for path in paths)
         assert any('/v0/namespace/{namespace_name}/states/{state_id}/errored' in path for path in paths)
         assert any('/v0/namespace/{namespace_name}/states/{state_id}/prune' in path for path in paths)
@@ -80,36 +80,14 @@ class TestModelValidation:
 
     def test_trigger_graph_request_model_validation(self):
         """Test TriggerGraphRequestModel validation"""
-        # Test with valid data
+        from app.models.trigger_model import TriggerGraphRequestModel
         valid_data = {
-            "states": [
-                {
-                    "identifier": "node1",
-                    "inputs": {"input1": "value1"}
-                }
-            ]
+            "store": {"s1": "v1"},
+            "inputs": {"input1": "value1"}
         }
-        model = TriggerGraphRequestModel(**valid_data) # type: ignore
-        assert len(model.states) == 1
-        assert model.states[0].identifier == "node1"
-        assert model.states[0].inputs == {"input1": "value1"}
-
-    def test_create_request_model_validation(self):
-        """Test CreateRequestModel validation"""
-        # Test with valid data
-        valid_data = {
-            "run_id": "test-run-id",
-            "states": [
-                {
-                    "identifier": "node1",
-                    "inputs": {"input1": "value1"}
-                }
-            ]
-        }
-        model = CreateRequestModel(**valid_data)
-        assert model.run_id == "test-run-id"
-        assert len(model.states) == 1
-        assert model.states[0].identifier == "node1"
+        model = TriggerGraphRequestModel(**valid_data)
+        assert model.store == {"s1": "v1"}
+        assert model.inputs == {"input1": "value1"}
 
     def test_prune_request_model_validation(self):
         """Test PruneRequestModel validation"""
@@ -331,7 +309,6 @@ class TestRouteHandlers:
         from app.routes import (
             enqueue_state,
             trigger_graph_route,
-            create_state,
             executed_state_route,
             errored_state_route,
             upsert_graph_template,
@@ -347,7 +324,6 @@ class TestRouteHandlers:
         # Verify all handlers are callable
         assert callable(enqueue_state)
         assert callable(trigger_graph_route)
-        assert callable(create_state)
         assert callable(executed_state_route)
         assert callable(errored_state_route)
         assert callable(upsert_graph_template)
@@ -440,11 +416,11 @@ class TestRouteHandlerAPIKeyValidation:
     async def test_trigger_graph_route_with_valid_api_key(self, mock_trigger_graph, mock_request):
         """Test trigger_graph_route with valid API key"""
         from app.routes import trigger_graph_route
-        from app.models.create_models import TriggerGraphRequestModel
+        from app.models.trigger_model import TriggerGraphRequestModel
         
         # Arrange
         mock_trigger_graph.return_value = MagicMock()
-        body = TriggerGraphRequestModel(states=[])
+        body = TriggerGraphRequestModel()
         
         # Act
         result = await trigger_graph_route("test_namespace", "test_graph", body, mock_request, "valid_key")
@@ -457,11 +433,11 @@ class TestRouteHandlerAPIKeyValidation:
     async def test_trigger_graph_route_with_invalid_api_key(self, mock_trigger_graph, mock_request):
         """Test trigger_graph_route with invalid API key"""
         from app.routes import trigger_graph_route
-        from app.models.create_models import TriggerGraphRequestModel
+        from app.models.trigger_model import TriggerGraphRequestModel
         from fastapi import HTTPException
         
         # Arrange
-        body = TriggerGraphRequestModel(states=[])
+        body = TriggerGraphRequestModel()
         
         # Act & Assert
         with pytest.raises(HTTPException) as exc_info:
@@ -470,22 +446,11 @@ class TestRouteHandlerAPIKeyValidation:
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Invalid API key"
 
-    @patch('app.routes.create_states')
-    async def test_create_state_with_valid_api_key(self, mock_create_states, mock_request):
-        """Test create_state with valid API key"""
-        from app.routes import create_state
-        from app.models.create_models import CreateRequestModel
-        
-        # Arrange
-        mock_create_states.return_value = MagicMock()
-        body = CreateRequestModel(run_id="test_run", states=[])
-        
-        # Act
-        result = await create_state("test_namespace", "test_graph", body, mock_request, "valid_key")
-        
-        # Assert
-        mock_create_states.assert_called_once_with("test_namespace", "test_graph", body, "test-request-id")
-        assert result == mock_create_states.return_value
+    def test_no_create_state_route(self):
+        from app.routes import router
+        routes = [route for route in router.routes if hasattr(route, 'path')]
+        paths = [route.path for route in routes]  # type: ignore
+        assert not any('/v0/namespace/{namespace_name}/graph/{graph_name}/states/create' in path for path in paths)
 
     @patch('app.routes.executed_state')
     async def test_executed_state_route_with_valid_api_key(self, mock_executed_state, mock_request, mock_background_tasks):
