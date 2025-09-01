@@ -39,7 +39,7 @@ async def trigger_graph(namespace_name: str, graph_name: str, body: TriggerGraph
                 raise e
             
         if not graph_template.is_valid():
-            raise HTTPException(status_code=400, detail=f"Graph template is not valid")
+            raise HTTPException(status_code=400, detail="Graph template is not valid")
 
         check_required_store_keys(graph_template, body.store)
 
