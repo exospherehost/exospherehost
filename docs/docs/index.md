@@ -59,8 +59,11 @@ Runtime(
     namespace="MyProject",
     name="HelloWorld",
     nodes=[HelloWorldNode]
-).start()
+).start()  # Note: This blocks the main thread
 ```
+
+!!! info "Interactive Environments"
+    If you're using Jupyter notebooks or Python REPLs, `Runtime.start()` will block your session. See the [Getting Started guide](./getting-started.md#important-blocking-behavior) for non-blocking alternatives.
 
 ### Run it
 
