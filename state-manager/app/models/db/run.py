@@ -11,14 +11,15 @@ class Run(Document):
     created_at: datetime = Field(default_factory=datetime.now, description="Creation timestamp")
 
     class Settings:
+        name = "runs"
         indexes = [
-            IndexModel(
-                keys=[("created_at", -1)],
-                name="created_at_index"
-            ),
             IndexModel(
                 keys=[("run_id", 1)],
                 unique=True,
                 name="run_id_index"
+            ),
+            IndexModel(
+                keys=[("namespace_name", 1), ("created_at", -1)],
+                name="namespace_created_at_index"
             )
         ]
