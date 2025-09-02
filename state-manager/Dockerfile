@@ -1,6 +1,9 @@
+FROM ghcr.io/astral-sh/uv:0.4.28 as uv
+
 FROM python:3.12-slim-bookworm
 
-RUN pip install --no-cache-dir uv==0.4.28
+COPY --from=uv /uv /usr/local/bin/uv
+COPY --from=uv /uvx /usr/local/bin/uvx
 
 WORKDIR /api-server
 
