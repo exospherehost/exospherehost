@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { GraphTemplateBuilder } from '@/components/GraphTemplateBuilder';
 import { NamespaceOverview } from '@/components/NamespaceOverview';
-import { StatesByRunId } from '@/components/StatesByRunId';
+import { RunsTable } from '@/components/RunsTable';
 import { NodeDetailModal } from '@/components/NodeDetailModal';
 import { GraphTemplateDetailModal } from '@/components/GraphTemplateDetailModal';
 import { apiService } from '@/services/api';
@@ -82,7 +82,7 @@ export default function Dashboard() {
   const tabs = [    
     { id: 'overview', label: 'Overview', icon: BarChart3 },    
     { id: 'graph', label: 'Graph Template', icon: GitBranch },    
-    { id: 'run-states', label: 'Run States', icon: Filter }
+    { id: 'run-states', label: 'Runs', icon: Filter }
   ] as const;
 
   return (
@@ -204,7 +204,7 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'run-states' && (
-          <StatesByRunId
+          <RunsTable
             namespace={namespace}
             apiKey={apiKey}
           />

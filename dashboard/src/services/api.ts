@@ -14,7 +14,8 @@ import {
   ListGraphTemplatesResponse,
   CurrentStatesResponse,
   StatesByRunIdResponse,
-  GraphStructureResponse
+  GraphStructureResponse,
+  RunsResponse
 } from '@/types/state-manager';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL || 'http://localhost:8000';
@@ -234,6 +235,24 @@ class ApiService {
   ): Promise<GraphStructureResponse> {
     return this.makeRequest<GraphStructureResponse>(
       `/v0/namespace/${namespace}/states/run/${runId}/graph`,
+      {
+        method: 'GET',
+        headers: {
+          'X-API-Key': apiKey,
+        },
+      }
+    );
+  }
+
+  // Runs endpoint
+  async getRuns(
+    namespace: string,
+    apiKey: string,
+    page: number = 1,
+    size: number = 20
+  ): Promise<RunsResponse> {
+    return this.makeRequest<RunsResponse>(
+      `/v0/namespace/${namespace}/runs/${page}/${size}`,
       {
         method: 'GET',
         headers: {

@@ -203,3 +203,30 @@ export interface GraphStructureResponse {
   edge_count: number;
   execution_summary: Record<string, number>;
 }
+
+// Runs Types
+export enum RunStatusEnum {
+  SUCCESS = "SUCCESS",
+  PENDING = "PENDING",
+  FAILED = "FAILED"
+}
+
+export interface RunListItem {
+  run_id: string;
+  graph_name: string;
+  success_count: number;
+  pending_count: number;
+  errored_count: number;
+  retried_count: number;
+  total_count: number;
+  status: RunStatusEnum;
+  created_at: string;
+}
+
+export interface RunsResponse {
+  namespace: string;
+  total: number;
+  page: number;
+  size: number;
+  runs: RunListItem[];
+}
