@@ -1,5 +1,10 @@
 from unittest.mock import patch
 import os
+import pathlib
+import sys
+
+project_root = str(pathlib.Path(__file__).parent.parent.parent.parent)
+sys.path.insert(0, project_root)
 
 from app.config.cors import get_cors_origins, get_cors_config
 
