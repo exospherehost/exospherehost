@@ -10,7 +10,7 @@ from ..singletons.logs_manager import LogsManager
 logger = LogsManager().get_logger()
 
 async def get_run_status(run_id: str) -> RunStatusEnum:
-    if await State.find(State.run_id == run_id, State.status == StateStatusEnum.ERRORED).count() > 0:
+    if await State.find(State.run_id == run_id, In(State.status, [StateStatusEnum.ERRORED, StateStatusEnum.NEXT_CREATED_ERROR])).count() > 0:
         return RunStatusEnum.FAILED
     elif await State.find(State.run_id == run_id, NotIn(State.status, [StateStatusEnum.SUCCESS, StateStatusEnum.RETRY_CREATED, StateStatusEnum.PRUNED])).count() == 0:
         return RunStatusEnum.SUCCESS
