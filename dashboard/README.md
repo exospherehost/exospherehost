@@ -212,6 +212,8 @@ The dashboard integrates with the State Manager API endpoints:
 - `POST /v0/namespace/{namespace}/states/enqueue` - Enqueue states
 - `POST /v0/namespace/{namespace}/states/{state_id}/executed` - Execute state
 - `GET /v0/namespace/{namespace}/state/{state_id}/secrets` - Get secrets
+- `GET /v0/namespace/{namespace}/runs/{page}/{size}` - Get runs
+- `GET /v0/namespace/{namespace}/states/run/{run_id}/graph` - Get graph structure for a run
 
 ## 🏗️ Architecture
 

@@ -12,8 +12,7 @@ import {
   SecretsResponse,
   ListRegisteredNodesResponse,
   ListGraphTemplatesResponse,
-  CurrentStatesResponse,
-  StatesByRunIdResponse,
+
   GraphStructureResponse,
   RunsResponse
 } from '@/types/state-manager';
@@ -196,37 +195,7 @@ class ApiService {
     );
   }
 
-  // State Operations
-  async getCurrentStates(
-    namespace: string,
-    apiKey: string
-  ): Promise<CurrentStatesResponse> {
-    return this.makeRequest<CurrentStatesResponse>(
-      `/v0/namespace/${namespace}/states/`,
-      {
-        method: 'GET',
-        headers: {
-          'X-API-Key': apiKey,
-        },
-      }
-    );
-  }
 
-  async getStatesByRunId(
-    namespace: string,
-    runId: string,
-    apiKey: string
-  ): Promise<StatesByRunIdResponse> {
-    return this.makeRequest<StatesByRunIdResponse>(
-      `/v0/namespace/${namespace}/states/run/${runId}`,
-      {
-        method: 'GET',
-        headers: {
-          'X-API-Key': apiKey,
-        },
-      }
-    );
-  }
 
   async getGraphStructure(
     namespace: string,

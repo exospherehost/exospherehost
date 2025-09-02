@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { GraphTemplateBuilder } from '@/components/GraphTemplateBuilder';
 import { NamespaceOverview } from '@/components/NamespaceOverview';
 import { RunsTable } from '@/components/RunsTable';
@@ -9,7 +9,6 @@ import { GraphTemplateDetailModal } from '@/components/GraphTemplateDetailModal'
 import { clientApiService } from '@/services/clientApi';
 import {
   NodeRegistration, 
-  ResponseState, 
   UpsertGraphTemplateRequest,
   UpsertGraphTemplateResponse,
 } from '@/types/state-manager';
@@ -21,16 +20,11 @@ import {
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState< 'overview' | 'graph' |'run-states'>('overview');
+  const [activeTab, setActiveTab] = useState< 'overview' | 'graph' |'runs'>('overview');
   const [namespace, setNamespace] = useState(process.env.NEXT_PUBLIC_DEFAULT_NAMESPACE || 'testnamespace');
-  const [runtimeName, setRuntimeName] = useState('test-runtime');
   const [graphName, setGraphName] = useState('test-graph');
-  
-  
-  const [currentStep, setCurrentStep] = useState(0);
-  const [registeredNodes, setRegisteredNodes] = useState<NodeRegistration[]>([]);
   const [graphTemplate, setGraphTemplate] = useState<UpsertGraphTemplateRequest | null>(null);
-  const [states, setStates] = useState<ResponseState[]>([]);
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -81,7 +75,7 @@ export default function Dashboard() {
   const tabs = [    
     { id: 'overview', label: 'Overview', icon: BarChart3 },    
     { id: 'graph', label: 'Graph Template', icon: GitBranch },    
-    { id: 'run-states', label: 'Runs', icon: Filter }
+    { id: 'runs', label: 'Runs', icon: Filter }
   ] as const;
 
   return (
@@ -192,7 +186,7 @@ export default function Dashboard() {
           />
         )}
 
-        {activeTab === 'run-states' && (
+        {activeTab === 'runs' && (
           <RunsTable
             namespace={namespace}
           />

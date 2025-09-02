@@ -139,19 +139,7 @@ export interface StateListItem {
   updated_at: string;
 }
 
-export interface StatesByRunIdResponse {
-  namespace: string;
-  run_id: string;
-  count: number;
-  states: StateListItem[];
-}
 
-export interface CurrentStatesResponse {
-  namespace: string;
-  count: number;
-  states: StateListItem[];
-  run_ids: string[];
-}
 
 export interface WorkflowStep {
   id: string;

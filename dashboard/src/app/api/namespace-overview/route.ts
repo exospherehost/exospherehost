@@ -32,25 +32,15 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Fetch current states
-    const statesResponse = await fetch(`${API_BASE_URL}/v0/namespace/${namespace}/states/`, {
-      headers: {
-        'X-API-Key': API_KEY,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const [nodesData, graphsData, statesData] = await Promise.all([
+    const [nodesData, graphsData] = await Promise.all([
       nodesResponse.ok ? nodesResponse.json() : { namespace, count: 0, nodes: [] },
-      graphsResponse.ok ? graphsResponse.json() : { namespace, count: 0, templates: [] },
-      statesResponse.ok ? statesResponse.json() : { namespace, count: 0, states: [], run_ids: [] }
+      graphsResponse.ok ? graphsResponse.json() : { namespace, count: 0, templates: [] }
     ]);
 
     return NextResponse.json({
       namespace,
       nodes: nodesData,
-      graphs: graphsData,
-      states: statesData
+      graphs: graphsData
     });
   } catch (error) {
     console.error('Error fetching namespace overview:', error);
