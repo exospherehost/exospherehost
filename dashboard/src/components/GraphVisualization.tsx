@@ -251,7 +251,7 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
 
     // Convert edges
     const reactFlowEdges: Edge[] = graphData.edges.map((edge, index) => ({
-      id: `edge-${index}`,
+      id: `edge-${edge.source}-${edge.target}`,
       source: edge.source,
       target: edge.target,
       type: 'default',
