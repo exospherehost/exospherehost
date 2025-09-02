@@ -33,9 +33,8 @@ from .models.list_models import ListRegisteredNodesResponse, ListGraphTemplatesR
 from .controller.list_registered_nodes import list_registered_nodes
 from .controller.list_graph_templates import list_graph_templates
 
-from .models.state_list_models import StatesByRunIdResponse, CurrentStatesResponse
-from .controller.get_states_by_run_id import get_states_by_run_id
-from .controller.get_current_states import get_current_states
+from .models.state_list_models import RunsResponse
+from .controller.get_runs import get_runs
 
 from .models.graph_structure_models import GraphStructureResponse
 from .controller.get_graph_structure import get_graph_structure
@@ -296,13 +295,13 @@ async def list_graph_templates_route(namespace_name: str, request: Request, api_
 
 
 @router.get(
-    "/states/",
-    response_model=CurrentStatesResponse,
+    "/runs/{page}/{size}",
+    response_model=RunsResponse,
     status_code=status.HTTP_200_OK,
-    response_description="Current states listed successfully",
+    response_description="Runs listed successfully",
     tags=["state"]
 )
-async def get_current_states_route(namespace_name: str, request: Request, api_key: str = Depends(check_api_key)):
+async def get_runs_route(namespace_name: str, page: int, size: int, request: Request, api_key: str = Depends(check_api_key)):
     x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
 
     if api_key:
@@ -310,89 +309,8 @@ async def get_current_states_route(namespace_name: str, request: Request, api_ke
     else:
         logger.error(f"API key is invalid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
-
-    states = await get_current_states(namespace_name, x_exosphere_request_id)
     
-    # Convert states to response format
-    state_items = []
-    run_ids = set()
-    
-    for state in states:
-        # Convert ObjectId parents to strings
-        parents_dict = {k: str(v) for k, v in state.parents.items()}
-        
-        state_items.append({
-            "id": str(state.id),
-            "node_name": state.node_name,
-            "namespace_name": state.namespace_name,
-            "identifier": state.identifier,
-            "graph_name": state.graph_name,
-            "run_id": state.run_id,
-            "status": state.status,
-            "inputs": state.inputs,
-            "outputs": state.outputs,
-            "error": state.error,
-            "parents": parents_dict,
-            "created_at": state.created_at,
-            "updated_at": state.updated_at
-        })
-        run_ids.add(state.run_id)
-    
-    return CurrentStatesResponse(
-        namespace=namespace_name,
-        count=len(states),
-        states=state_items,
-        run_ids=list(run_ids)
-    )
-
-
-@router.get(
-    "/states/run/{run_id}",
-    response_model=StatesByRunIdResponse,
-    status_code=status.HTTP_200_OK,
-    response_description="States by run ID listed successfully",
-    tags=["state"]
-)
-async def get_states_by_run_id_route(namespace_name: str, run_id: str, request: Request, api_key: str = Depends(check_api_key)):
-    x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
-
-    if api_key:
-        logger.info(f"API key is valid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
-    else:
-        logger.error(f"API key is invalid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
-
-    states = await get_states_by_run_id(namespace_name, run_id, x_exosphere_request_id)
-    
-    # Convert states to response format
-    state_items = []
-    
-    for state in states:
-        # Convert ObjectId parents to strings
-        parents_dict = {k: str(v) for k, v in state.parents.items()}
-        
-        state_items.append({
-            "id": str(state.id),
-            "node_name": state.node_name,
-            "namespace_name": state.namespace_name,
-            "identifier": state.identifier,
-            "graph_name": state.graph_name,
-            "run_id": state.run_id,
-            "status": state.status,
-            "inputs": state.inputs,
-            "outputs": state.outputs,
-            "error": state.error,
-            "parents": parents_dict,
-            "created_at": state.created_at,
-            "updated_at": state.updated_at
-        })
-    
-    return StatesByRunIdResponse(
-        namespace=namespace_name,
-        run_id=run_id,
-        count=len(states),
-        states=state_items
-    )
+    return await get_runs(namespace_name, page, size, x_exosphere_request_id)
 
 
 @router.get(

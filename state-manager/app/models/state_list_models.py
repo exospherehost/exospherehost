@@ -2,41 +2,24 @@
 Response models for state listing operations
 """
 from pydantic import BaseModel, Field
-from typing import List, Optional, Any
+from typing import List
 from datetime import datetime
-from beanie import PydanticObjectId
-
-from .state_status_enum import StateStatusEnum
 
 
-class StateListItem(BaseModel):
-    """Model for a single state in a list"""
-    id: PydanticObjectId = Field(..., description="State ID")
-    node_name: str = Field(..., description="Name of the node")
-    namespace_name: str = Field(..., description="Namespace name")
-    identifier: str = Field(..., description="Node identifier")
-    graph_name: str = Field(..., description="Graph name")
-    run_id: str = Field(..., description="Run ID")
-    status: StateStatusEnum = Field(..., description="State status")
-    inputs: dict[str, Any] = Field(..., description="State inputs")
-    outputs: dict[str, Any] = Field(..., description="State outputs")
-    error: Optional[str] = Field(None, description="Error message")
-    parents: dict[str, PydanticObjectId] = Field(default_factory=dict, description="Parent state IDs")
+class RunListItem(BaseModel):
+    """Model for a single run in a list"""
+    run_id: str = Field(..., description="The run ID")
+    success_count: int = Field(..., description="Number of success states")
+    pending_count: int = Field(..., description="Number of pending states")
+    failed_count: int = Field(..., description="Number of failed states")
+    total_count: int = Field(..., description="Total number of states")
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
 
-
-class StatesByRunIdResponse(BaseModel):
-    """Response model for fetching states by run ID"""
-    namespace: str = Field(..., description="The namespace")
-    run_id: str = Field(..., description="The run ID")
-    count: int = Field(..., description="Number of states")
-    states: List[StateListItem] = Field(..., description="List of states")
-
-
-class CurrentStatesResponse(BaseModel):
+class RunsResponse(BaseModel):
     """Response model for fetching current states"""
     namespace: str = Field(..., description="The namespace")
-    count: int = Field(..., description="Number of states")
-    states: List[StateListItem] = Field(..., description="List of states")
-    run_ids: List[str] = Field(..., description="List of unique run IDs")
+    total: int = Field(..., description="Number of runs")
+    page: int = Field(..., description="Page number")
+    size: int = Field(..., description="Page size")
+    runs: List[RunListItem] = Field(..., description="List of runs")
