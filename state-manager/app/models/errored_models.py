@@ -8,3 +8,4 @@ class ErroredRequestModel(BaseModel):
 
 class ErroredResponseModel(BaseModel):
     status: StateStatusEnum = Field(..., description="Status of the state")
+    retry_created: bool = Field(default=False, description="Whether a retry state was created")

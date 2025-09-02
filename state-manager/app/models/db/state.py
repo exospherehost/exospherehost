@@ -7,7 +7,8 @@ from pymongo.results import InsertManyResult
 from typing import Any, Optional
 import hashlib
 import json
-
+import time
+import uuid
 
 class State(BaseDatabaseModel):
     node_name: str = Field(..., description="Name of the node of the state")
@@ -18,11 +19,15 @@ class State(BaseDatabaseModel):
     status: StateStatusEnum = Field(..., description="Status of the state")
     inputs: dict[str, Any] = Field(..., description="Inputs of the state")
     outputs: dict[str, Any] = Field(..., description="Outputs of the state")
+    data: dict[str, Any] = Field(default_factory=dict, description="Data of the state (could be used to save pruned meta data)")
     error: Optional[str] = Field(None, description="Error message")
     parents: dict[str, PydanticObjectId] = Field(default_factory=dict, description="Parents of the state")
     does_unites: bool = Field(default=False, description="Whether this state unites other states")
     state_fingerprint: str = Field(default="", description="Fingerprint of the state")
-    
+    enqueue_after: int = Field(default_factory=lambda: int(time.time() * 1000), gt=0, description="Unix time in milliseconds after which the state should be enqueued")
+    retry_count: int = Field(default=0, description="Number of times the state has been retried")
+    fanout_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Fanout ID of the state")
+
     @before_event([Insert, Replace, Save])
     def _generate_fingerprint(self):
         if not self.does_unites:
@@ -35,6 +40,7 @@ class State(BaseDatabaseModel):
             "identifier": self.identifier,
             "graph_name": self.graph_name,
             "run_id": self.run_id,
+            "retry_count": self.retry_count,
             "parents": {k: str(v) for k, v in self.parents.items()},
         }
         payload = json.dumps(
@@ -65,5 +71,27 @@ class State(BaseDatabaseModel):
                 partialFilterExpression={
                     "does_unites": True
                 }
+            ),
+            IndexModel(
+                [
+                    ("enqueue_after", 1),
+                    ("status", 1),
+                    ("namespace_name", 1),
+                    ("node_name", 1),
+                ],
+                name="enqueue_query"
+            ),
+            IndexModel(
+                [
+                    ("node_name", 1),
+                    ("namespace_name", 1),
+                    ("graph_name", 1),
+                    ("identifier", 1),
+                    ("run_id", 1),
+                    ("retry_count", 1),
+                    ("fanout_id", 1),
+                ],
+                unique=True,
+                name="uniq_fanout_retry"
             )
         ]

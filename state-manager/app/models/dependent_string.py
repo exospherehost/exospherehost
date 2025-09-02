@@ -34,11 +34,14 @@ class DependentString(BaseModel):
             placeholder_content, tail = split.split("}}", 1)
 
             parts = [p.strip() for p in placeholder_content.split(".")]
-            if len(parts) != 3 or parts[1] != "outputs":
+
+            if len(parts) == 3 and parts[1] == "outputs":
+                dependent_string.dependents[order] = Dependent(identifier=parts[0], field=parts[2], tail=tail)
+            elif len(parts) == 2 and parts[0] == "store":
+                dependent_string.dependents[order] = Dependent(identifier=parts[0], field=parts[1], tail=tail)
+            else:
                 raise ValueError(f"Invalid syntax string placeholder {placeholder_content} for: {syntax_string}")
             
-            dependent_string.dependents[order] = Dependent(identifier=parts[0], field=parts[2], tail=tail)
-
         return dependent_string
 
     def _build_mapping_key_to_dependent(self):

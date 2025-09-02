@@ -66,6 +66,7 @@ jobs:
     defaults:
       run:
         working-directory: python-sdk
+    if: github.repository == 'exospherehost/exospherehost'
 
     steps:
       - uses: actions/checkout@v4

@@ -6,6 +6,7 @@ on:
 jobs:  
   deploy-api-server:
     runs-on: ubuntu-latest
+    if: github.repository == 'exospherehost/exospherehost'
     environment:
       name: deploy-kubernetes
     steps:

@@ -17,6 +17,7 @@ env:
 jobs:
   publish-image:
     runs-on: ubuntu-latest
+    if: github.repository == 'exospherehost/exospherehost'
 
     permissions:
       contents: read

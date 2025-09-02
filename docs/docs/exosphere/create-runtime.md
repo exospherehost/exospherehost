@@ -4,6 +4,29 @@ The `Runtime` class is the core component that manages the execution environment
 
 ## Runtime Setup
 
+Before creating a runtime, you need to set up the state manager and configure your environment variables.
+
+### Prerequisites
+
+1. **Start the State Manager**: Run the state manager using Docker Compose:
+   ```bash
+   docker-compose up -d
+   ```
+   For detailed setup instructions, see [State Manager Setup](./state-manager-setup.md).
+
+2. **Set Environment Variables**: Configure your authentication:
+   ```bash
+   export EXOSPHERE_STATE_MANAGER_URI="your-state-manager-uri"
+   export EXOSPHERE_API_KEY="your-api-key"
+   ```
+   
+   Or create a `.env` file:
+   ```bash
+   EXOSPHERE_STATE_MANAGER_URI=your-state-manager-uri
+   EXOSPHERE_API_KEY=your-api-key
+   ```
+
+### Creating a Runtime
 === "Basic"
 
     ```python hl_lines="17-22"
@@ -67,6 +90,21 @@ The `Runtime` class is the core component that manages the execution environment
     runtime.start()
 
     ```
+
+!!! warning "Blocking Operation"
+    `Runtime.start()` is a blocking operation that runs indefinitely. In interactive environments like Jupyter notebooks, consider running it in a background thread:
+    
+    ```python
+    import threading
+    
+    def run_runtime():
+        runtime.start()
+    
+    thread = threading.Thread(target=run_runtime, daemon=True)
+    thread.start()
+    ```
+    
+    See the [Getting Started guide](../getting-started.md#important-blocking-behavior) for more alternatives.
 
 ## Runtime Parameters
 

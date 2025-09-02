@@ -27,7 +27,8 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
                     Set({
                         GraphTemplate.nodes: body.nodes, # type: ignore
                         GraphTemplate.validation_status: GraphTemplateValidationStatus.PENDING, # type: ignore
-                        GraphTemplate.validation_errors: [] # type: ignore
+                        GraphTemplate.validation_errors: [], # type: ignore
+                        GraphTemplate.retry_policy: body.retry_policy # type: ignore
                     })
                 )
                 
@@ -44,7 +45,8 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
                         namespace=namespace_name,
                         nodes=body.nodes,
                         validation_status=GraphTemplateValidationStatus.PENDING,
-                        validation_errors=[]
+                        validation_errors=[],
+                        retry_policy=body.retry_policy
                     ).set_secrets(body.secrets)
                 )
         except ValueError as e:
@@ -58,6 +60,7 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
             validation_status=graph_template.validation_status,
             validation_errors=graph_template.validation_errors,
             secrets={secret_name: True for secret_name in graph_template.get_secrets().keys()},
+            retry_policy=graph_template.retry_policy,
             created_at=graph_template.created_at,
             updated_at=graph_template.updated_at
         )

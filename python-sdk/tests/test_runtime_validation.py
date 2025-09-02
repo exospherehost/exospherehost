@@ -50,6 +50,7 @@ def test_runtime_missing_config_raises(monkeypatch):
 		Runtime(namespace="ns", name="rt", nodes=[GoodNode])
 
 
+@pytest.mark.filterwarnings("ignore:.*coroutine.*was never awaited.*:RuntimeWarning")
 def test_runtime_with_env_ok(monkeypatch):
 	monkeypatch.setenv("EXOSPHERE_STATE_MANAGER_URI", "http://sm")
 	monkeypatch.setenv("EXOSPHERE_API_KEY", "k")
@@ -57,6 +58,7 @@ def test_runtime_with_env_ok(monkeypatch):
 	assert rt is not None
 
 
+@pytest.mark.filterwarnings("ignore:.*coroutine.*was never awaited.*:RuntimeWarning")
 def test_runtime_invalid_params_raises(monkeypatch):
 	monkeypatch.setenv("EXOSPHERE_STATE_MANAGER_URI", "http://sm")
 	monkeypatch.setenv("EXOSPHERE_API_KEY", "k")
@@ -79,6 +81,8 @@ def test_node_validation_errors(monkeypatch):
 	assert "Inputs field" in msg and "Outputs field" in msg and "Secrets field" in msg
 
 
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
+@pytest.mark.filterwarnings("ignore:.*coroutine.*was never awaited.*:RuntimeWarning")
 def test_duplicate_node_names_raise(monkeypatch):
 	monkeypatch.setenv("EXOSPHERE_STATE_MANAGER_URI", "http://sm")
 	monkeypatch.setenv("EXOSPHERE_API_KEY", "k")
@@ -107,8 +111,16 @@ def test_duplicate_node_names_raise(monkeypatch):
 	# Use the same name for both classes
 	GoodNode2.__name__ = "GoodNode1"
 	
-	# Suppress the RuntimeWarning about unawaited coroutines
+	# Suppress warnings about unawaited coroutines and pytest unraisable exceptions (test-only)
 	with warnings.catch_warnings():
-		warnings.filterwarnings("ignore", message=".*coroutine.*was never awaited.*", category=RuntimeWarning)
+		warnings.filterwarnings(
+			"ignore",
+			message=".*coroutine.*was never awaited.*",
+			category=RuntimeWarning
+		)
+		warnings.filterwarnings(
+			"ignore",
+			category=pytest.PytestUnraisableExceptionWarning
+		)
 		with pytest.raises(ValueError):
 			Runtime(namespace="ns", name="rt", nodes=[GoodNode1, GoodNode2])

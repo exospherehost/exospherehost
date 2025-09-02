@@ -1,99 +1,123 @@
-from datetime import datetime
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 from fastapi import HTTPException
 
-from app.controller.create_states import trigger_graph
-from app.models.create_models import TriggerGraphRequestModel, RequestStateModel, ResponseStateModel
+from app.controller.trigger_graph import trigger_graph
+from app.models.trigger_model import TriggerGraphRequestModel
 from app.models.state_status_enum import StateStatusEnum
 
 
 @pytest.fixture
 def mock_request():
     return TriggerGraphRequestModel(
-        states=[
-            RequestStateModel(
-                identifier="test_node_1",
-                inputs={"input1": "value1"}
-            ),
-            RequestStateModel(
-                identifier="test_node_2", 
-                inputs={"input2": "value2"}
-            )
-        ]
+        store={"k1": "v1"},
+        inputs={"input1": "value1"}
     )
 
 
 @pytest.mark.asyncio
 async def test_trigger_graph_success(mock_request):
-    """Test successful graph triggering"""
     namespace_name = "test_namespace"
     graph_name = "test_graph"
     x_exosphere_request_id = "test_request_id"
-    
-    # Mock the create_states function
-    with patch('app.controller.create_states.create_states') as mock_create_states:
-        mock_response = MagicMock()
-        mock_response.status = StateStatusEnum.CREATED
-        mock_response.states = [
-            ResponseStateModel(
-                state_id="state_1",
-                identifier="test_node_1",
-                node_name="TestNode1",
-                graph_name=graph_name,
-                run_id="generated_run_id",
-                inputs={"input1": "value1"},
-                created_at=datetime(2024, 1, 1, 0, 0, 0)
-            ),
-            ResponseStateModel(
-                state_id="state_2",
-                identifier="test_node_2",
-                node_name="TestNode2", 
-                graph_name=graph_name,
-                run_id="generated_run_id",
-                inputs={"input2": "value2"},
-                created_at=datetime(2024, 1, 1, 0, 0, 0)
-            )
-        ]
-        mock_create_states.return_value = mock_response
-        
-        # Call the function
+
+    with patch('app.controller.trigger_graph.GraphTemplate') as mock_graph_template_cls, \
+         patch('app.controller.trigger_graph.Store') as mock_store_cls, \
+         patch('app.controller.trigger_graph.State') as mock_state_cls:
+
+        mock_graph_template = MagicMock()
+        mock_graph_template.is_valid.return_value = True
+        mock_root_node = MagicMock()
+        mock_root_node.node_name = "root_node"
+        mock_root_node.identifier = "root_id"
+        mock_root_node.inputs = {"input1": "default"}
+        mock_graph_template.get_root_node.return_value = mock_root_node
+        mock_graph_template_cls.get = AsyncMock(return_value=mock_graph_template)
+
+        mock_store_cls.insert_many = AsyncMock(return_value=None)
+        mock_state_instance = MagicMock()
+        mock_state_instance.insert = AsyncMock(return_value=None)
+        mock_state_cls.return_value = mock_state_instance
+
         result = await trigger_graph(namespace_name, graph_name, mock_request, x_exosphere_request_id)
-        
-        # Verify the result
-        assert result.run_id is not None
+
         assert result.status == StateStatusEnum.CREATED
-        assert len(result.states) == 2
-        assert result.states[0].identifier == "test_node_1"
-        assert result.states[1].identifier == "test_node_2"
-        
-        # Verify create_states was called with the correct parameters
-        mock_create_states.assert_called_once()
-        call_args = mock_create_states.call_args
-        assert call_args[0][0] == namespace_name  # namespace_name
-        assert call_args[0][1] == graph_name      # graph_name
-        assert call_args[0][3] == x_exosphere_request_id  # x_exosphere_request_id
-        
-        # Verify the CreateRequestModel was created with a generated run_id
-        create_request = call_args[0][2]  # body parameter
-        assert create_request.run_id is not None
-        assert create_request.states == mock_request.states
+        assert isinstance(result.run_id, str) and len(result.run_id) > 0
+
+        mock_graph_template_cls.get.assert_awaited_once_with(namespace_name, graph_name)
+        mock_store_cls.insert_many.assert_awaited_once()
+        mock_state_instance.insert.assert_awaited_once()
 
 
 @pytest.mark.asyncio
-async def test_trigger_graph_create_states_error(mock_request):
-    """Test error handling when create_states fails"""
+async def test_trigger_graph_graph_template_not_found(mock_request):
     namespace_name = "test_namespace"
     graph_name = "test_graph"
     x_exosphere_request_id = "test_request_id"
-    
-    # Mock create_states to raise an exception
-    with patch('app.controller.create_states.create_states') as mock_create_states:
-        mock_create_states.side_effect = HTTPException(status_code=404, detail="Graph template not found")
-        
-        # Call the function and expect it to raise the same exception
+
+    with patch('app.controller.trigger_graph.GraphTemplate') as mock_graph_template_cls:
+        mock_graph_template_cls.get = AsyncMock(side_effect=ValueError("Graph template not found"))
+
         with pytest.raises(HTTPException) as exc_info:
             await trigger_graph(namespace_name, graph_name, mock_request, x_exosphere_request_id)
-        
+
         assert exc_info.value.status_code == 404
-        assert exc_info.value.detail == "Graph template not found"
+        assert "Graph template not found" in exc_info.value.detail
+
+
+@pytest.mark.asyncio
+async def test_trigger_graph_invalid_graph_template(mock_request):
+    namespace_name = "test_namespace"
+    graph_name = "test_graph"
+    x_exosphere_request_id = "test_request_id"
+
+    with patch('app.controller.trigger_graph.GraphTemplate') as mock_graph_template_cls:
+        mock_graph_template = MagicMock()
+        mock_graph_template.is_valid.return_value = False
+        mock_graph_template_cls.get = AsyncMock(return_value=mock_graph_template)
+
+        with pytest.raises(HTTPException) as exc_info:
+            await trigger_graph(namespace_name, graph_name, mock_request, x_exosphere_request_id)
+
+        assert exc_info.value.status_code == 400
+        assert exc_info.value.detail == "Graph template is not valid"
+
+
+@pytest.mark.asyncio
+async def test_trigger_graph_missing_store_keys():
+    namespace_name = "test_namespace"
+    graph_name = "test_graph"
+    x_exosphere_request_id = "test_request_id"
+
+    req = TriggerGraphRequestModel(store={}, inputs={})
+
+    with patch('app.controller.trigger_graph.GraphTemplate') as mock_graph_template_cls:
+        mock_graph_template = MagicMock()
+        mock_graph_template.is_valid.return_value = True
+        mock_graph_template.store_config.required_keys = ["k1"]
+        mock_root_node = MagicMock()
+        mock_root_node.node_name = "root_node"
+        mock_root_node.identifier = "root_id"
+        mock_graph_template.get_root_node.return_value = mock_root_node
+        mock_graph_template_cls.get = AsyncMock(return_value=mock_graph_template)
+
+        with pytest.raises(HTTPException) as exc_info:
+            await trigger_graph(namespace_name, graph_name, req, x_exosphere_request_id)
+
+        assert exc_info.value.status_code == 400
+        assert "Missing store keys" in exc_info.value.detail
+
+
+@pytest.mark.asyncio
+async def test_trigger_graph_value_error_not_graph_template_not_found(mock_request):
+    """Test trigger_graph handles ValueError that is not about graph template not found"""
+    namespace_name = "test_namespace"
+    graph_name = "test_graph"
+    x_exosphere_request_id = "test_request_id"
+
+    with patch('app.controller.trigger_graph.GraphTemplate') as mock_graph_template_cls:
+        # Simulate a ValueError that doesn't contain "Graph template not found"
+        mock_graph_template_cls.get.side_effect = ValueError("Some other validation error")
+        
+        with pytest.raises(ValueError, match="Some other validation error"):
+            await trigger_graph(namespace_name, graph_name, mock_request, x_exosphere_request_id)

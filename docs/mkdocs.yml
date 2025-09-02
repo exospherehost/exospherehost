@@ -11,7 +11,7 @@ edit_uri: edit/main/docs/docs
 copyright: Copyright &copy; 2025 exosphere.host
 
 
-theme: 
+theme:
   name: material
   logo: assets/logo.svg
   favicon: assets/logo.svg
@@ -51,7 +51,7 @@ theme:
         icon: material/brightness-auto
         name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
-      scheme: exosphere-light 
+      scheme: exosphere-light
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
@@ -87,23 +87,37 @@ plugins:
       type: date
   - llmstxt:
       markdown_description: |
-        exosphere.host is building an open-source infrastructure layer for background AI workflows/agents that is reliable, affordable, and effortless.
+        Exosphere is an open-source infrastructure platform for running AI agents and workflows at scale. It provides reliable execution, persistent state management, and failure handling for long-running AI processes.
 
-        You just describe your workflows once, then let Exosphere run them in the background with up to 75% lower cost—built for jobs that must run reliably at scale.
+        Core Components:
+        - State Manager: FastAPI backend with MongoDB for workflow orchestration and state persistence
+        - Dashboard: Next.js web interface for monitoring and managing workflows
+        - Python SDK: Library for defining nodes, runtimes, and triggering workflows
+        - Docker Compose: Quick local setup with cloud or local MongoDB options
 
-        Your AI workflows: Run at massive scale, Significantly optimize costs, Are self-healing, Integrate seamlessly with your favorite tools, Deliver an exceptional developer experience, Are build on completely open-source technologies
-      sections: 
+        Key Features:
+        - Define reusable nodes (agents, API calls, code) that can be plugged into any workflow
+        - Create graph-based workflows with JSON configuration
+        - Dynamic state creation at runtime with infinite parallel execution
+        - Built-in retry policies and failure handling
+        - Persistent state management across workflow executions
+        - RESTful API for workflow management and monitoring
+
+        Quick Setup: Use Docker Compose with cloud MongoDB (recommended) or local MongoDB for development. Set MONGO_URI, STATE_MANAGER_SECRET, and other environment variables. SDK requires EXOSPHERE_STATE_MANAGER_URI and EXOSPHERE_API_KEY to connect to running instance.
+      sections:
         Introduction:
           - index.md
           - getting-started.md
-        Exosphere:
+          - docker-compose-setup.md
           - exosphere/state-manager-setup.md
           - exosphere/register-node.md
           - exosphere/create-runtime.md
           - exosphere/create-graph.md
+          - exosphere/retry-policy.md
           - exosphere/trigger-graph.md
           - exosphere/dashboard.md
-          - exosphere/architecture.md       
+          - exosphere/signals.md
+          - exosphere/architecture.md
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -114,7 +128,7 @@ markdown_extensions:
   - pymdownx.snippets
   - pymdownx.superfences
   - admonition
-  - pymdownx.details  
+  - pymdownx.details
   - pymdownx.tabbed:
       alternate_style: true
 
@@ -122,12 +136,15 @@ extra_css:
   - stylesheets/extra.css
 
 nav:
-  - Introduction: index.md  
+  - Introduction: index.md
   - Getting Started: getting-started.md
+  - Docker Compose: docker-compose-setup.md
   - State Manager Setup: exosphere/state-manager-setup.md
-  - Register Node: exosphere/register-node.md 
+  - Register Node: exosphere/register-node.md
   - Create Runtime: exosphere/create-runtime.md
   - Create Graph: exosphere/create-graph.md
-  - Trigger Graph: exosphere/trigger-graph.md  
+  - Retry Policy: exosphere/retry-policy.md
+  - Trigger Graph: exosphere/trigger-graph.md
   - Dashboard: exosphere/dashboard.md
+  - Signals: exosphere/signals.md
   - Architecture: exosphere/architecture.md

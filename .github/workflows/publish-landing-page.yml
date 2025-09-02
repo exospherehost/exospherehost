@@ -17,6 +17,7 @@ env:
 jobs:
   publish-image:
     runs-on: ubuntu-latest
+    if: github.repository == 'exospherehost/exospherehost'
 
     permissions:
       contents: read
@@ -59,6 +60,7 @@ jobs:
   deploy-to-k8s:
     needs: publish-image
     runs-on: ubuntu-latest
+    if: github.repository == 'exospherehost/exospherehost'
     steps:
       - name: Deploy to K8s
         run: |
