@@ -7,6 +7,7 @@ from app.models.graph_models import UpsertGraphTemplateRequest, UpsertGraphTempl
 from app.models.register_nodes_request import RegisterNodesRequestModel
 from app.models.secrets_response import SecretsResponseModel
 from app.models.list_models import ListRegisteredNodesResponse, ListGraphTemplatesResponse
+from app.models.run_models import RunsResponse, RunListItem, RunStatusEnum
 
 
 import pytest
@@ -819,16 +820,138 @@ class TestRouteHandlerAPIKeyValidation:
     async def test_get_runs_route_with_valid_api_key(self, mock_get_runs, mock_request):
         """Test get_runs_route with valid API key"""
         from app.routes import get_runs_route
+        from app.models.run_models import RunsResponse, RunListItem, RunStatusEnum
+        from datetime import datetime
         
-        # Arrange
-        mock_get_runs.return_value = MagicMock()
+        # Arrange - Create a comprehensive mock response
+        mock_run_1 = MagicMock(spec=RunListItem)
+        mock_run_1.run_id = "test_run_123"
+        mock_run_1.graph_name = "test_graph"
+        mock_run_1.success_count = 5
+        mock_run_1.pending_count = 2
+        mock_run_1.errored_count = 0
+        mock_run_1.retried_count = 1
+        mock_run_1.total_count = 8
+        mock_run_1.status = RunStatusEnum.SUCCESS
+        mock_run_1.created_at = datetime(2024, 1, 15, 10, 30, 0)
+        
+        mock_run_2 = MagicMock(spec=RunListItem)
+        mock_run_2.run_id = "test_run_456"
+        mock_run_2.graph_name = "production_graph"
+        mock_run_2.success_count = 10
+        mock_run_2.pending_count = 3
+        mock_run_2.errored_count = 1
+        mock_run_2.retried_count = 2
+        mock_run_2.total_count = 16
+        mock_run_2.status = RunStatusEnum.PENDING
+        mock_run_2.created_at = datetime(2024, 1, 15, 11, 45, 0)
+        
+        expected_response = RunsResponse(
+            namespace="test_namespace",
+            total=2,
+            page=1,
+            size=10,
+            runs=[mock_run_1, mock_run_2]
+        )
+        
+        mock_get_runs.return_value = expected_response
         
         # Act
         result = await get_runs_route("test_namespace", 1, 10, mock_request, "valid_key")
         
         # Assert
         mock_get_runs.assert_called_once_with("test_namespace", 1, 10, "test-request-id")
-        assert result == mock_get_runs.return_value
+        assert result == expected_response
+        
+        # Verify response structure and content
+        assert result.namespace == "test_namespace"
+        assert result.total == 2
+        assert result.page == 1
+        assert result.size == 10
+        assert len(result.runs) == 2
+        
+        # Verify first run details
+        assert result.runs[0].run_id == "test_run_123"
+        assert result.runs[0].graph_name == "test_graph"
+        assert result.runs[0].status == RunStatusEnum.SUCCESS
+        assert result.runs[0].total_count == 8
+        
+        # Verify second run details
+        assert result.runs[1].run_id == "test_run_456"
+        assert result.runs[1].graph_name == "production_graph"
+        assert result.runs[1].status == RunStatusEnum.PENDING
+        assert result.runs[1].total_count == 16
+
+    @patch('app.routes.get_runs')
+    async def test_get_runs_route_pagination_and_edge_cases(self, mock_get_runs, mock_request):
+        """Test get_runs_route with different pagination scenarios and edge cases"""
+        from app.routes import get_runs_route
+        from app.models.run_models import RunsResponse, RunListItem, RunStatusEnum
+        from datetime import datetime
+        
+        # Test case 1: Empty results (page 2 with no data)
+        mock_get_runs.return_value = RunsResponse(
+            namespace="test_namespace",
+            total=5,
+            page=2,
+            size=10,
+            runs=[]
+        )
+        
+        result = await get_runs_route("test_namespace", 2, 10, mock_request, "valid_key")
+        
+        mock_get_runs.assert_called_with("test_namespace", 2, 10, "test-request-id")
+        assert result.namespace == "test_namespace"
+        assert result.total == 5
+        assert result.page == 2
+        assert result.size == 10
+        assert len(result.runs) == 0
+        
+        # Test case 2: Single result with different page size
+        mock_run = MagicMock(spec=RunListItem)
+        mock_run.run_id = "single_run_789"
+        mock_run.graph_name = "single_graph"
+        mock_run.success_count = 1
+        mock_run.pending_count = 0
+        mock_run.errored_count = 0
+        mock_run.retried_count = 0
+        mock_run.total_count = 1
+        mock_run.status = RunStatusEnum.SUCCESS
+        mock_run.created_at = datetime(2024, 1, 15, 12, 0, 0)
+        
+        mock_get_runs.return_value = RunsResponse(
+            namespace="test_namespace",
+            total=1,
+            page=1,
+            size=5,
+            runs=[mock_run]
+        )
+        
+        result = await get_runs_route("test_namespace", 1, 5, mock_request, "valid_key")
+        
+        mock_get_runs.assert_called_with("test_namespace", 1, 5, "test-request-id")
+        assert result.namespace == "test_namespace"
+        assert result.total == 1
+        assert result.page == 1
+        assert result.size == 5
+        assert len(result.runs) == 1
+        assert result.runs[0].run_id == "single_run_789"
+        assert result.runs[0].status == RunStatusEnum.SUCCESS
+
+    @patch('app.routes.get_runs')
+    async def test_get_runs_route_service_error(self, mock_get_runs, mock_request):
+        """Test get_runs_route when service raises an exception"""
+        from app.routes import get_runs_route
+        
+        # Arrange - Mock service to raise an exception
+        mock_get_runs.side_effect = Exception("Database connection error")
+        
+        # Act & Assert - Test error handling when service fails
+        with pytest.raises(Exception) as exc_info:
+            await get_runs_route("test_namespace", 1, 10, mock_request, "valid_key")
+        
+        assert str(exc_info.value) == "Database connection error"
+        mock_get_runs.assert_called_once_with("test_namespace", 1, 10, "test-request-id")
 
     @patch('app.routes.get_runs')
     async def test_get_runs_route_with_invalid_api_key(self, mock_get_runs, mock_request):
