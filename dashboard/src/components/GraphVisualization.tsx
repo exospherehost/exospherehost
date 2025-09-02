@@ -11,7 +11,6 @@ import ReactFlow, {
   Position,
   MarkerType,
   NodeTypes,
-  EdgeTypes,
   ConnectionLineType,
   Handle
 } from 'reactflow';
@@ -19,8 +18,7 @@ import 'reactflow/dist/style.css';
 import { clientApiService } from '@/services/clientApi';
 import { 
   GraphStructureResponse,
-  GraphNode as GraphNodeType,
-  GraphEdge as GraphEdgeType
+  GraphNode as GraphNodeType
 } from '@/types/state-manager';
 import {  
   RefreshCw, 
@@ -29,7 +27,6 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  Filter,
   Network,
   BarChart3
 } from 'lucide-react';
@@ -253,8 +250,8 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
     });
 
     // Convert edges
-    const reactFlowEdges: Edge[] = graphData.edges.map(edge => ({
-      id: edge.id,
+    const reactFlowEdges: Edge[] = graphData.edges.map((edge, index) => ({
+      id: `edge-${index}`,
       source: edge.source,
       target: edge.target,
       type: 'default',
@@ -456,16 +453,18 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h5 className="font-medium text-gray-700 mb-2">Inputs</h5>
-                  <pre className="text-xs text-black bg-gray-50 p-2 rounded overflow-x-auto">
-                    {JSON.stringify(selectedNode.inputs, null, 2)}
-                  </pre>
+                  <h5 className="font-medium text-gray-700 mb-2">Node Information</h5>
+                  <div className="text-sm text-gray-600">
+                    <p><strong>ID:</strong> {selectedNode.id}</p>
+                    <p><strong>Name:</strong> {selectedNode.node_name}</p>
+                    <p><strong>Identifier:</strong> {selectedNode.identifier}</p>
+                  </div>
                 </div>
                 <div>
-                  <h5 className="font-medium text-gray-700 mb-2">Outputs</h5>
-                  <pre className="text-xs text-black bg-gray-50 p-2 rounded overflow-x-auto">
-                    {JSON.stringify(selectedNode.outputs, null, 2)}
-                  </pre>
+                  <h5 className="font-medium text-gray-700 mb-2">Status</h5>
+                  <div className="text-sm text-gray-600">
+                    <p><strong>Current Status:</strong> {selectedNode.status}</p>
+                  </div>
                 </div>
               </div>
 
@@ -479,12 +478,7 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
               )}
 
               <div className="text-xs text-gray-500">
-                Created: {new Date(selectedNode.created_at).toLocaleString()}
-                {selectedNode.updated_at !== selectedNode.created_at && (
-                  <span className="ml-4">
-                    Updated: {new Date(selectedNode.updated_at).toLocaleString()}
-                  </span>
-                )}
+                Node ID: {selectedNode.id}
               </div>
             </div>
           </div>

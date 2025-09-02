@@ -164,27 +164,17 @@ export interface GraphNode {
   node_name: string;
   identifier: string;
   status: StateStatus;
-  inputs: Record<string, unknown>;
-  outputs: Record<string, unknown>;
   error?: string;
-  created_at: string;
-  updated_at: string;
-  position?: { x: number; y: number };
 }
 
 export interface GraphEdge {
-  id: string;
   source: string;
   target: string;
-  source_output?: string;
-  target_input?: string;
 }
 
 export interface GraphStructureResponse {
-  namespace: string;
-  run_id: string;
   graph_name: string;
-  root_nodes: GraphNode[];
+  root_states: GraphNode[];
   nodes: GraphNode[];
   edges: GraphEdge[];
   node_count: number;
