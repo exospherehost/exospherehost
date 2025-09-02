@@ -1,7 +1,7 @@
 ARG UV_VERSION=0.4.28
-FROM ghcr.io/astral-sh/uv:${UV_VERSION} as uv
+FROM ghcr.io/astral-sh/uv:${UV_VERSION}@sha256:<digest> AS uv
 
-FROM python:3.12-slim-bookworm
+FROM python:3.12-slim-bookworm@sha256:<digest>
 
 COPY --from=uv /uv /usr/local/bin/uv
 
