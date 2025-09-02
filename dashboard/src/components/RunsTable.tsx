@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { apiService } from '@/services/api';
+import { clientApiService } from '@/services/clientApi';
 import { RunsResponse, RunListItem, RunStatusEnum } from '@/types/state-manager';
 import { GraphVisualization } from './GraphVisualization';
 import { 
@@ -21,12 +21,10 @@ import {
 
 interface RunsTableProps {
   namespace: string;
-  apiKey: string;
 }
 
 export const RunsTable: React.FC<RunsTableProps> = ({
-  namespace,
-  apiKey
+  namespace
 }) => {
   const [runsData, setRunsData] = useState<RunsResponse | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,20 +39,20 @@ export const RunsTable: React.FC<RunsTableProps> = ({
     setError(null);
     
     try {
-      const data = await apiService.getRuns(namespace, apiKey, page, size);
+      const data = await clientApiService.getRuns(namespace, page, size);
       setRunsData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load runs');
     } finally {
       setIsLoading(false);
     }
-  }, [namespace, apiKey]);
+  }, [namespace]);
 
   useEffect(() => {
-    if (namespace && apiKey) {
+    if (namespace) {
       loadRuns(currentPage, pageSize);
     }
-  }, [namespace, apiKey, currentPage, pageSize, loadRuns]);
+  }, [namespace, currentPage, pageSize, loadRuns]);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -172,7 +170,6 @@ export const RunsTable: React.FC<RunsTableProps> = ({
             </div>
             <GraphVisualization
               namespace={namespace}
-              apiKey={apiKey}
               runId={selectedRunId}
             />
           </div>

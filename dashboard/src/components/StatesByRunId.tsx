@@ -212,11 +212,10 @@ export const StatesByRunId: React.FC<StatesByRunIdProps> = ({
       {/* Graph Visualization */}
       {showGraph && selectedRunId && (
         <div className="mb-6">
-          <GraphVisualization
-            namespace={namespace}
-            apiKey={apiKey}
-            runId={selectedRunId}
-          />
+                      <GraphVisualization
+              namespace={namespace}
+              runId={selectedRunId}
+            />
         </div>
       )}
 

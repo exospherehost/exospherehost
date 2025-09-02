@@ -16,7 +16,7 @@ import ReactFlow, {
   Handle
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { apiService } from '@/services/api';
+import { clientApiService } from '@/services/clientApi';
 import { 
   GraphStructureResponse,
   GraphNode as GraphNodeType,
@@ -36,7 +36,6 @@ import {
 
 interface GraphVisualizationProps {
   namespace: string;
-  apiKey: string;
   runId: string;
 }
 
@@ -121,7 +120,6 @@ const nodeTypes: NodeTypes = {
 
 export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
   namespace,
-  apiKey,
   runId
 }) => {
   const [graphData, setGraphData] = useState<GraphStructureResponse | null>(null);
@@ -134,7 +132,7 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
     setError(null);
     
     try {
-      const data = await apiService.getGraphStructure(namespace, runId, apiKey);
+      const data = await clientApiService.getGraphStructure(namespace, runId);
       setGraphData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load graph structure');
@@ -144,10 +142,10 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
   };
 
   useEffect(() => {
-    if (namespace && apiKey && runId) {
+    if (namespace && runId) {
       loadGraphStructure();
     }
-  }, [namespace, apiKey, runId]);
+  }, [namespace, runId]);
 
   // Convert graph data to React Flow format with horizontal layout
   const { nodes, edges } = useMemo(() => {

@@ -6,7 +6,7 @@ import { NamespaceOverview } from '@/components/NamespaceOverview';
 import { RunsTable } from '@/components/RunsTable';
 import { NodeDetailModal } from '@/components/NodeDetailModal';
 import { GraphTemplateDetailModal } from '@/components/GraphTemplateDetailModal';
-import { apiService } from '@/services/api';
+import { clientApiService } from '@/services/clientApi';
 import {
   NodeRegistration, 
   ResponseState, 
@@ -22,8 +22,7 @@ import {
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState< 'overview' | 'graph' |'run-states'>('overview');
-  const [namespace, setNamespace] = useState('testnamespace');
-  const [apiKey, setApiKey] = useState('');
+  const [namespace, setNamespace] = useState(process.env.NEXT_PUBLIC_DEFAULT_NAMESPACE || 'testnamespace');
   const [runtimeName, setRuntimeName] = useState('test-runtime');
   const [graphName, setGraphName] = useState('test-graph');
   
@@ -43,7 +42,7 @@ export default function Dashboard() {
 
   const handleSaveGraphTemplate = async (template: UpsertGraphTemplateRequest) => {
     try {
-      await apiService.upsertGraphTemplate(namespace, graphName, template, apiKey);
+      await clientApiService.upsertGraphTemplate(namespace, graphName, template);
       setGraphTemplate(template);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save graph template');
@@ -64,7 +63,7 @@ export default function Dashboard() {
   const handleOpenGraphModal = async (graphName: string) => {
     try {
       setIsLoading(true);
-      const graphTemplate = await apiService.getGraphTemplate(namespace, graphName, apiKey);
+      const graphTemplate = await clientApiService.getGraphTemplate(namespace, graphName);
       setSelectedGraphTemplate(graphTemplate);
       setIsGraphModalOpen(true);
     } catch (err) {
@@ -105,15 +104,6 @@ export default function Dashboard() {
                   type="text"
                   value={namespace}
                   onChange={(e) => setNamespace(e.target.value)}
-                  className="px-2 py-1 text-sm text-white border border-gray-300 rounded"
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-white">API Key:</span>
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
                   className="px-2 py-1 text-sm text-white border border-gray-300 rounded"
                 />
               </div>
@@ -197,7 +187,6 @@ export default function Dashboard() {
         {activeTab === 'overview' && (
           <NamespaceOverview
             namespace={namespace}
-            apiKey={apiKey}
             onOpenNode={handleOpenNodeModal}
             onOpenGraphTemplate={handleOpenGraphModal}
           />
@@ -206,7 +195,6 @@ export default function Dashboard() {
         {activeTab === 'run-states' && (
           <RunsTable
             namespace={namespace}
-            apiKey={apiKey}
           />
         )}
       </main>

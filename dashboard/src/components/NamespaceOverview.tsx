@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { apiService } from '@/services/api';
+import { clientApiService } from '@/services/clientApi';
 import { 
   ListRegisteredNodesResponse, 
   ListGraphTemplatesResponse,
@@ -20,14 +20,12 @@ import {
 
 interface NamespaceOverviewProps {
   namespace: string;
-  apiKey: string;
   onOpenNode?: (node: NodeRegistration) => void;
   onOpenGraphTemplate?: (graphName: string) => void;
 }
 
 export const NamespaceOverview: React.FC<NamespaceOverviewProps> = ({
   namespace,
-  apiKey,
   onOpenNode,
   onOpenGraphTemplate
 }) => {
@@ -41,13 +39,10 @@ export const NamespaceOverview: React.FC<NamespaceOverviewProps> = ({
     setError(null);
     
     try {
-      const [nodesData, templatesData] = await Promise.all([
-        apiService.listRegisteredNodes(namespace, apiKey),
-        apiService.listGraphTemplates(namespace, apiKey)
-      ]);
+      const data = await clientApiService.getNamespaceOverview(namespace);
       
-      setNodesResponse(nodesData);
-      setTemplatesResponse(templatesData);
+      setNodesResponse(data.nodes);
+      setTemplatesResponse(data.graphs);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load namespace data');
     } finally {
@@ -56,10 +51,10 @@ export const NamespaceOverview: React.FC<NamespaceOverviewProps> = ({
   };
 
   useEffect(() => {
-    if (namespace && apiKey) {
+    if (namespace) {
       loadNamespaceData();
     }
-  }, [namespace, apiKey]);
+  }, [namespace]);
 
   const getValidationStatusColor = (status: string) => {
     switch (status) {
