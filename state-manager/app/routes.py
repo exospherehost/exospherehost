@@ -299,7 +299,7 @@ async def list_graph_templates_route(namespace_name: str, request: Request, api_
     response_model=RunsResponse,
     status_code=status.HTTP_200_OK,
     response_description="Runs listed successfully",
-    tags=["state"]
+    tags=["runs"]
 )
 async def get_runs_route(namespace_name: str, page: int, size: int, request: Request, api_key: str = Depends(check_api_key)):
     x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
@@ -318,7 +318,7 @@ async def get_runs_route(namespace_name: str, page: int, size: int, request: Req
     response_model=GraphStructureResponse,
     status_code=status.HTTP_200_OK,
     response_description="Graph structure for run ID retrieved successfully",
-    tags=["state"]
+    tags=["runs"]
 )
 async def get_graph_structure_route(namespace_name: str, run_id: str, request: Request, api_key: str = Depends(check_api_key)):
     x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
