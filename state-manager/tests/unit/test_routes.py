@@ -563,7 +563,6 @@ class TestRouteHandlerAPIKeyValidation:
 
     async def test_get_run_details_by_run_id_route_with_valid_api_key(self, mock_request):
         """Test get_run_details_by_run_id_route with valid API key"""
-        from app.models.run_models import RunListItem, RunStatusEnum
         from datetime import datetime
         
         # Arrange - Create a mock service function and mock RunListItem
@@ -626,7 +625,6 @@ class TestRouteHandlerAPIKeyValidation:
 
     async def test_get_run_details_by_run_id_route_response_structure(self, mock_request):
         """Test get_run_details_by_run_id_route returns correct response structure"""
-        from app.models.run_models import RunListItem, RunStatusEnum
         from datetime import datetime
         
         # Arrange - Create a comprehensive mock RunListItem with all fields
@@ -820,7 +818,6 @@ class TestRouteHandlerAPIKeyValidation:
     async def test_get_runs_route_with_valid_api_key(self, mock_get_runs, mock_request):
         """Test get_runs_route with valid API key"""
         from app.routes import get_runs_route
-        from app.models.run_models import RunsResponse, RunListItem, RunStatusEnum
         from datetime import datetime
         
         # Arrange - Create a comprehensive mock response
@@ -886,7 +883,6 @@ class TestRouteHandlerAPIKeyValidation:
     async def test_get_runs_route_pagination_and_edge_cases(self, mock_get_runs, mock_request):
         """Test get_runs_route with different pagination scenarios and edge cases"""
         from app.routes import get_runs_route
-        from app.models.run_models import RunsResponse, RunListItem, RunStatusEnum
         from datetime import datetime
         
         # Test case 1: Empty results (page 2 with no data)
