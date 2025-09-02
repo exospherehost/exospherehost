@@ -208,8 +208,9 @@ class TestLifespan:
         from app.models.db.graph_template_model import GraphTemplate
         from app.models.db.registered_node import RegisteredNode
         from app.models.db.store import Store
+        from app.models.db.run import Run
 
-        expected_models = [State, GraphTemplate, RegisteredNode, Store]
+        expected_models = [State, GraphTemplate, RegisteredNode, Store, Run]
         assert document_models == expected_models
 
 

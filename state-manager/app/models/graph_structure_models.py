@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Dict, List, Any, Optional
-from datetime import datetime
+from typing import Dict, List, Optional
 from .db.state import StateStatusEnum
 
 class GraphNode(BaseModel):

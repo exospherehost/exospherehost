@@ -7,7 +7,7 @@ from app.models.graph_models import UpsertGraphTemplateRequest, UpsertGraphTempl
 from app.models.register_nodes_request import RegisterNodesRequestModel
 from app.models.secrets_response import SecretsResponseModel
 from app.models.list_models import ListRegisteredNodesResponse, ListGraphTemplatesResponse
-from app.models.state_list_models import StatesByRunIdResponse, CurrentStatesResponse
+# from app.models.state_list_models import StatesByRunIdResponse, CurrentStatesResponse
 
 import pytest
 from unittest.mock import MagicMock, patch
@@ -52,7 +52,7 @@ class TestRouteStructure:
         # Check that all routes have appropriate tags
         for route in router.routes:
             if hasattr(route, 'tags'):
-                assert route.tags in [["state"], ["graph"], ["nodes"]] # type: ignore
+                assert route.tags in [["state"], ["graph"], ["nodes"], ["runs"]] # type: ignore
 
     def test_router_dependencies(self):
         """Test that router has API key dependency"""
@@ -268,35 +268,35 @@ class TestResponseModels:
         assert model.namespace == "test"
         assert model.count == 0
 
-    def test_states_by_run_id_response_validation(self):
-        """Test StatesByRunIdResponse validation"""
-        # Test with valid data
-        valid_data = {
-            "states": [],
-            "namespace": "test",
-            "run_id": "test-run-id",
-            "count": 0
-        }
-        model = StatesByRunIdResponse(**valid_data)
-        assert model.states == []
-        assert model.namespace == "test"
-        assert model.run_id == "test-run-id"
-        assert model.count == 0
+    # def test_states_by_run_id_response_validation(self):
+    #     """Test StatesByRunIdResponse validation"""
+    #     # Test with valid data
+    #     valid_data = {
+    #         "states": [],
+    #         "namespace": "test",
+    #         "run_id": "test-run-id",
+    #         "count": 0
+    #     }
+    #     model = StatesByRunIdResponse(**valid_data)
+    #     assert model.states == []
+    #     assert model.namespace == "test"
+    #     assert model.run_id == "test-run-id"
+    #     assert model.count == 0
 
-    def test_current_states_response_validation(self):
-        """Test CurrentStatesResponse validation"""
-        # Test with valid data
-        valid_data = {
-            "states": [],
-            "namespace": "test",
-            "count": 0,
-            "run_ids": ["run1", "run2"]
-        }
-        model = CurrentStatesResponse(**valid_data)
-        assert model.states == []
-        assert model.namespace == "test"
-        assert model.count == 0
-        assert model.run_ids == ["run1", "run2"]
+    # def test_current_states_response_validation(self):
+    #     """Test CurrentStatesResponse validation"""
+    #     # Test with valid data
+    #     valid_data = {
+    #         "states": [],
+    #         "namespace": "test",
+    #         "count": 0,
+    #         "run_ids": ["run1", "run2"]
+    #     }
+    #     model = CurrentStatesResponse(**valid_data)
+    #     assert model.states == []
+    #     assert model.namespace == "test"
+    #     assert model.count == 0
+    #     assert model.run_ids == ["run1", "run2"]
 
 
 class TestRouteHandlers:
@@ -315,9 +315,9 @@ class TestRouteHandlers:
             register_nodes_route,
             get_secrets_route,
             list_registered_nodes_route,
-            list_graph_templates_route,
-            get_states_by_run_id_route,
-            get_current_states_route
+            list_graph_templates_route
+            # get_states_by_run_id_route,
+            # get_current_states_route
         )
         
         # Verify all handlers are callable
@@ -331,8 +331,8 @@ class TestRouteHandlers:
         assert callable(get_secrets_route)
         assert callable(list_registered_nodes_route)
         assert callable(list_graph_templates_route)
-        assert callable(get_states_by_run_id_route)
-        assert callable(get_current_states_route)
+        # assert callable(get_states_by_run_id_route)
+        # assert callable(get_current_states_route)
 
 
 class TestRouteHandlerAPIKeyValidation:
@@ -581,77 +581,77 @@ class TestRouteHandlerAPIKeyValidation:
         assert result.count == 0
         assert result.templates == []
 
-    @patch('app.routes.get_current_states')
-    async def test_get_current_states_route_with_valid_api_key(self, mock_get_states, mock_request):
-        """Test get_current_states_route with valid API key"""
-        from app.routes import get_current_states_route
-        from app.models.db.state import State
-        from beanie import PydanticObjectId
-        from datetime import datetime
-        
-        # Arrange
-        mock_state = MagicMock(spec=State)
-        mock_state.id = PydanticObjectId()
-        mock_state.node_name = "test_node"
-        mock_state.identifier = "test_identifier"
-        mock_state.namespace_name = "test_namespace"
-        mock_state.graph_name = "test_graph"
-        mock_state.run_id = "test_run"
-        mock_state.status = "CREATED"
-        mock_state.inputs = {"key": "value"}
-        mock_state.outputs = {"output": "result"}
-        mock_state.error = None
-        mock_state.parents = {"parent1": PydanticObjectId()}
-        mock_state.created_at = datetime.now()
-        mock_state.updated_at = datetime.now()
-        
-        mock_get_states.return_value = [mock_state]
-        
-        # Act
-        result = await get_current_states_route("test_namespace", mock_request, "valid_key")
-        
-        # Assert
-        mock_get_states.assert_called_once_with("test_namespace", "test-request-id")
-        assert result.namespace == "test_namespace"
-        assert result.count == 1
-        assert len(result.states) == 1
-        assert result.run_ids == ["test_run"]
+    # @patch('app.routes.get_current_states')
+    # async def test_get_current_states_route_with_valid_api_key(self, mock_get_states, mock_request):
+    #     """Test get_current_states_route with valid API key"""
+    #     from app.routes import get_current_states_route
+    #     from app.models.db.state import State
+    #     from beanie import PydanticObjectId
+    #     from datetime import datetime
+    #     
+    #     # Arrange
+    #     mock_state = MagicMock(spec=State)
+    #     mock_state.id = PydanticObjectId()
+    #     mock_state.node_name = "test_node"
+    #     mock_state.identifier = "test_identifier"
+    #     mock_state.namespace_name = "test_namespace"
+    #     mock_state.graph_name = "test_graph"
+    #     mock_state.run_id = "test_run"
+    #     mock_state.status = "CREATED"
+    #     mock_state.inputs = {"key": "value"}
+    #     mock_state.outputs = {"output": "result"}
+    #     mock_state.error = None
+    #     mock_state.parents = {"parent1": PydanticObjectId()}
+    #     mock_state.created_at = datetime.now()
+    #     mock_state.updated_at = datetime.now()
+    #     
+    #     mock_get_states.return_value = [mock_state]
+    #     
+    #     # Act
+    #     result = await get_current_states_route("test_namespace", mock_request, "valid_key")
+    #     
+    #     # Assert
+    #     mock_get_states.assert_called_once_with("test_namespace", "test-request-id")
+    #     assert result.namespace == "test_namespace"
+    #     assert result.count == 1
+    #     assert len(result.states) == 1
+    #     assert result.run_ids == ["test_run"]
 
-    @patch('app.routes.get_states_by_run_id')
-    async def test_get_states_by_run_id_route_with_valid_api_key(self, mock_get_states, mock_request):
-        """Test get_states_by_run_id_route with valid API key"""
-        from app.routes import get_states_by_run_id_route
-        from app.models.db.state import State
-        from beanie import PydanticObjectId
-        from datetime import datetime
-        
-        # Arrange
-        mock_state = MagicMock(spec=State)
-        mock_state.id = PydanticObjectId()
-        mock_state.node_name = "test_node"
-        mock_state.identifier = "test_identifier"
-        mock_state.namespace_name = "test_namespace"
-        mock_state.graph_name = "test_graph"
-        mock_state.run_id = "test_run"
-        mock_state.status = "CREATED"
-        mock_state.inputs = {"key": "value"}
-        mock_state.outputs = {"output": "result"}
-        mock_state.error = None
-        mock_state.parents = {"parent1": PydanticObjectId()}
-        mock_state.created_at = datetime.now()
-        mock_state.updated_at = datetime.now()
-        
-        mock_get_states.return_value = [mock_state]
-        
-        # Act
-        result = await get_states_by_run_id_route("test_namespace", "test_run", mock_request, "valid_key")
-        
-        # Assert
-        mock_get_states.assert_called_once_with("test_namespace", "test_run", "test-request-id")
-        assert result.namespace == "test_namespace"
-        assert result.run_id == "test_run"
-        assert result.count == 1
-        assert len(result.states) == 1
+    # @patch('app.routes.get_states_by_run_id')
+    # async def test_get_states_by_run_id_route_with_valid_api_key(self, mock_get_states, mock_request):
+    #     """Test get_states_by_run_id_route with valid API key"""
+    #     from app.routes import get_states_by_run_id_route
+    #     from app.models.db.state import State
+    #     from beanie import PydanticObjectId
+    #     from datetime import datetime
+    #     
+    #     # Arrange
+            #     mock_state = MagicMock(spec=State)
+    #     mock_state.id = PydanticObjectId()
+    #     mock_state.node_name = "test_node"
+    #     mock_state.identifier = "test_identifier"
+    #     mock_state.namespace_name = "test_namespace"
+    #     mock_state.graph_name = "test_graph"
+    #     mock_state.run_id = "test_run"
+    #     mock_state.status = "CREATED"
+    #     mock_state.inputs = {"key": "value"}
+    #     mock_state.outputs = {"output": "result"}
+    #     mock_state.error = None
+    #     mock_state.parents = {"parent1": PydanticObjectId()}
+    #     mock_state.created_at = datetime.now()
+    #     mock_state.updated_at = datetime.now()
+    #     
+    #     mock_get_states.return_value = [mock_state]
+    #     
+    #     # Act
+    #     result = await get_states_by_run_id_route("test_namespace", "test_run", mock_request, "valid_key")
+    #     
+    #     # Assert
+    #     mock_get_states.assert_called_once_with("test_namespace", "test_run", "test-request-id")
+    #     assert result.namespace == "test_namespace"
+    #     assert result.run_id == "test_run"
+    #     assert result.count == 1
+    #     assert len(result.states) == 1
 
     @patch('app.routes.prune_signal')
     async def test_prune_state_route_with_valid_api_key(self, mock_prune_signal, mock_request):

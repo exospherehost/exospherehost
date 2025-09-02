@@ -23,7 +23,8 @@ async def test_trigger_graph_success(mock_request):
 
     with patch('app.controller.trigger_graph.GraphTemplate') as mock_graph_template_cls, \
          patch('app.controller.trigger_graph.Store') as mock_store_cls, \
-         patch('app.controller.trigger_graph.State') as mock_state_cls:
+         patch('app.controller.trigger_graph.State') as mock_state_cls, \
+         patch('app.controller.trigger_graph.Run') as mock_run_cls:
 
         mock_graph_template = MagicMock()
         mock_graph_template.is_valid.return_value = True
@@ -38,6 +39,10 @@ async def test_trigger_graph_success(mock_request):
         mock_state_instance = MagicMock()
         mock_state_instance.insert = AsyncMock(return_value=None)
         mock_state_cls.return_value = mock_state_instance
+        
+        mock_run_instance = MagicMock()
+        mock_run_instance.insert = AsyncMock(return_value=None)
+        mock_run_cls.return_value = mock_run_instance
 
         result = await trigger_graph(namespace_name, graph_name, mock_request, x_exosphere_request_id)
 

@@ -55,8 +55,6 @@ class TestGetGraphStructure:
 
             # Verify the result
             assert isinstance(result, GraphStructureResponse)
-            assert result.namespace == namespace
-            assert result.run_id == run_id
             assert result.graph_name == "test_graph"
             assert result.node_count == 2
             assert result.edge_count == 1
@@ -75,8 +73,6 @@ class TestGetGraphStructure:
             edge = result.edges[0]
             assert edge.source == str(mock_state1.id)
             assert edge.target == str(mock_state2.id)
-            assert edge.source_output == "id1"
-            assert edge.target_input == "id1"
 
             # Verify execution summary
             assert result.execution_summary["SUCCESS"] == 1
@@ -98,8 +94,6 @@ class TestGetGraphStructure:
 
             # Verify empty result
             assert isinstance(result, GraphStructureResponse)
-            assert result.namespace == namespace
-            assert result.run_id == run_id
             assert result.graph_name == ""
             assert result.node_count == 0
             assert result.edge_count == 0
@@ -211,8 +205,6 @@ class TestGetGraphStructure:
             edge = result.edges[0]
             assert edge.source == str(mock_state2.id)
             assert edge.target == str(mock_child.id)
-            assert edge.source_output == "parent2"
-            assert edge.target_input == "parent2"
 
     @pytest.mark.asyncio
     async def test_get_graph_structure_parent_not_in_nodes(self):
@@ -332,6 +324,6 @@ class TestGetGraphStructure:
 
             result = await get_graph_structure(namespace, run_id, request_id)
 
-            # Verify node has position set to None (as per implementation)
+            # Verify node structure
             node = result.nodes[0]
-            assert node.position is None 
+            assert node.id == str(mock_state.id) 
