@@ -33,7 +33,7 @@ from .models.list_models import ListRegisteredNodesResponse, ListGraphTemplatesR
 from .controller.list_registered_nodes import list_registered_nodes
 from .controller.list_graph_templates import list_graph_templates
 
-from .models.state_list_models import RunsResponse
+from .models.run_models import RunsResponse
 from .controller.get_runs import get_runs
 
 from .models.graph_structure_models import GraphStructureResponse

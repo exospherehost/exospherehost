@@ -8,7 +8,6 @@ from app.models.db.store import Store
 from app.models.db.run import Run
 from app.models.db.graph_template_model import GraphTemplate
 from app.models.node_template_model import NodeTemplate
-from app.models.state_list_models import RunStatusEnum
 import uuid
 
 logger = LogsManager().get_logger()
@@ -48,8 +47,7 @@ async def trigger_graph(namespace_name: str, graph_name: str, body: TriggerGraph
         new_run = Run(
             run_id=run_id,
             namespace_name=namespace_name,
-            graph_name=graph_name,
-            status=RunStatusEnum.PENDING
+            graph_name=graph_name
         )
         await new_run.insert()
 
