@@ -21,6 +21,7 @@ from .models.db.state import State
 from .models.db.graph_template_model import GraphTemplate
 from .models.db.registered_node import RegisteredNode
 from .models.db.store import Store
+from .models.db.run import Run
 
 # injecting routes
 from .routes import router
@@ -42,7 +43,7 @@ async def lifespan(app: FastAPI):
     # initializing beanie
     client = AsyncMongoClient(settings.mongo_uri)
     db = client[settings.mongo_database_name]
-    await init_beanie(db, document_models=[State, GraphTemplate, RegisteredNode, Store])
+    await init_beanie(db, document_models=[State, GraphTemplate, RegisteredNode, Store, Run])
     logger.info("beanie dbs initialized")
 
     # initialize secret

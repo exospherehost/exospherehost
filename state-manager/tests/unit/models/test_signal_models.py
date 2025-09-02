@@ -229,7 +229,6 @@ class TestSignalResponseModel:
             StateStatusEnum.QUEUED,
             StateStatusEnum.EXECUTED,
             StateStatusEnum.ERRORED,
-            StateStatusEnum.CANCELLED,
             StateStatusEnum.SUCCESS,
             StateStatusEnum.NEXT_CREATED_ERROR,
             StateStatusEnum.PRUNED
