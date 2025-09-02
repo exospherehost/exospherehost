@@ -203,7 +203,7 @@ The Exosphere Dashboard has been refactored to use Next.js API routes for enhanc
 
 ### **Docker Security Features**
 
-- **Environment Variable Isolation**: Server-side variables never exposed to containers
+- **Environment Variable Isolation**: Server-side environment variables are set in containers and available to server processes, but are not exposed to the browser/client bundle
 - **Network Security**: Services communicate over isolated Docker networks
 - **Health Checks**: Built-in health monitoring for all services
 - **Resource Limits**: Configurable resource constraints for production use
