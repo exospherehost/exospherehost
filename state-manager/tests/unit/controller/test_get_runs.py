@@ -355,7 +355,7 @@ class TestGetRuns:
                  patch('app.controller.get_runs.get_run_info') as _, \
                  patch('app.controller.get_runs.logger') as _:
                 
-                # Mock the entire query chain for runs list
+            # Mock the entire query chain for runs list
                 mock_query_chain = MagicMock()
                 mock_query_chain.to_list = AsyncMock(return_value=[])
                 mock_run_class.find.return_value.sort.return_value.skip.return_value.limit.return_value = mock_query_chain
@@ -392,7 +392,7 @@ class TestGetRuns:
              patch('app.controller.get_runs.get_run_info') as mock_get_run_info, \
              patch('app.controller.get_runs.logger') as _:
             
-                        # Mock the entire query chain for runs list
+            # Mock the entire query chain for runs list
             mock_query_chain = MagicMock()
             mock_query_chain.to_list = AsyncMock(return_value=large_runs_list)
             mock_run_class.find.return_value.sort.return_value.skip.return_value.limit.return_value = mock_query_chain

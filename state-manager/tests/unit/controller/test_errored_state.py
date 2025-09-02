@@ -411,8 +411,7 @@ class TestErroredState:
 
         # Assert
         assert result.status == StateStatusEnum.ERRORED
-        assert not result.retry_created
-        assert mock_state_queued.status == StateStatusEnum.ERRORED
+        assert mock_state_queued.status == StateStatusEnum.RETRY_CREATED
         assert mock_state_queued.error == mock_errored_request.error
 
     @patch('app.controller.errored_state.State')
