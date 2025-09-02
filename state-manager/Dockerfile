@@ -1,9 +1,9 @@
-FROM ghcr.io/astral-sh/uv:0.4.28 as uv
+ARG UV_VERSION=0.4.28
+FROM ghcr.io/astral-sh/uv:${UV_VERSION} as uv
 
 FROM python:3.12-slim-bookworm
 
 COPY --from=uv /uv /usr/local/bin/uv
-COPY --from=uv /uvx /usr/local/bin/uvx
 
 WORKDIR /api-server
 
