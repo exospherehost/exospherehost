@@ -29,8 +29,6 @@ EXOSPHERE_API_KEY=exosphere@123
 NEXT_PUBLIC_DEFAULT_NAMESPACE=your-namespace
 ```
 
-
-
 ## API Routes
 
 The following server-side API routes handle all communication with the state-manager:
