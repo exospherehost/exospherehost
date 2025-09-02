@@ -61,7 +61,11 @@ async def errored_state(namespace_name: str, state_id: PydanticObjectId, body: E
             except DuplicateKeyError:
                 logger.info(f"Duplicate retry state detected for state {state_id}. A retry state with the same unique key already exists.", x_exosphere_request_id=x_exosphere_request_id)
 
-        state.status = StateStatusEnum.ERRORED
+        if retry_created:
+            state.status = StateStatusEnum.RETRY_CREATED
+        else:
+            state.status = StateStatusEnum.ERRORED
+            
         state.error = body.error
         await state.save()
 

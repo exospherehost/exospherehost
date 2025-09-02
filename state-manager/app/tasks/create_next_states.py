@@ -1,6 +1,6 @@
 from beanie import PydanticObjectId
 from pymongo.errors import DuplicateKeyError, BulkWriteError
-from beanie.operators import In, NE
+from beanie.operators import In, NotIn
 from app.singletons.logs_manager import LogsManager
 from app.models.db.graph_template_model import GraphTemplate
 from app.models.db.state import State
@@ -37,7 +37,7 @@ async def check_unites_satisfied(namespace: str, graph_name: str, node_template:
             any_one_pending = await State.find_one(
                 State.namespace_name == namespace,
                 State.graph_name == graph_name,
-                NE(State.status, StateStatusEnum.SUCCESS),
+                NotIn(State.status, [StateStatusEnum.SUCCESS, StateStatusEnum.RETRY_CREATED]),
                 {
                     f"parents.{node_template.unites.identifier}": unites_id
                 }

@@ -11,3 +11,4 @@ class StateStatusEnum(str, Enum):
     SUCCESS = 'SUCCESS'
     NEXT_CREATED_ERROR = 'NEXT_CREATED_ERROR'
     PRUNED = 'PRUNED'
+    RETRY_CREATED = 'RETRY_CREATED'
