@@ -17,7 +17,7 @@ import {
   RunsResponse
 } from '@/types/state-manager';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URI || 'http://localhost:8000';
+const API_BASE_URL = process.env.EXOSPHERE_STATE_MANAGER_URI || 'http://localhost:8000';
 
 class ApiService {
   private async makeRequest<T>(
