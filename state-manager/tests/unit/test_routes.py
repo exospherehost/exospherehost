@@ -7,7 +7,7 @@ from app.models.graph_models import UpsertGraphTemplateRequest, UpsertGraphTempl
 from app.models.register_nodes_request import RegisterNodesRequestModel
 from app.models.secrets_response import SecretsResponseModel
 from app.models.list_models import ListRegisteredNodesResponse, ListGraphTemplatesResponse
-# from app.models.state_list_models import StatesByRunIdResponse, CurrentStatesResponse
+
 
 import pytest
 from unittest.mock import MagicMock, patch
@@ -44,6 +44,7 @@ class TestRouteStructure:
         # List routes
         assert any('/v0/namespace/{namespace_name}/nodes' in path for path in paths)
         assert any('/v0/namespace/{namespace_name}/graphs' in path for path in paths)
+        assert any('/v0/namespace/{namespace_name}/runs/{page}/{size}' in path for path in paths)
         assert any('/v0/namespace/{namespace_name}/states/run/{run_id}' in path for path in paths)
         assert any('/v0/namespace/{namespace_name}/states' in path for path in paths)
 
@@ -268,35 +269,7 @@ class TestResponseModels:
         assert model.namespace == "test"
         assert model.count == 0
 
-    # def test_states_by_run_id_response_validation(self):
-    #     """Test StatesByRunIdResponse validation"""
-    #     # Test with valid data
-    #     valid_data = {
-    #         "states": [],
-    #         "namespace": "test",
-    #         "run_id": "test-run-id",
-    #         "count": 0
-    #     }
-    #     model = StatesByRunIdResponse(**valid_data)
-    #     assert model.states == []
-    #     assert model.namespace == "test"
-    #     assert model.run_id == "test-run-id"
-    #     assert model.count == 0
 
-    # def test_current_states_response_validation(self):
-    #     """Test CurrentStatesResponse validation"""
-    #     # Test with valid data
-    #     valid_data = {
-    #         "states": [],
-    #         "namespace": "test",
-    #         "count": 0,
-    #         "run_ids": ["run1", "run2"]
-    #     }
-    #     model = CurrentStatesResponse(**valid_data)
-    #     assert model.states == []
-    #     assert model.namespace == "test"
-    #     assert model.count == 0
-    #     assert model.run_ids == ["run1", "run2"]
 
 
 class TestRouteHandlers:
@@ -315,7 +288,9 @@ class TestRouteHandlers:
             register_nodes_route,
             get_secrets_route,
             list_registered_nodes_route,
-            list_graph_templates_route
+            list_graph_templates_route,
+            get_runs_route,
+            get_graph_structure_route
 
         )
         
@@ -330,6 +305,8 @@ class TestRouteHandlers:
         assert callable(get_secrets_route)
         assert callable(list_registered_nodes_route)
         assert callable(list_graph_templates_route)
+        assert callable(get_runs_route)
+        assert callable(get_graph_structure_route)
 
 
 
@@ -811,4 +788,68 @@ class TestRouteHandlerAPIKeyValidation:
             
             # Assert
             mock_re_queue_after_signal.assert_called_with("test_namespace", PydanticObjectId(state_id), re_enqueue_request, "test-request-id")
-            assert result == expected_response 
+            assert result == expected_response
+
+    @patch('app.routes.get_runs')
+    async def test_get_runs_route_with_valid_api_key(self, mock_get_runs, mock_request):
+        """Test get_runs_route with valid API key"""
+        from app.routes import get_runs_route
+        
+        # Arrange
+        mock_get_runs.return_value = MagicMock()
+        
+        # Act
+        result = await get_runs_route("test_namespace", 1, 10, mock_request, "valid_key")
+        
+        # Assert
+        mock_get_runs.assert_called_once_with("test_namespace", 1, 10, "test-request-id")
+        assert result == mock_get_runs.return_value
+
+    @patch('app.routes.get_runs')
+    async def test_get_runs_route_with_invalid_api_key(self, mock_get_runs, mock_request):
+        """Test get_runs_route with invalid API key"""
+        from app.routes import get_runs_route
+        from fastapi import HTTPException
+        
+        # Arrange
+        mock_get_runs.return_value = MagicMock()
+        
+        # Act & Assert
+        with pytest.raises(HTTPException) as exc_info:
+            await get_runs_route("test_namespace", 1, 10, mock_request, None) # type: ignore
+        
+        assert exc_info.value.status_code == 401
+        assert exc_info.value.detail == "Invalid API key"
+        mock_get_runs.assert_not_called()
+
+    @patch('app.routes.get_graph_structure')
+    async def test_get_graph_structure_route_with_valid_api_key(self, mock_get_graph_structure, mock_request):
+        """Test get_graph_structure_route with valid API key"""
+        from app.routes import get_graph_structure_route
+        
+        # Arrange
+        mock_get_graph_structure.return_value = MagicMock()
+        
+        # Act
+        result = await get_graph_structure_route("test_namespace", "test_run_id", mock_request, "valid_key")
+        
+        # Assert
+        mock_get_graph_structure.assert_called_once_with("test_namespace", "test_run_id", "test-request-id")
+        assert result == mock_get_graph_structure.return_value
+
+    @patch('app.routes.get_graph_structure')
+    async def test_get_graph_structure_route_with_invalid_api_key(self, mock_get_graph_structure, mock_request):
+        """Test get_graph_structure_route with invalid API key"""
+        from app.routes import get_graph_structure_route
+        from fastapi import HTTPException
+        
+        # Arrange
+        mock_get_graph_structure.return_value = MagicMock()
+        
+        # Act & Assert
+        with pytest.raises(HTTPException) as exc_info:
+            await get_graph_structure_route("test_namespace", "test_run_id", mock_request, None) # type: ignore
+        
+        assert exc_info.value.status_code == 401
+        assert exc_info.value.detail == "Invalid API key"
+        mock_get_graph_structure.assert_not_called()
