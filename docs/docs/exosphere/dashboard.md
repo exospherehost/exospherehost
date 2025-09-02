@@ -4,7 +4,7 @@ The Exosphere dashboard provides a comprehensive web interface for monitoring, d
 
 ## Dashboard Overview
 
-The Exosphere dashboard is a modern web application that connects to your state manager backend and provides:
+The Exosphere dashboard is a modern web application that connects to your state manager backend through secure server-side routes and provides:
 
 - **Real-time monitoring** of workflow execution
 - **Visual graph representation** of your workflows
@@ -21,6 +21,7 @@ Before setting up the dashboard, ensure you have:
 - A running Exosphere state manager (see [State Manager Setup](./state-manager-setup.md))
 - Your API key and namespace from the state manager
 - Docker (for containerized deployment)
+- Environment configuration file (`.env.local` for local development)
 
 === "Docker (Recommended)"
 
@@ -37,11 +38,13 @@ Before setting up the dashboard, ensure you have:
        # Pull the latest dashboard image
        docker pull ghcr.io/exospherehost/exosphere-dashboard:latest
 
-       # Run the dashboard container
+       # Run the dashboard container with secure environment variables
        docker run -d \
          --name exosphere-dashboard \
          -p 3000:3000 \
-         -e NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL="http://localhost:8000" \
+         -e EXOSPHERE_STATE_MANAGER_URI="http://localhost:8000" \
+         -e EXOSPHERE_API_KEY="your-secure-api-key" \
+         -e NEXT_PUBLIC_DEFAULT_NAMESPACE="your-namespace" \
          ghcr.io/exospherehost/exosphere-dashboard:latest
        ```
 
@@ -63,7 +66,13 @@ Before setting up the dashboard, ensure you have:
 
     | Variable | Description | Required | Default |
     |----------|-------------|----------|---------|
-    | `NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL` | State manager API endpoint | Yes | - |
+    | `EXOSPHERE_STATE_MANAGER_URI` | State manager API endpoint | Yes | - |
+    | `EXOSPHERE_API_KEY` | **REQUIRED**: Secure API key for state manager access | Yes | `exosphere@123` |
+    | `NEXT_PUBLIC_DEFAULT_NAMESPACE` | Default namespace for workflows | No | `default` |
+    
+    > **💡 Default API Key**: `EXOSPHERE_API_KEY` defaults to `exosphere@123` (same as state manager's default secret)
+    > 
+    > **🔐 Authentication**: When the dashboard sends API requests to the state-manager, the `EXOSPHERE_API_KEY` value is checked for equality with the `STATE_MANAGER_SECRET` value in the state-manager container.
     
 === "Local Development"
 
@@ -103,12 +112,47 @@ Before setting up the dashboard, ensure you have:
 
     #### Environment Variables
 
-    Create a `.env` file in the dashboard directory with these variables:
+    Create a `.env.local` file in the dashboard directory with these variables:
 
     ```bash
-    # State manager API endpoint
-    NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL=http://localhost:8000
+    # Server-side secure configuration (NOT exposed to browser)
+    EXOSPHERE_STATE_MANAGER_URI=http://localhost:8000
+    EXOSPHERE_API_KEY=exosphere@123
+    
+    # Client-side configuration (exposed to browser)
+    NEXT_PUBLIC_DEFAULT_NAMESPACE=your-namespace
     ```
+    
+    > **💡 Default API Key**: `EXOSPHERE_API_KEY` defaults to `exosphere@123` (same as state manager's default secret)
+    > 
+    > **🔐 Authentication**: When the dashboard sends API requests to the state-manager, the `EXOSPHERE_API_KEY` value is checked for equality with the `STATE_MANAGER_SECRET` value in the state-manager container.
+
+## 🔒 Security Architecture
+
+### **Server-Side Rendering (SSR) Implementation**
+
+The Exosphere Dashboard has been refactored to use Next.js API routes for enhanced security:
+
+- **API Key Protection**: All sensitive credentials are stored server-side
+- **Secure Communication**: Client never directly communicates with state-manager
+- **Environment Isolation**: Sensitive config separated from public code
+- **Production Ready**: Enterprise-grade security for production deployments
+
+### **API Route Structure**
+
+```
+/api/runs              → Secure runs fetching with pagination
+/api/graph-structure   → Protected graph visualization data
+/api/namespace-overview → Secure namespace summary
+/api/graph-template    → Protected template management
+```
+
+### **Security Benefits**
+
+1. **No API Key Exposure**: Credentials never visible in browser
+2. **Server-Side Validation**: All requests validated before reaching state-manager
+3. **Environment Security**: Sensitive variables isolated from client bundle
+4. **Audit Trail**: All API calls logged server-side for monitoring
 
 ## Dashboard Interface
 
@@ -127,8 +171,8 @@ View graph runs and debug each node that was created.
 
 1. **Configure Connection**:
    
-      - Set your namespace in the header
-      - Enter your API key
+      - Set your namespace in the header (or use environment variable)
+      - API key is automatically handled server-side
       - Ensure your state manager is running
 
 2. **Explore Overview**:

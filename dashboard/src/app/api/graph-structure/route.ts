@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE_URL = process.env.EXOSPHERE_STATE_MANAGER_URL || 'http://localhost:8000';
-const API_KEY = process.env.EXOSPHERE_STATE_MANAGER_API_KEY;
+const API_BASE_URL = process.env.EXOSPHERE_STATE_MANAGER_URI || 'http://localhost:8000';
+const API_KEY = process.env.EXOSPHERE_API_KEY;
 
 export async function GET(request: NextRequest) {
   try {

@@ -4,6 +4,12 @@ A modern Next.js dashboard for visualizing and managing the Exosphere State Mana
 
 ## ✨ Features
 
+### 🔒 **Secure Server-Side Architecture**
+- **Server-Side Rendering (SSR)**: All API calls handled securely on the server
+- **Protected API Keys**: Sensitive credentials never exposed to the browser
+- **Production Ready**: Enterprise-grade security for production deployments
+- **Environment Isolation**: Secure separation of sensitive and public configuration
+
 ### 📊 Overview Dashboard
 - **Namespace Overview**: Comprehensive view of your state manager namespace
 - **Real-time Statistics**: Live metrics and status indicators
@@ -38,6 +44,7 @@ A modern Next.js dashboard for visualizing and managing the Exosphere State Mana
 - **Node.js 18+** 
 - **A running State Manager backend** (default: http://localhost:8000)
 - **Valid API key and namespace**
+- **Environment configuration file** (`.env.local`)
 
 ### Quick Start
 
@@ -57,8 +64,9 @@ npm install
 cp env.example .env.local
 
 # Edit .env.local with your configuration
-NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL=http://localhost:8000
-NEXT_PUBLIC_DEV_MODE=true
+EXOSPHERE_STATE_MANAGER_URI=http://localhost:8000
+EXOSPHERE_API_KEY=your-secure-api-key-here
+NEXT_PUBLIC_DEFAULT_NAMESPACE=your-namespace
 ```
 
 4. **Start the development server:**
@@ -70,16 +78,24 @@ npm run dev
 
 ### Environment Configuration
 
-The dashboard supports the following environment variables:
+The dashboard uses a secure server-side architecture with the following environment variables:
 
+#### 🔒 **Server-Side Variables (NOT exposed to browser)**
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL` | `http://localhost:8000` | URL of the State Manager backend API |
-| `NEXT_PUBLIC_DEV_MODE` | `false` | Enable development mode features |
-| `NEXT_PUBLIC_DEFAULT_NAMESPACE` | - | Default namespace to use |
-| `NEXT_PUBLIC_DEFAULT_API_KEY` | - | Default API key (use with caution) |
-| `NEXT_PUBLIC_DEFAULT_RUNTIME_NAME` | - | Default runtime name |
-| `NEXT_PUBLIC_DEFAULT_GRAPH_NAME` | - | Default graph name |
+| `EXOSPHERE_STATE_MANAGER_URI` | `http://localhost:8000` | URI of the State Manager backend API |
+| `EXOSPHERE_API_KEY` | `exosphere@123` | **REQUIRED**: Your secure API key for state manager access |
+
+#### 🌐 **Client-Side Variables (exposed to browser)**
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NEXT_PUBLIC_DEFAULT_NAMESPACE` | `testnamespace` | Default namespace to use on dashboard startup |
+
+> **⚠️ Security Note**: Server-side variables are never exposed to the browser, keeping your API keys secure.
+> 
+> **💡 Default API Key**: `EXOSPHERE_API_KEY` defaults to `exosphere@123` (same as `STATE_MANAGER_SECRET` in the state manager container)
+> 
+> **🔐 Authentication**: When the dashboard sends API requests to the state-manager, the `EXOSPHERE_API_KEY` value is checked for equality with the `STATE_MANAGER_SECRET` value in the state-manager container.
 
 ## 🐳 Docker Deployment
 
@@ -90,13 +106,48 @@ The dashboard supports the following environment variables:
 docker build -t exosphere-dashboard .
 ```
 
-2. **Run the container:**
+2. **Run the container with secure environment variables:**
 ```bash
 docker run -d \
   -p 3000:3000 \
-  -e NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL=http://your-state-manager-url:8000 \
+  -e EXOSPHERE_STATE_MANAGER_URI=http://your-state-manager-url:8000 \
+  -e EXOSPHERE_API_KEY=your-secure-api-key \
+  -e NEXT_PUBLIC_DEFAULT_NAMESPACE=your-namespace \
   exosphere-dashboard
 ```
+
+> **🔒 Security**: API keys are securely handled server-side and never exposed to the browser.
+> 
+> **💡 Default API Key**: If not specified, `EXOSPHERE_API_KEY` defaults to `exosphere@123` (same as `STATE_MANAGER_SECRET` in the state manager container)
+> 
+> **🔐 Authentication**: When the dashboard sends API requests to the state-manager, the `EXOSPHERE_API_KEY` value is checked for equality with the `STATE_MANAGER_SECRET` value in the state-manager container.
+
+## 🔒 Security Architecture
+
+### **Server-Side Rendering (SSR) Implementation**
+
+The dashboard has been refactored to use Next.js API routes for enhanced security:
+
+- **API Key Protection**: All sensitive credentials are stored server-side
+- **Secure Communication**: Client never directly communicates with state-manager
+- **Environment Isolation**: Sensitive config separated from public code
+- **Production Ready**: Enterprise-grade security for production deployments
+
+### **API Route Structure**
+
+```
+/api/runs              → Secure runs fetching with pagination
+/api/graph-structure   → Protected graph visualization data
+/api/namespace-overview → Secure namespace summary
+/api/graph-template    → Protected template management
+```
+
+### **Security Benefits**
+
+1. **No API Key Exposure**: Credentials never visible in browser
+2. **Server-Side Validation**: All requests validated before reaching state-manager
+3. **Environment Security**: Sensitive variables isolated from client bundle
+4. **Audit Trail**: All API calls logged server-side for monitoring
 
 ## 📖 Usage Guide
 

@@ -50,9 +50,11 @@ services:
     container_name: exosphere-dashboard
     restart: unless-stopped
     environment:
-      - NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL=${NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL:-http://exosphere-state-manager:8000}
+      # Server-side secure configuration (NOT exposed to browser)
+      - EXOSPHERE_STATE_MANAGER_URI=${EXOSPHERE_STATE_MANAGER_URI:-http://exosphere-state-manager:8000}
+      - EXOSPHERE_API_KEY=${EXOSPHERE_API_KEY:-exosphere@123}
+      # Client-side configuration (exposed to browser)
       - NEXT_PUBLIC_DEFAULT_NAMESPACE=${NEXT_PUBLIC_DEFAULT_NAMESPACE:-default}
-      - NEXT_PUBLIC_DEFAULT_API_KEY=${NEXT_PUBLIC_DEFAULT_API_KEY}
     depends_on:
       exosphere-state-manager:
         condition: service_healthy

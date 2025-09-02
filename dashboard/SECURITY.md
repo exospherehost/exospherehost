@@ -20,8 +20,8 @@ This dashboard has been refactored to use **Server-Side Rendering (SSR)** for en
 
 ### Server-Side (NOT exposed to browser)
 ```bash
-EXOSPHERE_STATE_MANAGER_URL=http://localhost:8000
-EXOSPHERE_STATE_MANAGER_API_KEY=your-secure-api-key-here
+EXOSPHERE_STATE_MANAGER_URI=http://localhost:8000
+EXOSPHERE_API_KEY=exosphere@123
 ```
 
 ### Client-Side (exposed to browser)
@@ -50,9 +50,10 @@ The following server-side API routes handle all communication with the state-man
 ## Setup Instructions
 
 1. Copy `env.example` to `.env.local`
-2. Set your actual API key in `EXOSPHERE_STATE_MANAGER_API_KEY`
-3. Configure your state-manager URL in `EXOSPHERE_STATE_MANAGER_URL`
-4. Set your default namespace in `NEXT_PUBLIC_DEFAULT_NAMESPACE`
+2. **Optional**: Override the default API key in `EXOSPHERE_API_KEY` (defaults to `exosphere@123`, same as `STATE_MANAGER_SECRET` in the state manager container)
+3. **Authentication**: The `EXOSPHERE_API_KEY` value is checked for equality with the `STATE_MANAGER_SECRET` value when making API requests to the state-manager
+4. Configure your state-manager URI in `EXOSPHERE_STATE_MANAGER_URI`
+5. Set your default namespace in `NEXT_PUBLIC_DEFAULT_NAMESPACE`
 
 ## Development vs Production
 

@@ -14,6 +14,8 @@ Before creating a runtime, you need to set up the state manager and configure yo
    ```
    For detailed setup instructions, see [State Manager Setup](./state-manager-setup.md).
 
+> **🔐 Authentication**: When making API requests to the state-manager, the `EXOSPHERE_API_KEY` value is checked for equality with the `STATE_MANAGER_SECRET` value in the state-manager container.
+
 2. **Set Environment Variables**: Configure your authentication:
    ```bash
    export EXOSPHERE_STATE_MANAGER_URI="your-state-manager-uri"

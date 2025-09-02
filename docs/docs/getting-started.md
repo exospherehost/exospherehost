@@ -24,6 +24,8 @@ Set up your environment variables for authentication:
 
 Refer: [Getting State Manager URI](./exosphere/state-manager-setup.md)
 
+> **🔐 Authentication**: When making API requests to the state-manager, the `EXOSPHERE_API_KEY` value is checked for equality with the `STATE_MANAGER_SECRET` value in the state-manager container.
+
 ## Overview
 
 Exosphere is built around three core concepts:

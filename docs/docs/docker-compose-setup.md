@@ -151,19 +151,62 @@ docker compose -f docker-compose-with-mongodb.yml up -d
 
 > **Important**: The `SECRETS_ENCRYPTION_KEY` is used to encrypt secrets in the database. Changing this value will make existing encrypted secrets unreadable. Only change this key when setting up a new instance or if you're okay with losing access to existing encrypted data.
 
-### Dashboard Environment Variables (All Optional)
+### Dashboard Environment Variables
 
+#### 🔒 **Server-Side Variables (REQUIRED - NOT exposed to browser)**
 | Variable | Description | Default Value |
 |----------|-------------|---------------|
-| `NEXT_PUBLIC_EXOSPHERE_STATE_MANAGER_URL` | State manager API URL | `http://exosphere-state-manager:8000` |
-| `NEXT_PUBLIC_DEFAULT_NAMESPACE` | Default namespace for workflows | `default` |
-| `NEXT_PUBLIC_DEFAULT_API_KEY` | Default API key for dashboard | `<your-api-key>` (dev-only example) |
+| `EXOSPHERE_STATE_MANAGER_URI` | State manager API URI | `http://exosphere-state-manager:8000` |
+| `EXOSPHERE_API_KEY` | **REQUIRED**: Secure API key for state manager access | `exosphere@123` |
 
-> **⚠️ Security Warning**: `NEXT_PUBLIC_*` variables are embedded in client bundles and visible to end users. **Never put real secrets in NEXT_PUBLIC_ variables**. For production:
-> - Use server-side environment variables (without NEXT_PUBLIC_ prefix) for real secrets
-> - Implement server-side token exchange or API proxy for secret operations  
-> - Store sensitive data in secure vaults, not client-accessible variables
-> - The defaults shown above are development examples only
+#### 🌐 **Client-Side Variables (Optional - exposed to browser)**
+| Variable | Description | Default Value |
+|----------|-------------|---------------|
+| `NEXT_PUBLIC_DEFAULT_NAMESPACE` | Default namespace for workflows | `default` |
+
+> **🔒 Security Note**: The dashboard now uses **Server-Side Rendering (SSR)** for enhanced security:
+> - **API keys are never exposed** to the browser
+> - **All API calls go through** secure server-side routes
+> - **Production-ready security** architecture
+> - **Environment isolation** between sensitive and public configuration
+> 
+> **💡 Default API Key**: `EXOSPHERE_API_KEY` defaults to `exosphere@123` (same as state manager's default secret)
+> 
+> **🔐 Authentication**: When the dashboard sends API requests to the state-manager, the `EXOSPHERE_API_KEY` value is checked for equality with the `STATE_MANAGER_SECRET` value in the state-manager container.
+
+## 🔒 **Security Architecture**
+
+### **Server-Side Rendering (SSR) Implementation**
+
+The Exosphere Dashboard has been refactored to use Next.js API routes for enhanced security:
+
+- **API Key Protection**: All sensitive credentials are stored server-side
+- **Secure Communication**: Client never directly communicates with state-manager
+- **Environment Isolation**: Sensitive config separated from public code
+- **Production Ready**: Enterprise-grade security for production deployments
+
+### **API Route Structure**
+
+```
+/api/runs              → Secure runs fetching with pagination
+/api/graph-structure   → Protected graph visualization data
+/api/namespace-overview → Secure namespace summary
+/api/graph-template    → Protected template management
+```
+
+### **Security Benefits**
+
+1. **No API Key Exposure**: Credentials never visible in browser
+2. **Server-Side Validation**: All requests validated before reaching state-manager
+3. **Environment Security**: Sensitive variables isolated from client bundle
+4. **Audit Trail**: All API calls logged server-side for monitoring
+
+### **Docker Security Features**
+
+- **Environment Variable Isolation**: Server-side variables never exposed to containers
+- **Network Security**: Services communicate over isolated Docker networks
+- **Health Checks**: Built-in health monitoring for all services
+- **Resource Limits**: Configurable resource constraints for production use
 
 ### MongoDB Local Setup Variables (for docker-compose-with-mongodb.yml only)
 
@@ -185,6 +228,8 @@ To use the Exosphere Python SDK with your running instance, set these environmen
 |----------|-------------|---------------|
 | `EXOSPHERE_STATE_MANAGER_URI` | URL where the state manager is running | `http://localhost:8000` |
 | `EXOSPHERE_API_KEY` | API key for authentication (same as STATE_MANAGER_SECRET) | `exosphere@123` |
+
+> **🔐 Authentication**: When making API requests to the state-manager, the `EXOSPHERE_API_KEY` value is checked for equality with the `STATE_MANAGER_SECRET` value in the state-manager container.
 
 **Example SDK setup**:
 ```bash
@@ -212,9 +257,10 @@ MONGO_DATABASE_NAME=exosphere
 STATE_MANAGER_SECRET=your-custom-secret-key
 SECRETS_ENCRYPTION_KEY=your-base64-encoded-encryption-key
 
-# Dashboard Configuration (Optional)
+# Dashboard Configuration
+# Note: EXOSPHERE_API_KEY defaults to 'exosphere@123' if not specified
+EXOSPHERE_API_KEY=your-secure-api-key
 NEXT_PUBLIC_DEFAULT_NAMESPACE=YourNamespace
-NEXT_PUBLIC_DEFAULT_API_KEY=your-custom-secret-key
 
 # For local MongoDB setup only (docker-compose-with-mongodb.yml)
 MONGO_INITDB_ROOT_USERNAME=admin
@@ -382,7 +428,7 @@ The `--wait` flag ensures all services pass their health checks before returning
 
 3. **Authentication errors**: Verify your `STATE_MANAGER_SECRET` matches between the state manager and dashboard configuration.
 
-4. **SDK connection issues**: Make sure `EXOSPHERE_STATE_MANAGER_URI` points to the correct URL and `EXOSPHERE_API_KEY` matches your `STATE_MANAGER_SECRET`.
+4. **SDK connection issues**: Make sure `EXOSPHERE_STATE_MANAGER_URI` points to the correct URL and `EXOSPHERE_API_KEY` matches your `STATE_MANAGER_SECRET`. The `EXOSPHERE_API_KEY` value is checked for equality with the `STATE_MANAGER_SECRET` value when making API requests.
 
 ## Next Steps
 
