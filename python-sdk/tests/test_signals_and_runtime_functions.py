@@ -95,7 +95,7 @@ class TestPruneSignal:
         # Verify the request was made correctly
         mock_session.post.assert_called_once_with(
             "http://test-endpoint/prune",
-            json=data,
+            json={"data": data},
             headers={"x-api-key": "test-api-key"}
         )
 
@@ -270,7 +270,7 @@ class TestRuntimeSignalHandling:
         # Verify prune endpoint was called correctly
         mock_session.post.assert_called_once_with(
             runtime._get_prune_endpoint("test-state"),
-            json={"reason": "direct_test"},
+            json={"data": {"reason": "direct_test"}},
             headers={"x-api-key": "test-key"}
         )
 

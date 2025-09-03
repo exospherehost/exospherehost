@@ -192,13 +192,13 @@ class TestRuntimeEndpointConstruction:
     def test_get_executed_endpoint(self, runtime_config):
         runtime = Runtime(**runtime_config)
         endpoint = runtime._get_executed_endpoint("state123")
-        expected = "http://localhost:8080/v1/namespace/test_namespace/states/state123/executed"
+        expected = "http://localhost:8080/v1/namespace/test_namespace/state/state123/executed"
         assert endpoint == expected
 
     def test_get_errored_endpoint(self, runtime_config):
         runtime = Runtime(**runtime_config)
         endpoint = runtime._get_errored_endpoint("state123")
-        expected = "http://localhost:8080/v1/namespace/test_namespace/states/state123/errored"
+        expected = "http://localhost:8080/v1/namespace/test_namespace/state/state123/errored"
         assert endpoint == expected
 
     def test_get_register_endpoint(self, runtime_config):
