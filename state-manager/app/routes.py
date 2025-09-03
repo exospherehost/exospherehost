@@ -92,7 +92,7 @@ async def trigger_graph_route(namespace_name: str, graph_name: str, body: Trigge
     return await trigger_graph(namespace_name, graph_name, body, x_exosphere_request_id)
 
 @router.post(
-    "/states/{state_id}/executed",
+    "/state/{state_id}/executed",
     response_model=ExecutedResponseModel,
     status_code=status.HTTP_200_OK,
     response_description="State executed successfully",
@@ -112,7 +112,7 @@ async def executed_state_route(namespace_name: str, state_id: str, body: Execute
 
 
 @router.post(
-    "/states/{state_id}/errored",
+    "/state/{state_id}/errored",
     response_model=ErroredResponseModel,
     status_code=status.HTTP_200_OK,
     response_description="State errored successfully",
@@ -132,7 +132,7 @@ async def errored_state_route(namespace_name: str, state_id: str, body: ErroredR
 
 
 @router.post(
-    "/states/{state_id}/prune",
+    "/state/{state_id}/prune",
     response_model=SignalResponseModel,
     status_code=status.HTTP_200_OK,
     response_description="State pruned successfully",
@@ -151,7 +151,7 @@ async def prune_state_route(namespace_name: str, state_id: str, body: PruneReque
 
 
 @router.post(
-    "/states/{state_id}/re-enqueue-after",
+    "/state/{state_id}/re-enqueue-after",
     response_model=SignalResponseModel,
     status_code=status.HTTP_200_OK,
     response_description="State re-enqueued successfully",

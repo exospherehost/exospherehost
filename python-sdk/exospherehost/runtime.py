@@ -141,13 +141,13 @@ class Runtime:
         """
         Construct the endpoint URL for notifying executed states.
         """
-        return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/states/{state_id}/executed"
+        return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/state/{state_id}/executed"
     
     def _get_errored_endpoint(self, state_id: str):
         """
         Construct the endpoint URL for notifying errored states.
         """
-        return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/states/{state_id}/errored"
+        return f"{self._state_manager_uri}/{str(self._state_manager_version)}/namespace/{self._namespace}/state/{state_id}/errored"
     
     def _get_register_endpoint(self):
         """
