@@ -4,8 +4,7 @@ from datetime import datetime
 
 from app.controller.get_runs import get_runs
 from app.models.db.run import Run
-from app.models.db.state import State
-from app.models.run_models import RunsResponse, RunListItem, RunStatusEnum
+from app.models.run_models import RunsResponse, RunStatusEnum
 from app.models.state_status_enum import StateStatusEnum
 
 
