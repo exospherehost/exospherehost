@@ -54,7 +54,10 @@ async def trigger_graph(namespace_name: str, graph_name: str, body: TriggerGraph
                     if dependent.identifier != "store":
                         raise HTTPException(status_code=400, detail=f"Root node can have only store identifier as dependent but got {dependent.identifier}")
                     elif dependent.field not in body.store:
-                        raise HTTPException(status_code=400, detail=f"Dependent {dependent.field} not found in store for root node {root.identifier}")
+                        if dependent.field in graph_template.store_config.default_values.keys():
+                            dependent_string.set_value(dependent.identifier, dependent.field, graph_template.store_config.default_values[dependent.field])
+                        else:
+                            raise HTTPException(status_code=400, detail=f"Dependent {dependent.field} not found in store for root node {root.identifier}")
                     else:
                         dependent_string.set_value(dependent.identifier, dependent.field, body.store[dependent.field])
 
