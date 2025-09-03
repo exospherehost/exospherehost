@@ -12,7 +12,6 @@ from app.models.state_status_enum import StateStatusEnum
 from app.models.node_template_model import NodeTemplate, Unites, UnitesStrategyEnum
 from app.models.store_config_model import StoreConfig
 from pydantic import BaseModel
-from pymongo.errors import DuplicateKeyError, BulkWriteError
 
 
 class TestDependent:

@@ -464,7 +464,7 @@ async def test_verify_graph_with_exception():
     graph_template.validation_errors = MagicMock()
 
     with patch('app.tasks.verify_graph.RegisteredNode') as mock_registered_node_cls, \
-         patch('app.tasks.verify_graph.logger') as mock_logger:
+         patch('app.tasks.verify_graph.logger') as _:
 
         # Mock RegisteredNode.list_nodes_by_templates to raise an exception
         mock_registered_node_cls.list_nodes_by_templates.side_effect = Exception("Database connection error")
