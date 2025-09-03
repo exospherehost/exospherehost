@@ -8,6 +8,7 @@ from app.models.db.store import Store
 from app.models.db.run import Run
 from app.models.db.graph_template_model import GraphTemplate
 from app.models.node_template_model import NodeTemplate
+from app.models.dependent_string import DependentString
 import uuid
 
 logger = LogsManager().get_logger()
@@ -41,6 +42,27 @@ async def trigger_graph(namespace_name: str, graph_name: str, body: TriggerGraph
             
         if not graph_template.is_valid():
             raise HTTPException(status_code=400, detail="Graph template is not valid")
+        
+        root = graph_template.get_root_node()
+        inputs = construct_inputs(root, body.inputs)
+
+        try:
+            for field, value in inputs.items():
+                dependent_string = DependentString.create_dependent_string(value)
+
+                for dependent in dependent_string.dependents.values():
+                    if dependent.identifier != "store":
+                        raise HTTPException(status_code=400, detail=f"Root node can have only store identifier as dependent but got {dependent.identifier}")
+                    elif dependent.field not in body.store:
+                        raise HTTPException(status_code=400, detail=f"Dependent {dependent.field} not found in store for root node {root.identifier}")
+                    else:
+                        dependent_string.set_value(dependent.identifier, dependent.field, body.store[dependent.field])
+
+                inputs[field] = dependent_string.generate_string()
+
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid input: {e}")
+
 
         check_required_store_keys(graph_template, body.store)
 
@@ -64,8 +86,6 @@ async def trigger_graph(namespace_name: str, graph_name: str, body: TriggerGraph
         if len(new_stores) > 0:
             await Store.insert_many(new_stores)
         
-        root = graph_template.get_root_node()
-
         new_state = State(
             node_name=root.node_name,
             namespace_name=namespace_name,
@@ -73,7 +93,7 @@ async def trigger_graph(namespace_name: str, graph_name: str, body: TriggerGraph
             graph_name=graph_name,
             run_id=run_id,
             status=StateStatusEnum.CREATED,
-            inputs=construct_inputs(root, body.inputs),
+            inputs=inputs,
             outputs={},
             error=None
         )
