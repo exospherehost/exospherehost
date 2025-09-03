@@ -481,17 +481,226 @@ async def test_verify_graph_with_exception():
 @pytest.mark.asyncio
 async def test_verify_graph_with_validation_errors():
     """Test verify_graph when validation produces errors"""
-    # This test is simplified to avoid complex asyncio.gather mocking issues
-    # We'll test the error handling through individual function tests
-    pass
+    graph_template = MagicMock()
+    graph_template.nodes = []
+    graph_template.id = "test_id"
+    graph_template.save = AsyncMock()
+    graph_template.validation_status = MagicMock()
+    graph_template.validation_errors = MagicMock()
+
+    # This test verifies that verify_graph can handle validation errors
+    # The complex mocking of internal functions is tested separately
+    with patch('app.tasks.verify_graph.RegisteredNode') as mock_registered_node_cls:
+        # Mock registered nodes to return empty list (will cause validation errors)
+        mock_registered_node_cls.list_nodes_by_templates.return_value = []
+
+        # This should mark the graph as invalid due to validation errors
+        await verify_graph(graph_template)
+
+        # Verify that the graph was marked as invalid
+        assert graph_template.validation_status == GraphTemplateValidationStatus.INVALID
+        # The specific error message depends on the actual validation logic
+        assert len(graph_template.validation_errors) > 0
 
 
 @pytest.mark.asyncio
 async def test_verify_graph_with_valid_graph():
     """Test verify_graph when all validations pass"""
-    # This test is simplified to avoid complex asyncio.gather mocking issues
-    # We'll test the error handling through individual function tests
-    pass
+    graph_template = MagicMock()
+    graph_template.nodes = []
+    graph_template.id = "test_id"
+    graph_template.save = AsyncMock()
+    graph_template.validation_status = MagicMock()
+    graph_template.validation_errors = MagicMock()
+
+    # This test verifies that verify_graph can handle valid graphs
+    # The complex mocking of internal functions is tested separately
+    with patch('app.tasks.verify_graph.RegisteredNode') as mock_registered_node_cls:
+        # Mock registered nodes to return a valid node
+        mock_registered_node = MagicMock()
+        mock_registered_node.name = "test_node"
+        mock_registered_node.namespace = "test_namespace"
+        mock_registered_node.runtime_name = "runtime1"
+        mock_registered_node.runtime_namespace = "runtime_namespace1"
+        mock_registered_node.inputs_schema = {}
+        mock_registered_node.outputs_schema = {}
+        mock_registered_node.secrets = []
+        mock_registered_node_cls.list_nodes_by_templates.return_value = [mock_registered_node]
+
+        # This should mark the graph as valid
+        await verify_graph(graph_template)
+
+        # Verify that the graph was processed (status may vary based on actual validation)
+        # The specific status depends on the actual validation logic
+        assert graph_template.save.called
+
+
+
+
+
+@pytest.mark.asyncio
+async def test_verify_secrets_with_none_secrets():
+    """Test verify_secrets when node has no secrets"""
+    graph_template = MagicMock()
+    graph_template.secrets = {"secret1": "value1", "secret2": "value2"}
+
+    mock_node = MagicMock()
+    mock_node.secrets = None  # No secrets required
+
+    registered_nodes = [mock_node]
+
+    errors = await verify_secrets(graph_template, registered_nodes) # type: ignore
+
+    # Should return no errors when secrets is None
+    assert len(errors) == 0
+
+
+@pytest.mark.asyncio
+async def test_verify_secrets_with_empty_secrets():
+    """Test verify_secrets when node has empty secrets list"""
+    graph_template = MagicMock()
+    graph_template.secrets = {"secret1": "value1", "secret2": "value2"}
+
+    mock_node = MagicMock()
+    mock_node.secrets = []  # Empty secrets list
+
+    registered_nodes = [mock_node]
+
+    errors = await verify_secrets(graph_template, registered_nodes) # type: ignore
+
+    # Should return no errors when secrets list is empty
+    assert len(errors) == 0
+
+
+@pytest.mark.asyncio
+async def test_verify_inputs_with_node_without_inputs():
+    """Test verify_inputs when node has no inputs"""
+    graph_template = MagicMock()
+    graph_template.nodes = [
+        NodeTemplate(node_name="test_node", identifier="id1", namespace="test", inputs={}, next_nodes=None, unites=None)
+    ]
+
+    mock_node = MagicMock()
+    mock_node.name = "test_node"
+    mock_node.namespace = "test"
+    mock_node.runtime_name = "runtime1"
+    mock_node.runtime_namespace = "runtime_namespace1"
+    mock_node.inputs_schema = {}
+    mock_node.outputs_schema = {}
+    mock_node.secrets = []
+
+    registered_nodes = [mock_node]
+
+    errors = await verify_inputs(graph_template, registered_nodes) # type: ignore
+
+    # Node without inputs should be skipped
+    assert len(errors) == 0
+
+
+@pytest.mark.asyncio
+async def test_verify_inputs_with_store_dependent():
+    """Test verify_inputs with store-dependent inputs (should be skipped)"""
+    graph_template = MagicMock()
+    graph_template.nodes = [
+        NodeTemplate(node_name="test_node", identifier="id1", namespace="test", inputs={"input1": "{{store.key}}"}, next_nodes=None, unites=None)
+    ]
+
+    mock_node = MagicMock()
+    mock_node.name = "test_node"
+    mock_node.namespace = "test"
+    mock_node.runtime_name = "runtime1"
+    mock_node.runtime_namespace = "runtime_namespace1"
+    mock_node.inputs_schema = {}
+    mock_node.outputs_schema = {}
+    mock_node.secrets = []
+
+    registered_nodes = [mock_node]
+
+    with patch('app.tasks.verify_graph.create_model') as mock_create_model:
+        # Mock input model
+        mock_input_model = MagicMock()
+        mock_field = MagicMock()
+        mock_field.annotation = str
+        mock_input_model.model_fields = {"input1": mock_field}
+        mock_create_model.return_value = mock_input_model
+
+        # Mock dependent string
+        mock_dependent_string = MagicMock()
+        mock_dependent_string.get_identifier_field.return_value = [("store", "key")]
+        mock_node.get_dependent_strings.return_value = [mock_dependent_string]
+
+        errors = await verify_inputs(graph_template, registered_nodes) # type: ignore
+
+        # Store dependencies should be skipped, so no errors
+        assert len(errors) == 0
+
+
+@pytest.mark.asyncio
+async def test_verify_inputs_with_missing_input_in_template():
+    """Test verify_inputs when input is not present in graph template"""
+    graph_template = MagicMock()
+    graph_template.nodes = [
+        NodeTemplate(node_name="test_node", identifier="id1", namespace="test", inputs={"input1": "value1"}, next_nodes=None, unites=None)
+    ]
+
+    mock_node = MagicMock()
+    mock_node.name = "test_node"
+    mock_node.namespace = "test"
+    mock_node.runtime_name = "runtime1"
+    mock_node.runtime_namespace = "runtime_namespace1"
+    mock_node.inputs_schema = {}
+    mock_node.outputs_schema = {}
+    mock_node.secrets = []
+
+    registered_nodes = [mock_node]
+
+    with patch('app.tasks.verify_graph.create_model') as mock_create_model:
+        # Mock input model
+        mock_input_model = MagicMock()
+        mock_field = MagicMock()
+        mock_field.annotation = str
+        mock_input_model.model_fields = {"input1": mock_field, "input2": mock_field}  # input2 not in template
+        mock_create_model.return_value = mock_input_model
+
+        errors = await verify_inputs(graph_template, registered_nodes) # type: ignore
+
+        # Should have error for missing input2
+        assert len(errors) == 1
+        assert "Input input2 in node test_node in namespace test is not present in the graph template" in errors[0]
+
+
+@pytest.mark.asyncio
+async def test_verify_inputs_with_non_string_input():
+    """Test verify_inputs when input annotation is not string"""
+    graph_template = MagicMock()
+    graph_template.nodes = [
+        NodeTemplate(node_name="test_node", identifier="id1", namespace="test", inputs={"input1": "value1"}, next_nodes=None, unites=None)
+    ]
+
+    mock_node = MagicMock()
+    mock_node.name = "test_node"
+    mock_node.namespace = "test"
+    mock_node.runtime_name = "runtime1"
+    mock_node.runtime_namespace = "runtime_namespace1"
+    mock_node.inputs_schema = {}
+    mock_node.outputs_schema = {}
+    mock_node.secrets = []
+
+    registered_nodes = [mock_node]
+
+    with patch('app.tasks.verify_graph.create_model') as mock_create_model:
+        # Mock input model
+        mock_input_model = MagicMock()
+        mock_field = MagicMock()
+        mock_field.annotation = int  # Non-string annotation
+        mock_input_model.model_fields = {"input1": mock_field}
+        mock_create_model.return_value = mock_input_model
+
+        errors = await verify_inputs(graph_template, registered_nodes) # type: ignore
+
+        # Should have error for non-string input
+        assert len(errors) == 1
+        assert "Input input1 in node test_node in namespace test is not a string" in errors[0] 
 
 
 @pytest.mark.asyncio
@@ -723,67 +932,4 @@ async def test_verify_inputs_with_non_string_output_field():
             errors = await verify_inputs(graph_template, registered_nodes + [mock_parent_registered_node]) # type: ignore
 
             assert len(errors) == 1
-            assert "Field output1 in node parent_node in namespace test is not a string" in errors[0]
-
-
-@pytest.mark.asyncio
-async def test_verify_inputs_with_store_dependent():
-    """Test verify_inputs with store-dependent input (should be skipped)"""
-    graph_template = MagicMock()
-    graph_template.nodes = [
-        NodeTemplate(node_name="test_node", identifier="id1", namespace="test", inputs={"input1": "{{store.key}}"}, next_nodes=None, unites=None)
-    ]
-    
-    mock_node = MagicMock()
-    mock_node.name = "test_node"
-    mock_node.namespace = "test"
-    mock_node.runtime_name = "runtime1"
-    mock_node.runtime_namespace = "runtime_namespace1"
-    mock_node.inputs_schema = {}
-    mock_node.outputs_schema = {}
-    mock_node.secrets = []
-    
-    registered_nodes = [mock_node]
-    
-    with patch('app.tasks.verify_graph.create_model') as mock_create_model:
-        # Mock input model
-        mock_input_model = MagicMock()
-        mock_field = MagicMock()
-        mock_field.annotation = str
-        mock_input_model.model_fields = {"input1": mock_field}
-        mock_create_model.return_value = mock_input_model
-        
-        # Mock dependent string with store identifier
-        mock_dependent_string = MagicMock()
-        mock_dependent_string.get_identifier_field.return_value = [("store", "key")]
-        mock_node.get_dependent_strings.return_value = [mock_dependent_string]
-        
-        errors = await verify_inputs(graph_template, registered_nodes) # type: ignore
-        
-        # Store dependencies should be skipped, so no errors
-        assert len(errors) == 0
-
-
-@pytest.mark.asyncio
-async def test_verify_inputs_with_node_without_inputs():
-    """Test verify_inputs with node that has no inputs"""
-    graph_template = MagicMock()
-    graph_template.nodes = [
-        NodeTemplate(node_name="test_node", identifier="id1", namespace="test", inputs={}, next_nodes=None, unites=None)
-    ]
-    
-    mock_node = MagicMock()
-    mock_node.name = "test_node"
-    mock_node.namespace = "test"
-    mock_node.runtime_name = "runtime1"
-    mock_node.runtime_namespace = "runtime_namespace1"
-    mock_node.inputs_schema = {}
-    mock_node.outputs_schema = {}
-    mock_node.secrets = []
-    
-    registered_nodes = [mock_node]
-    
-    errors = await verify_inputs(graph_template, registered_nodes) # type: ignore
-    
-    # Node without inputs should be skipped
-    assert len(errors) == 0 
+            assert "Field output1 in node parent_node in namespace test is not a string" in errors[0] 
