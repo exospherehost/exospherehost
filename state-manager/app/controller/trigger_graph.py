@@ -61,7 +61,8 @@ async def trigger_graph(namespace_name: str, graph_name: str, body: TriggerGraph
             ) for key, value in body.store.items()
         ]
 
-        await Store.insert_many(new_stores)
+        if len(new_stores) > 0:
+            await Store.insert_many(new_stores)
         
         root = graph_template.get_root_node()
 

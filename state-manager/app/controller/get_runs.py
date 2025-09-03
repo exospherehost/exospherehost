@@ -18,6 +18,9 @@ async def get_run_status(run_id: str) -> RunStatusEnum:
         return RunStatusEnum.PENDING
 
 async def get_run_info(run: Run) -> RunListItem:
+
+    total_count = await State.find(State.run_id == run.run_id).count()
+
     return RunListItem(
         run_id=run.run_id,
         graph_name=run.graph_name,
@@ -25,8 +28,8 @@ async def get_run_info(run: Run) -> RunListItem:
         pending_count=await State.find(State.run_id == run.run_id, In(State.status, [StateStatusEnum.CREATED, StateStatusEnum.QUEUED, StateStatusEnum.EXECUTED])).count(),
         errored_count=await State.find(State.run_id == run.run_id, In(State.status, [StateStatusEnum.ERRORED, StateStatusEnum.NEXT_CREATED_ERROR])).count(),
         retried_count=await State.find(State.run_id == run.run_id, State.status == StateStatusEnum.RETRY_CREATED).count(),
-        total_count=await State.find(State.run_id == run.run_id,).count(),
-        status=await get_run_status(run.run_id),
+        total_count=total_count,
+        status=await get_run_status(run.run_id) if total_count > 0 else RunStatusEnum.FAILED,
         created_at=run.created_at
     )
 
