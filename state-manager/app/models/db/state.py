@@ -93,5 +93,12 @@ class State(BaseDatabaseModel):
                 ],
                 unique=True,
                 name="uniq_fanout_retry"
+            ),
+            IndexModel(
+                [
+                    ("run_id", 1),
+                    ("status", 1),
+                ],
+                name="run_id_status_index"
             )
         ]
