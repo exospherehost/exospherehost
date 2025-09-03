@@ -27,8 +27,11 @@ class PruneSignal(Exception):
         Raises:
             Exception: If the HTTP request fails (status code != 200).
         """
+        body = {
+            "data": self.data
+        }
         async with ClientSession() as session:
-            async with session.post(endpoint, json=self.data, headers={"x-api-key": key}) as response:
+            async with session.post(endpoint, json=body, headers={"x-api-key": key}) as response:
                 if response.status != 200:
                     raise Exception(f"Failed to send prune signal to {endpoint}")
                 
