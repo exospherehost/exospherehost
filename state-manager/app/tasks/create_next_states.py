@@ -70,6 +70,8 @@ def validate_dependencies(next_state_node_template: NodeTemplate, next_state_inp
         dependency_string = DependentString.create_dependent_string(next_state_node_template.inputs[field_name])
         
         for dependent in dependency_string.dependents.values():
+            if dependent.identifier == "store":
+                continue
             # 2) For each placeholder, verify the identifier is either current or present in parents
             if dependent.identifier != identifier and dependent.identifier not in parents:
                 raise KeyError(f"Identifier '{dependent.identifier}' not found in parents for template '{next_state_node_template.identifier}'")
