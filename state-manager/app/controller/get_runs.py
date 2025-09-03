@@ -18,7 +18,7 @@ async def get_runs(namespace_name: str, page: int, size: int, x_exosphere_reques
         if len(runs) == 0:
             return RunsResponse(
                 namespace=namespace_name,
-                total=0,
+                total=await Run.find(Run.namespace_name == namespace_name).count(),
                 page=page,
                 size=size,
                 runs=[]
@@ -30,7 +30,7 @@ async def get_runs(namespace_name: str, page: int, size: int, x_exosphere_reques
         viewed = set()
 
 
-        data = await (await State.get_pymongo_collection().aggregate(
+        data_cursor = await State.get_pymongo_collection().aggregate(
             [
                 {
                     "$match": {
@@ -84,7 +84,8 @@ async def get_runs(namespace_name: str, page: int, size: int, x_exosphere_reques
                     }
                 }
             ]
-        )).to_list()
+        )
+        data = await data_cursor.to_list()
         
         runs = []
         for run in data:
