@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GraphTemplateBuilder } from '@/components/GraphTemplateBuilder';
 import { NamespaceOverview } from '@/components/NamespaceOverview';
 import { RunsTable } from '@/components/RunsTable';
@@ -21,7 +21,7 @@ import {
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState< 'overview' | 'graph' |'runs'>('overview');
-  const [namespace, setNamespace] = useState(process.env.NEXT_PUBLIC_DEFAULT_NAMESPACE || 'testnamespace');
+  const [namespace, setNamespace] = useState('default');
   const [graphName, setGraphName] = useState('test-graph');
   const [graphTemplate, setGraphTemplate] = useState<UpsertGraphTemplateRequest | null>(null);
 
@@ -33,6 +33,23 @@ export default function Dashboard() {
   const [isNodeModalOpen, setIsNodeModalOpen] = useState(false);
   const [selectedGraphTemplate, setSelectedGraphTemplate] = useState<UpsertGraphTemplateResponse | null>(null);
   const [isGraphModalOpen, setIsGraphModalOpen] = useState(false);
+
+  // Fetch configuration on component mount
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await fetch('/api/config');
+        if (response.ok) {
+          const config = await response.json();
+          setNamespace(config.defaultNamespace);
+        }
+      } catch (error) {
+        console.warn('Failed to fetch config, using default namespace');
+      }
+    };
+
+    fetchConfig();
+  }, []);
 
   const handleSaveGraphTemplate = async (template: UpsertGraphTemplateRequest) => {
     try {
