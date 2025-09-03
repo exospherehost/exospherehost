@@ -15,10 +15,7 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
             GraphTemplate.name == graph_name,
             GraphTemplate.namespace == namespace_name
         )
-        print("================================================")
-        print(graph_template)
-        print("================================================")
-
+               
         try:
             if graph_template:
                 logger.info(
