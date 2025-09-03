@@ -28,10 +28,10 @@ class TestRouteStructure:
         assert any('/v0/namespace/{namespace_name}/states/enqueue' in path for path in paths)
         assert any('/v0/namespace/{namespace_name}/graph/{graph_name}/trigger' in path for path in paths)
         # Removed deprecated create states route assertion
-        assert any('/v0/namespace/{namespace_name}/states/{state_id}/executed' in path for path in paths)
-        assert any('/v0/namespace/{namespace_name}/states/{state_id}/errored' in path for path in paths)
-        assert any('/v0/namespace/{namespace_name}/states/{state_id}/prune' in path for path in paths)
-        assert any('/v0/namespace/{namespace_name}/states/{state_id}/re-enqueue-after' in path for path in paths)
+        assert any('/v0/namespace/{namespace_name}/state/{state_id}/executed' in path for path in paths)
+        assert any('/v0/namespace/{namespace_name}/state/{state_id}/errored' in path for path in paths)
+        assert any('/v0/namespace/{namespace_name}/state/{state_id}/prune' in path for path in paths)
+        assert any('/v0/namespace/{namespace_name}/state/{state_id}/re-enqueue-after' in path for path in paths)
         
         # Graph template routes (there are two /graph/{graph_name} routes - GET and PUT)
         assert any('/v0/namespace/{namespace_name}/graph/{graph_name}' in path for path in paths)
