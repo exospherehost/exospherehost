@@ -71,7 +71,10 @@ async def verify_inputs(graph_template: GraphTemplate, registered_nodes: list[Re
         for dependent_string in dependent_strings:
             identifier_field_pairs = dependent_string.get_identifier_field()
             for identifier, field in identifier_field_pairs:
-
+                
+                if identifier == "store":
+                    continue
+                
                 temp_node = graph_template.get_node_by_identifier(identifier)
                 if temp_node is None:
                     errors.append(f"Node {identifier} does not exist in the graph template")
