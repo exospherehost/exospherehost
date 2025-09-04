@@ -6,7 +6,7 @@ Get Exosphere running locally with Docker Compose in under 2 minutes.
 
 This guide provides everything you need to run the complete Exosphere stack locally for development and testing.
 
-Exosphere uses MongoDB as the database to manage states. You can either have mongodb setup locally or use a cloud hosted instance(recommended)
+Exosphere uses MongoDB as the database to manage states. You can either have mongodb setup locally or use a cloud hosted instance (recommended)
 
 === "Exosphere Local Setup with Cloud MongoDB(Rec)"
 
