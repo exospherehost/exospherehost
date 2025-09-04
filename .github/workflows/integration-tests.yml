@@ -1,0 +1,58 @@
+name: Integration Tests for Exosphere
+
+on:
+    push:
+        branches: [main]
+        paths:
+          - 'integration-tests/**'
+          - 'state-manager/**'
+          - 'python-sdk/**'
+          - '.github/workflows/integration-tests.yml'
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        services:
+            mongodb:
+              image: mongo:7
+              ports:
+                - 27017:27017
+              options: >-
+                --health-cmd "mongosh --eval 'db.runCommand(\"ping\")'"
+                --health-interval 10s
+                --health-timeout 5s
+                --health-retries 5
+              env:
+                MONGO_INITDB_ROOT_USERNAME: admin
+                MONGO_INITDB_ROOT_PASSWORD: password
+                MONGO_INITDB_DATABASE: integration_tests
+
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.12'
+
+        - name: Install uv
+          uses: astral-sh/setup-uv@v2
+          with:
+            cache: true
+
+        - name: Install dev dependencies with uv
+          working-directory: integration-tests
+          run: |
+            uv sync --group dev
+
+        - name: Run integration tests
+          working-directory: integration-tests
+          env:
+            MONGO_URI: mongodb://admin:password@localhost:27017
+            MONGO_DATABASE_NAME: integration_tests
+            STATE_MANAGER_SECRET: test-secret-key
+            EXOSPHERE_API_KEY: test-secret-key
+            SECRETS_ENCRYPTION_KEY: YTzpUlBGLSwm-3yKJRJTZnb0_aQuQQHyz64s8qAERVU=
+          run: |
+            uv run pytest
