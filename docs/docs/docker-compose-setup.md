@@ -78,8 +78,8 @@ Exosphere uses MongoDB as the database to manage states. You can either have mon
     3) Done! This will start:
      
     - MongoDB database: [http://localhost:27017](http://localhost:27017)
-    - Exosphere Dashboard: [http://localhost:8000](http://localhost:8000)
-    - Exosphere State Manager: [http://localhost:3000](http://localhost:3000)
+    - Exosphere Dashboard: [http://localhost:3000](http://localhost:3000)
+    - Exosphere State Manager: [http://localhost:8000](http://localhost:8000)
 
 
 ## Beta Version
