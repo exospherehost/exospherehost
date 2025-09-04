@@ -182,13 +182,13 @@ jobs:
    
       - name: Sign the package
         run: |
-          uv pip install -U pypi-attestations
-          uv run pypi_attestations sign dist/*
+          python -m pip install -U pypi-attestations
+          python -m pypi_attestations sign dist/*
 
       - name: Publish to PyPI with provenance
         run: |
-          uv pip install -U twine
-          uv run twine upload --attestations dist/*
+          python -m pip install -U twine
+          python -m twine upload --attestations dist/*
 
       - name: Upload SBOM artifacts
         uses: actions/upload-artifact@v4
