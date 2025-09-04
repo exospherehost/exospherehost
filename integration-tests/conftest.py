@@ -3,8 +3,11 @@ import asyncio
 import threading
 import time
 import uvicorn
+import os
+import asyncio
+from dotenv import load_dotenv
 from app.main import app
-
+from pymongo import AsyncMongoClient
 
 class UvicornTestServer:
     """
@@ -95,6 +98,13 @@ class UvicornTestServer:
         return f"http://{self.host}:{self.port}"
 
 
+async def clean_up_db():
+    """Clean up the database."""
+    load_dotenv()
+    client = AsyncMongoClient(os.getenv("MONGO_URI"))
+    await client.drop_database(os.getenv("MONGO_DATABASE_NAME")) # type: ignore
+
+
 @pytest.fixture(scope="session")
 def running_server():
     """
@@ -103,6 +113,11 @@ def running_server():
     """
     server = UvicornTestServer(app)
     server.start()
+
+    asyncio.run(clean_up_db())
+
     yield server
+
+    asyncio.run(clean_up_db())
     server.stop()
 
