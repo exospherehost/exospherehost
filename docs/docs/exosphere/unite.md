@@ -17,9 +17,7 @@ graph TB
     D --> E
     
     E -.->|unites: data_splitter| A
-    
-    style E fill:#e1f5fe
-    style A fill:#f3e5f5
+
 ```
 
 ## How Unite Works
