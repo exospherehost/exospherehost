@@ -8,6 +8,14 @@ on:
           - 'state-manager/**'
           - 'python-sdk/**'
           - '.github/workflows/integration-tests.yml'
+    pull_request:
+        branches: [main]
+        paths:
+          - 'integration-tests/**' 
+          - 'state-manager/**'
+          - 'python-sdk/**'
+          - '.github/workflows/integration-tests.yml'
+
 
 jobs:
     test:
