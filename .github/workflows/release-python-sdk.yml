@@ -124,8 +124,8 @@ jobs:
 
       - name: Generate requirements file for SBOM
         run: |
-          uv export --format=requirements-txt --output-file=requirements.txt
-          echo "Generated requirements.txt for SBOM creation"
+          uv export --locked --format=requirements-txt --output-file=requirements.txt
+          echo "Generated requirements.txt for SBOM creation from lockfile"
 
       - name: Install SBOM generation tools
         run: |
@@ -161,7 +161,7 @@ jobs:
           echo "You can verify this package's provenance on PyPI using:" >> sbom-summary.md
           echo '```bash' >> sbom-summary.md
           echo 'pip install sigstore' >> sbom-summary.md
-          echo 'python -m sigstore verify --bundle <bundle-file> exospherehost==${{ github.ref_name }}' >> sbom-summary.md
+          echo 'python -m sigstore verify --bundle <bundle-file> exospherehost==${{ startsWith(github.ref_name, 'v') && substring(github.ref_name, 1) || github.ref_name }}' >> sbom-summary.md
           echo '```' >> sbom-summary.md
 
       - run: uv build
@@ -189,5 +189,6 @@ jobs:
             python-sdk/sbom-cyclonedx.json
             python-sdk/sbom-cyclonedx.xml
             python-sdk/sbom-summary.md
+            python-sdk/vulnerability-report.json
           body_path: python-sdk/sbom-summary.md
           append_body: true 

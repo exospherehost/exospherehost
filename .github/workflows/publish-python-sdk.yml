@@ -92,13 +92,17 @@ jobs:
 
       - name: Generate requirements file for SBOM
         run: |
-          uv export --format=requirements-txt --output-file=requirements.txt
-          echo "Generated requirements.txt for SBOM creation"
+          uv export --locked --format=requirements-txt --output-file=requirements.txt
+          echo "Generated requirements.txt for SBOM creation from lockfile"
 
       - name: Install SBOM generation tools
         run: |
           uv tool install cyclonedx-bom
+          echo "Installed cyclonedx-bom version:"
+          uv tool run cyclonedx-bom --version
           uv tool install pip-audit
+          echo "Installed pip-audit version:"
+          uv tool run pip-audit --version
 
       - name: Generate SBOM with CycloneDX
         run: |
@@ -113,7 +117,30 @@ jobs:
       - run: uv build
 
       - name: Publish to PyPI with provenance
-        run: uv publish --provenance
+        run: |
+          # Get the current version
+          VERSION=$(uv run python -c "
+          import sys
+          sys.path.append('.')
+          from exospherehost._version import version
+          print(version)
+          ")
+          
+          echo "Checking if exospherehost version $VERSION already exists on PyPI..."
+          
+          # Query PyPI JSON API to check if version exists
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/exospherehost/$VERSION/json")
+          
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "Version $VERSION already exists on PyPI. Skipping publish."
+            exit 0
+          elif [ "$HTTP_STATUS" = "404" ]; then
+            echo "Version $VERSION not found on PyPI. Proceeding with publish."
+            uv publish --provenance
+          else
+            echo "Unexpected HTTP status $HTTP_STATUS when checking PyPI. Proceeding with publish."
+            uv publish --provenance
+          fi
 
       - name: Upload SBOM artifacts
         uses: actions/upload-artifact@v4
