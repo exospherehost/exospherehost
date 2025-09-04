@@ -174,6 +174,7 @@ If you're working in a Jupyter notebook or Python REPL, consider these alternati
 
 Now that you have the basics, explore:
 
+- **[Local Setup](./exosphere/local-setup.md)** - Set up Exosphere locally for development and testing
 - **[Register Node](./exosphere/register-node.md)** - Understand how to create and register custom nodes
 - **[Create Runtime](./exosphere/create-runtime.md)** - Learn how to set up and configure your runtime
 - **[Create Graph](./exosphere/create-graph.md)** - Build workflows by connecting nodes together

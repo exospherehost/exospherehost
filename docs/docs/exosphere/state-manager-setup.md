@@ -2,6 +2,8 @@
 
 This guide provides step-by-step instructions for setting up the Exosphere state manager in both local and production environments.
 
+> **📚 Getting Started**: For a complete local setup guide covering both the state manager and dashboard, see our [Local Setup Guide](./local-setup.md).
+
 ## Overview
 
 The Exosphere state manager is the core backend service that handles workflow execution, state management, and coordination between nodes. It provides a REST API for managing graph templates, registered nodes, and workflow execution states.

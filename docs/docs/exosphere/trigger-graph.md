@@ -2,6 +2,8 @@
 
 Once you have created a graph template, you can trigger its execution by sending trigger states to the state manager. This guide shows you how to trigger graphs and monitor their execution.
 
+> **📚 Getting Started**: For a complete local setup guide covering both the state manager and dashboard, see our [Local Setup Guide](./local-setup.md).
+
 The recommended way to trigger graphs is using the Exosphere Python SDK, which provides a clean interface to the State Manager API.
 
 === "Exosphere Python SDK"

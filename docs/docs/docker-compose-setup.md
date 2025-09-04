@@ -1,142 +1,234 @@
 # Docker Compose Setup Guide
 
-Get Exosphere running locally with Docker Compose in under 2 minutes. This guide provides everything you need to run the complete Exosphere stack locally for development and testing.
+Get Exosphere running locally with Docker Compose in under 2 minutes. 
 
-## Download Docker Compose Files
+## Setup
 
-First, download the Docker Compose files from the GitHub repository:
+This guide provides everything you need to run the complete Exosphere stack locally for development and testing.
 
-### Option 1: Download Both Files
+Exosphere uses MongoDB as the database to manage states. You can either have mongodb setup locally or use a cloud hosted instance(recommended)
 
-```bash
-# Download docker-compose file for cloud MongoDB (recommended)
-curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose.yml
+=== "Exosphere Local Setup with Cloud MongoDB(Rec)"
 
-# Download docker-compose file with local MongoDB included
-curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose-with-mongodb.yml
-```
+    1) Download Docker Compose Files
 
-### Option 2: Using wget
+    First, download the Docker Compose files from the GitHub repository:
+    
+    === "curl"
+        ```bash
+        # Download docker-compose file for cloud MongoDB (recommended)
+        curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose.yml
+        ```
+    === "wget"
+        ```bash
+        # Download docker-compose file for cloud MongoDB (recommended)
+        wget https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose.yml
+        ```
+    
+    2) Set up a cloud MongoDB
+    Set up a mongodb cluster in a provider of your choice MongoDB Atlas, AWS DocumentDB. Get the mongo db url.
+    
+    3) Set up the secrets in env
+    === ".env file"
+        Create a `.env` file with your MongoDB connection:
+        ```bash
+        MONGO_URI=mongodb+srv://username:password@your-cluster.mongodb.net/
+        ```
+    === "Environment Variables"
+        On your terminal:
+        ```bash
+        export MONGO_URI=mongodb+srv://username:password@your-cluster.mongodb.net/
+        ```
+    
+    4) Download and start the services:
+      ```bash
+      curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose.yml && docker compose -f docker-compose.yml up -d
+      ```
 
-```bash
-# Download docker-compose file for cloud MongoDB (recommended)
-wget https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose.yml
+     5) Done! This will start:
+     
+    - Exosphere State Manager : [http://localhost:8000](http://localhost:8000)
+    - Exosphere Dashboard: [http://localhost:3000](http://localhost:3000)
 
-# Download docker-compose file with local MongoDB included
-wget https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose-with-mongodb.yml
-```
+=== "Exosphere Local Setup with Local MongoDB"
 
-## Quick Start
+    For quick local testing only:
 
-We **recommend using a cloud MongoDB managed service** (MongoDB Atlas, AWS DocumentDB, etc.) for better performance, reliability, and security.
+    1) Download Docker Compose Files
 
-### Option 1: With Cloud MongoDB (Recommended)
+    First, download the Docker Compose files from the GitHub repository:
+    
+    === "curl"
+        ```bash
+        # Download docker-compose file with local MongoDB included
+        curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose-with-mongodb.yml
+        ```
+    === "wget"
+        ```bash
+        # Download docker-compose file with local MongoDB included
+        wget https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose-with-mongodb.yml
+        ```
+    
+    2) Download and start the services:
+      
+        ```bash
+        curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose-with-mongodb.yml && docker compose -f docker-compose-with-mongodb.yml up -d
+        ```
 
-1. Set up a cloud MongoDB instance (MongoDB Atlas, AWS DocumentDB, etc.)
+    3) Done! This will start:
+     
+    - MongoDB database: [http://localhost:27017](http://localhost:27017)
+    - Exosphere Dashboard: [http://localhost:8000](http://localhost:8000)
+    - Exosphere State Manager: [http://localhost:3000](http://localhost:3000)
 
-2. Create a `.env` file with your MongoDB connection:
-   ```bash
-   MONGO_URI=mongodb+srv://username:password@your-cluster.mongodb.net/
-   ```
-
-3. Download and start the services:
-   ```bash
-   curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose.yml && docker compose -f docker-compose.yml up -d
-   ```
-
-This will start:
-- Exosphere State Manager (port 8000)  
-- Exosphere Dashboard (port 3000)
-
-### Option 2: With Local MongoDB (Development Only)
-
-For quick local testing only:
-
-```bash
-curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose-with-mongodb.yml && docker compose -f docker-compose-with-mongodb.yml up -d
-```
-
-This will start:
-- MongoDB database (port 27017)
-- Exosphere State Manager (port 8000)  
-- Exosphere Dashboard (port 3000)
 
 ## Beta Version
 
 To run the latest beta version of Exosphere with the newest features, replace container tags with `beta-latest`:
 
-### Quick Beta Setup with Cloud MongoDB
+=== ".env File"
 
-**Option 1: Environment Variable Approach (Recommended)**
-```bash
-# Download compose file
-curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose.yml
-# Set image tag via environment variable
-export EXOSPHERE_TAG=beta-latest
-# Set your MONGO_URI in .env file, then:
-docker compose -f docker-compose.yml up -d
-```
+    ```bash
+    EXOSPHERE_TAG=beta-latest
+    ```
+=== "Environment Variables"
 
-**Option 2: In-place File Editing**
-```bash
-# Download and modify for beta with cloud MongoDB
-curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose.yml
+    ```bash
+    export EXOSPHERE_TAG=beta-latest
+    ```
 
-# Portable approach (works on all platforms):
-perl -pi -e 's|(ghcr\.io/exospherehost/[^:]+):latest|\1:beta-latest|g' docker-compose.yml
+Get the docker image running:
 
-# Platform-specific alternatives:
-# Linux/GNU sed:
-# sed -i 's|(ghcr\.io/exospherehost/[^:]+):latest|\1:beta-latest|g' docker-compose.yml
-# macOS/BSD sed:
-# sed -i '' 's|(ghcr\.io/exospherehost/[^:]+):latest|\1:beta-latest|g' docker-compose.yml
+=== "Cloud Mongodb"
 
-# Set your MONGO_URI in .env file, then:
-docker compose -f docker-compose.yml up -d
-```
+    ```bash
+    docker compose -f docker-compose.yml up -d
+    ```
+=== "Local Mongodb"
 
-### Quick Beta Setup with Local MongoDB
+    ```bash
+    docker compose -f docker-compose-with-mongodb.yml up -d
+    ```
 
-**Option 1: Environment Variable Approach (Recommended)**
-```bash
-# Download compose file
-curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose-with-mongodb.yml
-# Set image tag via environment variable
-export EXOSPHERE_TAG=beta-latest
-docker compose -f docker-compose-with-mongodb.yml up -d
-```
+## Access Your Services
 
-**Option 2: In-place File Editing**
-```bash
-# Download and modify for beta with local MongoDB
-curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose-with-mongodb.yml
+After running the Docker Compose command:
 
-# Portable approach (works on all platforms):
-perl -pi -e 's|(ghcr\.io/exospherehost/[^:]+):latest|\1:beta-latest|g' docker-compose-with-mongodb.yml
+- **Exosphere Dashboard**: `http://localhost:3000`
+- **State Manager API**: `http://localhost:8000`
+- **MongoDB** (if using with-mongodb): `mongodb://localhost:27017` (not HTTP - use MongoDB clients like MongoDB Compass or mongosh)
+- **API Documentation**: `http://localhost:8000/docs`
 
-# Platform-specific alternatives:
-# Linux/GNU sed:
-# sed -i 's|(ghcr\.io/exospherehost/[^:]+):latest|\1:beta-latest|g' docker-compose-with-mongodb.yml
-# macOS/BSD sed:
-# sed -i '' 's|(ghcr\.io/exospherehost/[^:]+):latest|\1:beta-latest|g' docker-compose-with-mongodb.yml
+## Development Commands
 
-docker compose -f docker-compose-with-mongodb.yml up -d
-```
+=== "Cloud Mongodb"
+    ```bash
+    # Start services in background
+    docker compose -f docker-compose.yml up -d
 
-### Manual Beta Setup (Alternative)
+    # View logs
+    docker compose -f docker-compose.yml logs -f
 
-1. Download the docker-compose file
-2. Edit the file and change:
-   ```yaml
-   # Change from:
-   image: ghcr.io/exospherehost/exosphere-state-manager:latest
-   image: ghcr.io/exospherehost/exosphere-dashboard:latest
-   
-   # To:
-   image: ghcr.io/exospherehost/exosphere-state-manager:beta-latest
-   image: ghcr.io/exospherehost/exosphere-dashboard:beta-latest
-   ```
-3. Start the services with `docker compose up -d`
+    # Stop services
+    docker compose -f docker-compose.yml down
+
+    # Stop services and remove volumes
+    docker compose -f docker-compose.yml down -v
+
+    # Pull latest images
+    docker compose -f docker-compose.yml pull
+
+    # Restart a specific service
+    docker compose -f docker-compose.yml restart exosphere-state-manager
+    ```
+=== "Local Mongodb"
+    ```bash
+    # Start services in background
+    docker compose -f docker-compose-with-mongodb.yml up -d
+
+    # View logs
+    docker compose -f docker-compose-with-mongodb.yml logs -f
+
+    # Stop services
+    docker compose -f docker-compose-with-mongodb.yml down
+
+    # Stop services and remove volumes (⚠️ This will delete your data)
+    docker compose -f docker-compose-with-mongodb.yml down -v
+
+    # Pull latest images
+    docker compose -f docker-compose-with-mongodb.yml pull
+
+    # Restart a specific service
+    docker compose -f docker-compose-with-mongodb.yml restart exosphere-state-manager
+    ```
+
+
+### Check Service Health
+
+=== "Cloud Mongodb"
+    ```bash
+    # Check if all containers are running
+    docker compose -f docker-compose.yml ps
+
+    # Check state manager health
+    curl http://localhost:8000/health
+
+    # View container logs
+    docker compose -f docker-compose.yml logs exosphere-state-manager
+    ```
+
+
+=== "Local Mongodb"
+    ```bash
+    # Check if all containers are running
+    docker compose -f docker-compose-with-mongodb.yml ps
+
+    # Check state manager health
+    curl http://localhost:8000/health
+
+    # View container logs
+    docker compose -f docker-compose-with-mongodb.yml logs exosphere-state-manager
+    ```
+
+### Testing Your Setup
+
+You can validate your docker-compose configuration before starting services:
+
+=== "Cloud Mongodb"
+    ```bash
+    # Test configuration syntax
+    docker compose -f docker-compose.yml config
+
+    # Pull all required images
+    docker compose -f docker-compose.yml pull
+
+    # Start with health monitoring (--wait waits for all health checks)
+    docker compose -f docker-compose.yml up -d --wait
+    ```
+
+    The `--wait` flag ensures all services pass their health checks before returning. The startup sequence will be:
+
+    1. State Manager starts and passes health check (~10-30 seconds)  
+    2. Dashboard starts and passes health check (~10-30 seconds)
+
+=== "Local Mongodb"
+    ```bash
+    # Test configuration syntax
+    docker compose -f docker-compose-with-mongodb.yml config
+
+    # Pull all required images
+    docker compose -f docker-compose-with-mongodb.yml pull
+
+    # Start with health monitoring (--wait waits for all health checks)
+    docker compose -f docker-compose-with-mongodb.yml up -d --wait
+    ```
+
+    The `--wait` flag ensures all services pass their health checks before returning. The startup sequence will be:
+
+    1. MongoDB starts and passes health check (~10-30 seconds)
+    2. State Manager starts and passes health check (~10-30 seconds)  
+    3. Dashboard starts and passes health check (~10-30 seconds)
+
 
 ## Environment Variables
 
@@ -153,13 +245,13 @@ docker compose -f docker-compose-with-mongodb.yml up -d
 
 ### Dashboard Environment Variables
 
-#### 🔒 **Server-Side Variables (REQUIRED - NOT exposed to browser)**
+#### **Server-Side Variables (REQUIRED - NOT exposed to browser)**
 | Variable | Description | Default Value |
 |----------|-------------|---------------|
 | `EXOSPHERE_STATE_MANAGER_URI` | State manager API URI | `http://exosphere-state-manager:8000` |
 | `EXOSPHERE_API_KEY` | **REQUIRED**: Secure API key for state manager access | `exosphere@123` |
 
-#### 🌐 **Client-Side Variables (Optional - exposed to browser)**
+#### **Client-Side Variables (Optional - exposed to browser)**
 | Variable | Description | Default Value |
 |----------|-------------|---------------|
 | `NEXT_PUBLIC_DEFAULT_NAMESPACE` | Default namespace for workflows | `default` |
@@ -174,40 +266,6 @@ docker compose -f docker-compose-with-mongodb.yml up -d
 > 
 > **🔐 Authentication**: When the dashboard sends API requests to the state-manager, the `EXOSPHERE_API_KEY` value is checked for equality with the `STATE_MANAGER_SECRET` value in the state-manager container.
 
-## 🔒 **Security Architecture**
-
-### **Server-Side Rendering (SSR) Implementation**
-
-The Exosphere Dashboard has been refactored to use Next.js API routes for enhanced security:
-
-- **API Key Protection**: All sensitive credentials are stored server-side
-- **Secure Communication**: Client never directly communicates with state-manager
-- **Environment Isolation**: Sensitive config separated from public code
-- **Production Ready**: Enterprise-grade security for production deployments
-
-### **API Route Structure**
-
-```
-/api/runs              → Secure runs fetching with pagination
-/api/graph-structure   → Protected graph visualization data
-/api/namespace-overview → Secure namespace summary
-/api/graph-template    → Protected template management
-```
-
-### **Security Benefits**
-
-1. **No API Key Exposure**: Credentials never visible in browser
-2. **Server-Side Validation**: All requests validated before reaching state-manager
-3. **Environment Security**: Sensitive variables isolated from client bundle
-4. **Audit Trail**: All API calls logged server-side for monitoring
-
-### **Docker Security Features**
-
-- **Environment Variable Isolation**: Server-side environment variables are set in containers and available to server processes, but are not exposed to the browser/client bundle
-- **Network Security**: Services communicate over isolated Docker networks
-- **Health Checks**: Built-in health monitoring for all services
-- **Resource Limits**: Configurable resource constraints for production use
-
 ### MongoDB Local Setup Variables (for docker-compose-with-mongodb.yml only)
 
 | Variable | Description | Default Value |
@@ -215,10 +273,6 @@ The Exosphere Dashboard has been refactored to use Next.js API routes for enhanc
 | `MONGO_INITDB_ROOT_USERNAME` | MongoDB root username | `admin` |
 | `MONGO_INITDB_ROOT_PASSWORD` | MongoDB root password | `password` |
 | `MONGO_INITDB_DATABASE` | Initial MongoDB database | `exosphere` |
-
-> **⚠️ Development Only — Do Not Use in Production**
->
-> The MongoDB credentials above (`MONGO_INITDB_ROOT_USERNAME`, `MONGO_INITDB_ROOT_PASSWORD`, and `MONGO_INITDB_DATABASE`) are intended **only for local development**. These default values must **never be used in production environments**. For production deployments, use environment variable overrides, secure secrets management systems, or generate strong, unique credentials. Always rotate these values before deploying to any non-development environment.
 
 ### SDK Environment Variables
 
@@ -228,19 +282,6 @@ To use the Exosphere Python SDK with your running instance, set these environmen
 |----------|-------------|---------------|
 | `EXOSPHERE_STATE_MANAGER_URI` | URL where the state manager is running | `http://localhost:8000` |
 | `EXOSPHERE_API_KEY` | API key for authentication (same as STATE_MANAGER_SECRET) | `exosphere@123` |
-
-> **🔐 Authentication**: When making API requests to the state-manager, the `EXOSPHERE_API_KEY` value is checked for equality with the `STATE_MANAGER_SECRET` value in the state-manager container.
-
-**Example SDK setup**:
-```bash
-# Set environment variables for SDK
-export EXOSPHERE_STATE_MANAGER_URI=http://localhost:8000
-export EXOSPHERE_API_KEY=exosphere@123
-
-# Or add to your .env file for your Python project
-echo "EXOSPHERE_STATE_MANAGER_URI=http://localhost:8000" >> .env
-echo "EXOSPHERE_API_KEY=exosphere@123" >> .env
-```
 
 ## Custom Configuration
 
@@ -279,7 +320,70 @@ docker compose -f docker-compose-with-mongodb.yml up -d
 
 **Note**: The docker-compose files now automatically use `.env` files in the same directory and provide sensible defaults for all optional variables.
 
-### Legacy Docker Compose v1 Compatibility
+### Generating a New Encryption Key
+
+To generate a secure encryption key for `SECRETS_ENCRYPTION_KEY`:
+
+```bash
+# Using Python
+python -c "import base64; import os; print(base64.urlsafe_b64encode(os.urandom(32)).decode())"
+
+# Using OpenSSL
+openssl rand -base64 32
+```
+
+## Security Architecture
+
+### Server-Side Rendering (SSR) Implementation
+
+The Exosphere Dashboard has been refactored to use Next.js API routes for enhanced security:
+
+- **API Key Protection**: All sensitive credentials are stored server-side
+- **Secure Communication**: Client never directly communicates with state-manager
+- **Environment Isolation**: Sensitive config separated from public code
+- **Production Ready**: Enterprise-grade security for production deployments
+
+### API Route Structure
+
+```
+/api/runs              → Secure runs fetching with pagination
+/api/graph-structure   → Protected graph visualization data
+/api/namespace-overview → Secure namespace summary
+/api/graph-template    → Protected template management
+```
+
+### Security Benefits
+
+1. **No API Key Exposure**: Credentials never visible in browser
+2. **Server-Side Validation**: All requests validated before reaching state-manager
+3. **Environment Security**: Sensitive variables isolated from client bundle
+4. **Audit Trail**: All API calls logged server-side for monitoring
+
+### Docker Security Features
+
+- **Environment Variable Isolation**: Server-side environment variables are set in containers and available to server processes, but are not exposed to the browser/client bundle
+- **Network Security**: Services communicate over isolated Docker networks
+- **Health Checks**: Built-in health monitoring for all services
+- **Resource Limits**: Configurable resource constraints for production use
+
+> **🔐 Authentication**: When making API requests to the state-manager, the `EXOSPHERE_API_KEY` value is checked for equality with the `STATE_MANAGER_SECRET` value in the state-manager container.
+
+**Example SDK setup**:
+```bash
+# Set environment variables for SDK
+export EXOSPHERE_STATE_MANAGER_URI=http://localhost:8000
+export EXOSPHERE_API_KEY=exosphere@123
+
+# Or add to your .env file for your Python project
+echo "EXOSPHERE_STATE_MANAGER_URI=http://localhost:8000" >> .env
+echo "EXOSPHERE_API_KEY=exosphere@123" >> .env
+```
+
+> **⚠️ Development Only — Do Not Use in Production**
+>
+> The MongoDB credentials above (`MONGO_INITDB_ROOT_USERNAME`, `MONGO_INITDB_ROOT_PASSWORD`, and `MONGO_INITDB_DATABASE`) are intended **only for local development**. These default values must **never be used in production environments**. For production deployments, use environment variable overrides, secure secrets management systems, or generate strong, unique credentials. Always rotate these values before deploying to any non-development environment.
+
+## Legacy Docker Compose v1 Compatibility
 
 If you have the legacy `docker-compose` (v1) binary instead of the newer `docker compose` (v2) plugin, you can use the hyphenated command format:
 
@@ -300,83 +404,7 @@ alias 'docker compose'='docker-compose'
 # https://docs.docker.com/compose/install/
 ```
 
-### Generating a New Encryption Key
-
-To generate a secure encryption key for `SECRETS_ENCRYPTION_KEY`:
-
-```bash
-# Using Python
-python -c "import base64; import os; print(base64.urlsafe_b64encode(os.urandom(32)).decode())"
-
-# Using OpenSSL
-openssl rand -base64 32
-```
-
-## Access Your Services
-
-After running the Docker Compose command:
-
-- **Exosphere Dashboard**: `http://localhost:3000`
-- **State Manager API**: `http://localhost:8000`
-- **MongoDB** (if using with-mongodb): `mongodb://localhost:27017` (not HTTP - use MongoDB clients like MongoDB Compass or mongosh)
-- **API Documentation**: `http://localhost:8000/docs`
-
-## Development Commands
-
-```bash
-# Start services in background
-docker compose -f docker-compose-with-mongodb.yml up -d
-
-# View logs
-docker compose -f docker-compose-with-mongodb.yml logs -f
-
-# Stop services
-docker compose -f docker-compose-with-mongodb.yml down
-
-# Stop services and remove volumes (⚠️ This will delete your data)
-docker compose -f docker-compose-with-mongodb.yml down -v
-
-# Pull latest images
-docker compose -f docker-compose-with-mongodb.yml pull
-
-# Restart a specific service
-docker compose -f docker-compose-with-mongodb.yml restart exosphere-state-manager
-```
-
 ## Troubleshooting
-
-### Check Service Health
-
-```bash
-# Check if all containers are running
-docker compose -f docker-compose-with-mongodb.yml ps
-
-# Check state manager health
-curl http://localhost:8000/health
-
-# View container logs
-docker compose -f docker-compose-with-mongodb.yml logs exosphere-state-manager
-```
-
-### Testing Your Setup
-
-You can validate your docker-compose configuration before starting services:
-
-```bash
-# Test configuration syntax
-docker compose -f docker-compose-with-mongodb.yml config
-
-# Pull all required images
-docker compose -f docker-compose-with-mongodb.yml pull
-
-# Start with health monitoring (--wait waits for all health checks)
-docker compose -f docker-compose-with-mongodb.yml up -d --wait
-```
-
-The `--wait` flag ensures all services pass their health checks before returning. The startup sequence will be:
-1. MongoDB starts and passes health check (~10-30 seconds)
-2. State Manager starts and passes health check (~10-30 seconds)  
-3. Dashboard starts and passes health check (~10-30 seconds)
 
 ### Common Issues
 

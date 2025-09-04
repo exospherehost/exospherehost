@@ -114,7 +114,7 @@ Your runtime is now running and ready to process workflows!
 
 Get the Exosphere State Manager and Dashboard ready to start building workflows locally.
 
-Ref: [Local Setup](./local-setup.md)
+Ref: [Local Setup](./exosphere/local-setup.md)
 
 ## Example graph
 

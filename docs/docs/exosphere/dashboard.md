@@ -2,6 +2,8 @@
 
 The Exosphere dashboard provides a comprehensive web interface for monitoring, debugging, and managing your workflows. This guide shows you how to set up and use the dashboard effectively.
 
+> **📚 Getting Started**: For a complete local setup guide covering both the state manager and dashboard, see our [Local Setup Guide](./local-setup.md).
+
 ## Dashboard Overview
 
 The Exosphere dashboard is a modern web application that connects to your state manager backend through secure server-side routes and provides:

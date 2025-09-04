@@ -2,6 +2,8 @@
 
 This document provides a comprehensive overview of Exosphere's top-level architecture, focusing on state execution, fanout mechanisms, and the unites keyword for stage unification.
 
+> **📚 Getting Started**: For a complete local setup guide covering both the state manager and dashboard, see our [Local Setup Guide](./local-setup.md).
+
 ## Overview
 
 Exosphere is built around a **state-based execution model** where workflows are composed of discrete states that can be executed independently. The architecture consists of several key components:

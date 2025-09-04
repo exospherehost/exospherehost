@@ -108,6 +108,7 @@ plugins:
         Introduction:
           - index.md
           - getting-started.md
+          - exosphere/local-setup.md
           - docker-compose-setup.md
           - exosphere/state-manager-setup.md
           - exosphere/register-node.md
@@ -142,6 +143,7 @@ extra_css:
 nav:
   - Introduction: index.md
   - Getting Started: getting-started.md
+  - Local Setup: exosphere/local-setup.md
   - Docker Compose: docker-compose-setup.md
   - State Manager Setup: exosphere/state-manager-setup.md
   - Register Node: exosphere/register-node.md

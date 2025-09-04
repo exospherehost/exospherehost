@@ -2,6 +2,8 @@
 
 The `Runtime` class is the core component that manages the execution environment for your Exosphere nodes. It handles node registration, state polling, execution, and communication with the state manager.
 
+> **📚 Getting Started**: For a complete local setup guide covering both the state manager and dashboard, see our [Local Setup Guide](./local-setup.md).
+
 ## Runtime Setup
 
 Before creating a runtime, you need to set up the state manager and configure your environment variables.
