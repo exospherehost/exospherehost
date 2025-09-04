@@ -3,40 +3,7 @@ import aiohttp
 import asyncio
 import time
 
-from typing import Any
-from pydantic import BaseModel
-
-
-class TriggerState(BaseModel):
-    """
-    Represents a trigger state for graph execution.
-    
-    A trigger state contains an identifier and a set of input parameters that
-    will be passed to the graph when it is triggered for execution.
-    
-    Attributes:
-        identifier (str): A unique identifier for this trigger state. This is used
-            to distinguish between different trigger states and may be used by the
-            graph to determine how to process the trigger.
-        inputs (dict[str, str]): A dictionary of input parameters that will be
-            passed to the graph. The keys are parameter names and values are
-            parameter values, both as strings.
-    
-    Example:
-        ```python
-        # Create a trigger state with identifier and inputs
-        trigger_state = TriggerState(
-            identifier="user-login",
-            inputs={
-                "user_id": "12345",
-                "session_token": "abc123def456",
-                "timestamp": "2024-01-15T10:30:00Z"
-            }
-        )
-        ```
-    """
-    identifier: str
-    inputs: dict[str, str]
+from .models import GraphNodeModel, RetryPolicyModel, StoreConfigModel
 
 
 class StateManager:
@@ -67,7 +34,7 @@ class StateManager:
     def _get_get_graph_endpoint(self, graph_name: str):
         return f"{self._state_manager_uri}/{self._state_manager_version}/namespace/{self._namespace}/graph/{graph_name}"
 
-    async def trigger(self, graph_name: str, inputs: dict[str, str] | None = None, store: dict[str, str] | None = None):
+    async def trigger(self, graph_name: str, inputs: dict[str, str] | None = None, store: dict[str, str] | None = None, start_delay: int = 0):
         """
         Trigger execution of a graph.
         
@@ -82,7 +49,8 @@ class StateManager:
                 graph. Strings only.
             store (dict[str, str] | None): Optional key-value store that will be merged
                 into the graph-level store before execution (beta).
-        
+            start_delay (int): Optional delay in milliseconds before the graph starts execution.
+
         Returns:
             dict: JSON payload returned by the state-manager API.
         
@@ -108,6 +76,7 @@ class StateManager:
             store = {}
         
         body = {
+            "start_delay": start_delay,
             "inputs": inputs,
             "store": store
         }
@@ -156,7 +125,7 @@ class StateManager:
                     raise Exception(f"Failed to get graph: {response.status} {await response.text()}")
                 return await response.json()
 
-    async def upsert_graph(self, graph_name: str, graph_nodes: list[dict[str, Any]], secrets: dict[str, str], retry_policy: dict[str, Any] | None = None, store_config: dict[str, Any] | None = None, validation_timeout: int = 60, polling_interval: int = 1):
+    async def upsert_graph(self, graph_name: str, graph_nodes: list[GraphNodeModel], secrets: dict[str, str], retry_policy: RetryPolicyModel | None = None, store_config: StoreConfigModel | None = None, validation_timeout: int = 60, polling_interval: int = 1):
         """
         Create or update a graph definition.
 
@@ -169,10 +138,10 @@ class StateManager:
         
         Args:
             graph_name (str): Graph identifier.
-            graph_nodes (list[dict[str, Any]]): Graph node list.
+            graph_nodes (list[GraphNodeModel]): List of graph node models defining the workflow.
             secrets (dict[str, str]): Secrets available to all nodes.
-            retry_policy (dict[str, Any] | None): Optional per-node retry policy.
-            store_config (dict[str, Any] | None): Beta configuration for the
+            retry_policy (RetryPolicyModel | None): Optional per-node retry policy configuration.
+            store_config (StoreConfigModel | None): Beta configuration for the
                 graph-level store (schema is subject to change).
             validation_timeout (int): Seconds to wait for validation (default 60).
             polling_interval (int): Polling interval in seconds (default 1).
@@ -189,13 +158,13 @@ class StateManager:
         }
         body = {
             "secrets": secrets,
-            "nodes": graph_nodes
+            "nodes": [node.model_dump() for node in graph_nodes]
         }
 
         if retry_policy is not None:
-            body["retry_policy"] = retry_policy
+            body["retry_policy"] = retry_policy.model_dump()
         if store_config is not None:
-            body["store_config"] = store_config
+            body["store_config"] = store_config.model_dump()
 
         async with aiohttp.ClientSession() as session:
             async with session.put(endpoint, json=body, headers=headers) as response: # type: ignore

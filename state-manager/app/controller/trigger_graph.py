@@ -9,7 +9,9 @@ from app.models.db.run import Run
 from app.models.db.graph_template_model import GraphTemplate
 from app.models.node_template_model import NodeTemplate
 from app.models.dependent_string import DependentString
+
 import uuid
+import time
 
 logger = LogsManager().get_logger()
 
@@ -96,6 +98,7 @@ async def trigger_graph(namespace_name: str, graph_name: str, body: TriggerGraph
             graph_name=graph_name,
             run_id=run_id,
             status=StateStatusEnum.CREATED,
+            enqueue_after=int(time.time() * 1000) + body.start_delay,
             inputs=inputs,
             outputs={},
             error=None
