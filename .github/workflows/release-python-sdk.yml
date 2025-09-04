@@ -189,18 +189,7 @@ jobs:
         run: |
           python -m pip install -U twine
           # Try to upload, but don't fail if the version already exists
-          python -m twine upload --attestations dist/* || {
-            echo "Upload failed - checking if version already exists on PyPI..."
-            # Extract version from the built wheel/sdist filename
-            VERSION=$(ls dist/*.whl | head -1 | sed -n 's/.*-\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
-            if python -m pip index versions exospherehost | grep -q "$VERSION"; then
-              echo "Version $VERSION already exists on PyPI, skipping upload"
-              exit 0
-            else
-              echo "Version $VERSION does not exist on PyPI, upload failed for other reasons"
-              exit 1
-            fi
-          }
+          python -m twine upload --attestations dist/* 
 
       - name: Upload SBOM artifacts
         uses: actions/upload-artifact@v4
