@@ -1,6 +1,5 @@
 import pytest
 import asyncio
-import threading
 from pydantic import BaseModel
 from exospherehost import BaseNode, Runtime, StateManager, GraphNodeModel
 
