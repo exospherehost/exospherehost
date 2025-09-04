@@ -9,7 +9,7 @@
   <a href="https://github.com/orgs/exospherehost/packages?repo_name=exospherehost"><img src="https://img.shields.io/badge/Kubernetes-native-326ce5?logo=kubernetes&logoColor=white" alt="Kubernetes"></a>
   <a href="https://discord.com/invite/zT92CAgvkj"><img src="https://badgen.net/discord/members/zT92CAgvkj" alt="Discord"></a>
   <a href="https://github.com/exospherehost/exospherehost"><img src="https://img.shields.io/github/stars/exospherehost/exospherehost?style=social" alt="Stars"></a>
-  <a href="https://github.com/exospherehost/exospherehost/actions/workflows/integration-tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/exospherehost/exospherehost/integration-tests.yml?branch=main" alt="Integration Tests"></a>
+  <a href="https://github.com/exospherehost/exospherehost/actions/workflows/integration-tests.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/exospherehost/exospherehost/integration-tests.yml?branch=main" alt="Integration Tests (main)"></a>
 </p>
 
 ---
