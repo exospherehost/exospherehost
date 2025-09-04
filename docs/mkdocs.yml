@@ -108,7 +108,6 @@ plugins:
         Introduction:
           - index.md
           - getting-started.md
-          - exosphere/api-changes.md
           - exosphere/local-setup.md
           - docker-compose-setup.md
           - exosphere/state-manager-setup.md
@@ -144,15 +143,24 @@ extra_css:
 nav:
   - Introduction: index.md
   - Getting Started: getting-started.md
-  - Local Setup: exosphere/local-setup.md
-  - Docker Compose: docker-compose-setup.md
-  - State Manager Setup: exosphere/state-manager-setup.md
+  - Exosphere Concepts:
+    - Overview: exosphere/concepts.md
+    - Architecture: exosphere/architecture.md
+    - Fanout: exosphere/fanout.md
+    - Unite: exosphere/unite.md
+    - Signals: exosphere/signals.md
+    - Retry Policy: exosphere/retry-policy.md
+    - Store: exosphere/store.md  
+  - Local Setup:
+      - Overview: exosphere/local-setup.md
+      - Docker Compose: docker-compose-setup.md
+      - State Manager Setup: exosphere/state-manager-setup.md
+      - Dashboard: exosphere/dashboard.md
   - Register Node: exosphere/register-node.md
   - Create Runtime: exosphere/create-runtime.md
-  - Create Graph: exosphere/create-graph.md
-  - API Changes: exosphere/api-changes.md
-  - Retry Policy: exosphere/retry-policy.md
-  - Trigger Graph: exosphere/trigger-graph.md
-  - Dashboard: exosphere/dashboard.md
-  - Signals: exosphere/signals.md
-  - Architecture: exosphere/architecture.md
+  - Create Graph:
+      - Overview: exosphere/create-graph.md
+      - Components: exosphere/graph-components.md
+      - Validation: exosphere/graph-validation.md
+      - Python SDK: exosphere/python-sdk-graph.md
+  - Trigger Graph: exosphere/trigger-graph.md 

@@ -28,7 +28,33 @@ Refer: [Getting State Manager URI](./exosphere/state-manager-setup.md)
 
 ## Overview
 
-Exosphere is built around three core concepts:
+Exosphere is built around several core concepts that enable powerful workflow orchestration:
+
+### Data Flow Architecture
+
+```mermaid
+sequenceDiagram
+    participant Client as Client Application
+    participant Runtime as Runtime
+    participant Node as Node Executor
+    participant StateMgr as State Manager
+    participant MongoDB as State Store
+    
+    Client->>Runtime: Initialize with nodes
+    Runtime->>StateMgr: Register runtime & nodes
+    StateMgr->>MongoDB: Store registration info
+    
+    loop Workflow Execution
+        StateMgr->>Runtime: Trigger node execution
+        Runtime->>Node: Execute node logic
+        Node->>Runtime: Return outputs
+        Runtime->>StateMgr: Update execution state
+        StateMgr->>MongoDB: Persist state changes
+        StateMgr->>Runtime: Trigger next node (if any)
+    end
+    
+    StateMgr->>Client: Return final results
+```
 
 ### 1. Nodes
 
@@ -51,6 +77,18 @@ The `Runtime` class manages the execution environment and coordinates with the E
 ### 3. State Manager
 
 The state manager orchestrates workflow execution, manages state transitions, and provides the dashboard for monitoring and debugging.
+
+### 4. Core Concepts
+
+Exosphere provides several unique features that make it powerful:
+
+- **[Fanout](./exosphere/fanout.md)**: Create parallel execution paths dynamically
+- **[Unite](./exosphere/unite.md)**: Synchronize parallel execution paths
+- **[Signals](./exosphere/signals.md)**: Control workflow execution flow
+- **[Retry Policy](./exosphere/retry-policy.md)**: Build resilient workflows
+- **[Store](./exosphere/store.md)**: Persist data across workflow execution
+
+For a comprehensive overview, see **[Exosphere Concepts](./exosphere/concepts.md)**.
 
 ## Quick Start Example
 
@@ -181,31 +219,7 @@ Now that you have the basics, explore:
 - **[Trigger Graph](./exosphere/trigger-graph.md)** - Execute your workflows and monitor their progress
 
 
-### Data Flow Architecture
 
-```mermaid
-sequenceDiagram
-    participant Client as Client Application
-    participant Runtime as Runtime
-    participant Node as Node Executor
-    participant StateMgr as State Manager
-    participant MongoDB as State Store
-    
-    Client->>Runtime: Initialize with nodes
-    Runtime->>StateMgr: Register runtime & nodes
-    StateMgr->>MongoDB: Store registration info
-    
-    loop Workflow Execution
-        StateMgr->>Runtime: Trigger node execution
-        Runtime->>Node: Execute node logic
-        Node->>Runtime: Return outputs
-        Runtime->>StateMgr: Update execution state
-        StateMgr->>MongoDB: Persist state changes
-        StateMgr->>Runtime: Trigger next node (if any)
-    end
-    
-    StateMgr->>Client: Return final results
-```
 
 ## Data Model (v1)
 
