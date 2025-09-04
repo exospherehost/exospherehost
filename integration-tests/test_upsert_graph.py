@@ -51,3 +51,4 @@ async def test_upsert_graph(running_server):
         )
     
     assert data is not None
+    assert data["validation_status"] == "VALID"
