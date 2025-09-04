@@ -178,7 +178,7 @@ jobs:
           echo 'python -m sigstore verify --bundle <bundle-file> exospherehost==${{ github.ref_name }}' >> sbom-summary.md
           echo '```' >> sbom-summary.md
 
-      - run: uv build --no-source
+      - run: uv build
    
       - name: Sign the package
         run: |

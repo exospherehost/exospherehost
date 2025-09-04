@@ -124,8 +124,8 @@ jobs:
           uv tool run pip-audit --format json --output vulnerability-report.json --requirement requirements.txt || true
           echo "Generated vulnerability report (non-blocking)"
 
-      - run: uv build --no-source
-
+      - run: uv build
+      
       - name: Sign the package
         run: |
           uv pip install -U pypi-attestations
