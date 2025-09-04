@@ -43,7 +43,7 @@ async def test_statemanager_trigger_defaults(monkeypatch):
     # Verify it sent empty inputs/store when omitted
     mock_session.post.assert_called_once()
     _, kwargs = mock_session.post.call_args
-    assert kwargs["json"] == {"inputs": {}, "store": {}}
+    assert kwargs["json"] == {"inputs": {}, "store": {}, "start_delay": 0}
 
 
 class _DummyNode(BaseNode):

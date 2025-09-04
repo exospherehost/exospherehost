@@ -2,7 +2,7 @@ import pytest
 import asyncio
 from unittest.mock import AsyncMock, patch, MagicMock
 from pydantic import BaseModel
-from exospherehost import Runtime, BaseNode, StateManager, TriggerState
+from exospherehost import Runtime, BaseNode, StateManager
 
 
 def create_mock_aiohttp_session():
@@ -205,8 +205,16 @@ class TestStateManagerGraphIntegration:
             sm = StateManager(namespace="test_namespace")
             
             # Test graph creation
+            from exospherehost.models import GraphNodeModel
             graph_nodes = [
-                {"name": "IntegrationTestNode", "type": "test"}
+                GraphNodeModel(
+                    node_name="IntegrationTestNode",
+                    namespace="test_namespace",
+                    identifier="IntegrationTestNode",
+                    inputs={"type": "test"},
+                    next_nodes=None,
+                    unites=None
+                )
             ]
             secrets = {"api_key": "test_key", "database_url": "db://test"}
             
@@ -214,12 +222,9 @@ class TestStateManagerGraphIntegration:
             assert result["validation_status"] == "VALID"
             
             # Test graph triggering
-            trigger_state = TriggerState(
-                identifier="test_trigger",
-                inputs={"user_id": "123", "action": "login"}
-            )
+            trigger_state = {"identifier": "test_trigger", "inputs": {"user_id": "123", "action": "login"}}
             
-            trigger_result = await sm.trigger("test_graph", inputs=trigger_state.inputs)
+            trigger_result = await sm.trigger("test_graph", inputs=trigger_state["inputs"])
             assert trigger_result == {"status": "triggered"}
 
 
@@ -448,10 +453,10 @@ class TestErrorHandlingIntegration:
             mock_session_class.return_value = mock_session
             
             sm = StateManager(namespace="error_test")
-            trigger_state = TriggerState(identifier="test", inputs={"key": "value"})
+            trigger_state = {"identifier": "test", "inputs": {"key": "value"}}
             
             with pytest.raises(Exception, match="Failed to trigger state: 404 Graph not found"):
-                await sm.trigger("nonexistent_graph", inputs=trigger_state.inputs)
+                await sm.trigger("nonexistent_graph", inputs=trigger_state["inputs"])
 
 
 class TestConcurrencyIntegration:

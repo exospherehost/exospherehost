@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
-from exospherehost.statemanager import StateManager, TriggerState
+from exospherehost.statemanager import StateManager
+from exospherehost.models import GraphNodeModel
 
 
 def create_mock_aiohttp_session():
@@ -91,27 +92,6 @@ class TestStateManagerEndpointConstruction:
         assert endpoint == expected
 
 
-class TestTriggerState:
-    def test_trigger_state_creation(self):
-        state = TriggerState(
-            identifier="test_trigger",
-            inputs={"key1": "value1", "key2": "value2"}
-        )
-        assert state.identifier == "test_trigger"
-        assert state.inputs == {"key1": "value1", "key2": "value2"}
-
-    def test_trigger_state_model_dump(self):
-        state = TriggerState(
-            identifier="test_trigger",
-            inputs={"key": "value"}
-        )
-        dumped = state.model_dump()
-        assert dumped == {
-            "identifier": "test_trigger",
-            "inputs": {"key": "value"}
-        }
-
-
 class TestStateManagerTrigger:
     @pytest.mark.asyncio
     async def test_trigger_single_state_success(self, state_manager_config):
@@ -124,9 +104,9 @@ class TestStateManagerTrigger:
             mock_session_class.return_value = mock_session
             
             sm = StateManager(**state_manager_config)
-            state = TriggerState(identifier="test", inputs={"key": "value"})
+            state = {"identifier": "test", "inputs": {"key": "value"}}
             
-            result = await sm.trigger("test_graph", inputs=state.inputs)
+            result = await sm.trigger("test_graph", inputs=state["inputs"])
             
             assert result == {"status": "success"}
 
@@ -142,11 +122,11 @@ class TestStateManagerTrigger:
             
             sm = StateManager(**state_manager_config)
             states = [
-                TriggerState(identifier="test1", inputs={"key1": "value1"}),
-                TriggerState(identifier="test2", inputs={"key2": "value2"})
+                {"identifier": "test1", "inputs": {"key1": "value1"}},
+                {"identifier": "test2", "inputs": {"key2": "value2"}}
             ]
             
-            merged_inputs = {**states[0].inputs, **states[1].inputs}
+            merged_inputs = {**states[0]["inputs"], **states[1]["inputs"]}
             result = await sm.trigger("test_graph", inputs=merged_inputs)
             
             assert result == {"status": "success"}
@@ -162,10 +142,10 @@ class TestStateManagerTrigger:
             mock_session_class.return_value = mock_session
             
             sm = StateManager(**state_manager_config)
-            state = TriggerState(identifier="test", inputs={"key": "value"})
+            state = {"identifier": "test", "inputs": {"key": "value"}}
             
             with pytest.raises(Exception, match="Failed to trigger state: 400 Bad request"):
-                await sm.trigger("test_graph", inputs=state.inputs)
+                await sm.trigger("test_graph", inputs=state["inputs"])
 
 
 class TestStateManagerGetGraph:
@@ -229,7 +209,14 @@ class TestStateManagerUpsertGraph:
             ]
             
             sm = StateManager(**state_manager_config)
-            graph_nodes = [{"name": "node1", "type": "test"}]
+            graph_nodes = [GraphNodeModel(
+                node_name="node1",
+                namespace="test_namespace",
+                identifier="node1",
+                inputs={"type": "test"},
+                next_nodes=None,
+                unites=None
+            )]
             secrets = {"secret1": "value1"}
             
             result = await sm.upsert_graph("test_graph", graph_nodes, secrets)
@@ -254,7 +241,14 @@ class TestStateManagerUpsertGraph:
             mock_session_class.return_value = mock_session
             
             sm = StateManager(**state_manager_config)
-            graph_nodes = [{"name": "node1", "type": "test"}]
+            graph_nodes = [GraphNodeModel(
+                node_name="node1",
+                namespace="test_namespace",
+                identifier="node1",
+                inputs={"type": "test"},
+                next_nodes=None,
+                unites=None
+            )]
             secrets = {"secret1": "value1"}
             
             result = await sm.upsert_graph("test_graph", graph_nodes, secrets)
@@ -274,7 +268,14 @@ class TestStateManagerUpsertGraph:
             mock_session_class.return_value = mock_session
             
             sm = StateManager(**state_manager_config)
-            graph_nodes = [{"name": "node1", "type": "test"}]
+            graph_nodes = [GraphNodeModel(
+                node_name="node1",
+                namespace="test_namespace",
+                identifier="node1",
+                inputs={"type": "test"},
+                next_nodes=None,
+                unites=None
+            )]
             secrets = {"secret1": "value1"}
             
             with pytest.raises(Exception, match="Failed to upsert graph: 500 Internal server error"):
@@ -300,7 +301,14 @@ class TestStateManagerUpsertGraph:
             mock_get_graph.return_value = {"validation_status": "PENDING"}
             
             sm = StateManager(**state_manager_config)
-            graph_nodes = [{"name": "node1", "type": "test"}]
+            graph_nodes = [GraphNodeModel(
+                node_name="node1",
+                namespace="test_namespace",
+                identifier="node1",
+                inputs={"type": "test"},
+                next_nodes=None,
+                unites=None
+            )]
             secrets = {"secret1": "value1"}
             
             with pytest.raises(Exception, match="Graph validation check timed out after 1 seconds"):
@@ -332,7 +340,14 @@ class TestStateManagerUpsertGraph:
             ]
             
             sm = StateManager(**state_manager_config)
-            graph_nodes = [{"name": "node1", "type": "test"}]
+            graph_nodes = [GraphNodeModel(
+                node_name="node1",
+                namespace="test_namespace",
+                identifier="node1",
+                inputs={"type": "test"},
+                next_nodes=None,
+                unites=None
+            )]
             secrets = {"secret1": "value1"}
             
             with pytest.raises(Exception, match="Graph validation failed: INVALID and errors: \\[\"Node 'node1' not found\"\\]"):
@@ -361,7 +376,14 @@ class TestStateManagerUpsertGraph:
             ]
             
             sm = StateManager(**state_manager_config)
-            graph_nodes = [{"name": "node1", "type": "test"}]
+            graph_nodes = [GraphNodeModel(
+                node_name="node1",
+                namespace="test_namespace",
+                identifier="node1",
+                inputs={"type": "test"},
+                next_nodes=None,
+                unites=None
+            )]
             secrets = {"secret1": "value1"}
             
             result = await sm.upsert_graph(

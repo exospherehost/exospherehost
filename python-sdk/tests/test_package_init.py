@@ -1,5 +1,5 @@
 import pytest
-from exospherehost import Runtime, BaseNode, StateManager, TriggerState, VERSION
+from exospherehost import Runtime, BaseNode, StateManager, VERSION
 
 
 def test_package_imports():
@@ -7,7 +7,6 @@ def test_package_imports():
     assert Runtime is not None
     assert BaseNode is not None
     assert StateManager is not None
-    assert TriggerState is not None
     assert VERSION is not None
 
 
@@ -15,7 +14,7 @@ def test_package_all_imports():
     """Test that __all__ contains all expected exports."""
     from exospherehost import __all__
     
-    expected_exports = ["Runtime", "BaseNode", "StateManager", "TriggerState", "VERSION", "PruneSignal", "ReQueueAfterSignal"]
+    expected_exports = ["Runtime", "BaseNode", "StateManager", "VERSION", "PruneSignal", "ReQueueAfterSignal", "UnitesStrategyEnum", "UnitesModel", "GraphNodeModel", "RetryStrategyEnum", "RetryPolicyModel", "StoreConfigModel"]
     
     for export in expected_exports:
         assert export in __all__, f"{export} should be in __all__"
@@ -55,19 +54,6 @@ def test_state_manager_class_import():
     
     # Test that the imported StateManager is the same as the one from the package
     assert StateManager is StateManagerDirect
-
-
-def test_trigger_state_class_import():
-    """Test that TriggerState class can be imported and instantiated."""
-    from exospherehost.statemanager import TriggerState as TriggerStateDirect
-    
-    # Test that the imported TriggerState is the same as the one from the package
-    assert TriggerState is TriggerStateDirect
-    
-    # Test that TriggerState can be instantiated
-    state = TriggerState(identifier="test", inputs={"key": "value"})
-    assert state.identifier == "test"
-    assert state.inputs == {"key": "value"}
 
 
 def test_version_import():
@@ -121,7 +107,6 @@ def test_package_structure():
     assert hasattr(exospherehost, 'Runtime')
     assert hasattr(exospherehost, 'BaseNode')
     assert hasattr(exospherehost, 'StateManager')
-    assert hasattr(exospherehost, 'TriggerState')
     assert hasattr(exospherehost, 'VERSION')
     assert hasattr(exospherehost, '__version__')
     assert hasattr(exospherehost, '__all__')
