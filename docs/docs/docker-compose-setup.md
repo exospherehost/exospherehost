@@ -42,7 +42,7 @@ Exosphere uses MongoDB as the database to manage states. You can either have mon
     
     4) Download and start the services:
       ```bash
-      curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose.yml && docker compose -f docker-compose.yml up -d
+      docker compose -f docker-compose.yml up -d
       ```
 
      5) Done! This will start:
