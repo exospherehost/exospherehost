@@ -28,6 +28,32 @@ class MyNode(BaseNode):
         pass
 ```
 
+
+### Node Lifecycle Architecture
+
+```mermaid
+stateDiagram-v2
+    [*] --> Registered
+    Registered --> Ready
+    Ready --> Executing
+    Executing --> Completed
+    Executing --> Failed
+    Failed --> Ready
+    Completed --> Ready
+    
+    state Executing {
+        [*] --> ValidateInputs
+        ValidateInputs --> ProcessData
+        ProcessData --> ValidateOutputs
+        ValidateOutputs --> [*]
+    }
+    
+    note right of Failed
+        Automatic retry with
+        exponential backoff
+    end note
+```
+
 ### Inputs
 
 Define the data your node expects to receive:

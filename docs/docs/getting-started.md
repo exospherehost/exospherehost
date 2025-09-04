@@ -159,14 +159,6 @@ If you're working in a Jupyter notebook or Python REPL, consider these alternati
         ).start()  # Blocks and runs forever
     ```
 
-## Next Steps
-
-Now that you have the basics, explore:
-
-- **[Register Node](./exosphere/register-node.md)** - Understand how to create and register custom nodes
-- **[Create Runtime](./exosphere/create-runtime.md)** - Learn how to set up and configure your runtime
-- **[Create Graph](./exosphere/create-graph.md)** - Build workflows by connecting nodes together
-- **[Trigger Graph](./exosphere/trigger-graph.md)** - Execute your workflows and monitor their progress
 
 ## Key Features
 
@@ -178,16 +170,40 @@ Now that you have the basics, explore:
 - **Error Handling**: Built-in retry mechanisms and error recovery
 - **Scalability**: Designed for high-volume batch processing and workflows
 
-## Architecture
+## Next Steps
 
-```
-+-------------------+    +--------------------+    +-------------------+
-|   Your Nodes      |    |      Runtime       |    |  State Manager    |
-|                   |<-->|                    |<-->|                   |
-| • Inputs          |    | • Registration     |    | • Orchestration   |
-| • Outputs         |    | • Execution        |    | • State Mgmt      |
-| • Secrets         |    | • Error Handling   |    | • Dashboard       |
-+-------------------+    +--------------------+    +-------------------+
+Now that you have the basics, explore:
+
+- **[Register Node](./exosphere/register-node.md)** - Understand how to create and register custom nodes
+- **[Create Runtime](./exosphere/create-runtime.md)** - Learn how to set up and configure your runtime
+- **[Create Graph](./exosphere/create-graph.md)** - Build workflows by connecting nodes together
+- **[Trigger Graph](./exosphere/trigger-graph.md)** - Execute your workflows and monitor their progress
+
+
+### Data Flow Architecture
+
+```mermaid
+sequenceDiagram
+    participant Client as Client Application
+    participant Runtime as Runtime
+    participant Node as Node Executor
+    participant StateMgr as State Manager
+    participant MongoDB as State Store
+    
+    Client->>Runtime: Initialize with nodes
+    Runtime->>StateMgr: Register runtime & nodes
+    StateMgr->>MongoDB: Store registration info
+    
+    loop Workflow Execution
+        StateMgr->>Runtime: Trigger node execution
+        Runtime->>Node: Execute node logic
+        Node->>Runtime: Return outputs
+        Runtime->>StateMgr: Update execution state
+        StateMgr->>MongoDB: Persist state changes
+        StateMgr->>Runtime: Trigger next node (if any)
+    end
+    
+    StateMgr->>Client: Return final results
 ```
 
 ## Data Model (v1)
