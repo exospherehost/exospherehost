@@ -4,7 +4,6 @@ import threading
 import time
 import uvicorn
 import os
-import asyncio
 from dotenv import load_dotenv
 from app.main import app
 from pymongo import AsyncMongoClient
