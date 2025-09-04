@@ -17,7 +17,7 @@
 
     /* Accent color for links and headings */
     --md-accent-fg-color: #66d1b5;
-    --md-typeset-a-color: #daf5ff;
+    --md-typeset-a-color: #8bdfff;
 
     --md-code-fg-color: #daf5ff;
     --md-code-bg-color: #263048;
@@ -26,6 +26,8 @@
     --md-code-hl-color: #66d1b5;
     --md-code-hl-color--light: #0c246994;
 
+    --md-admonition-bg-color: #05184a;
+    --md-admonition-fg-color: #ffffff;
 
     --md-code-hl-number-color: hsla(0, 67%, 50%, 1);
     --md-code-hl-special-color: hsla(340, 83%, 47%, 1);
@@ -62,11 +64,11 @@
     --md-default-bg-color: #f7fdff;
 
     --md-typeset-color: #1a1a1a;
+    --md-typeset-a-color: #e4587d;
 
     /* Accent color for links and headings */
     --md-accent-fg-color: #e4587d;
-    --md-typeset-a-color: #031035;
-
+    
     --md-default-bg-color: #f7fdff;
 
     --md-code-fg-color: #031035;

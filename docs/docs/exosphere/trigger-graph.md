@@ -20,11 +20,11 @@ The recommended way to trigger graphs is using the Exosphere Python SDK, which p
         )
                
         try:
-            # Trigger the graph with optional store (beta)
+            # Trigger the graph with optional store 
             result = await state_manager.trigger(
                 "my-graph",
                 inputs={"user_id": "123"},
-                store={"cursor": "0"}  # persisted across nodes (beta)
+                store={"cursor": "0"}  # persisted across nodes
             )
             print(f"Graph triggered successfully!")
             print(f"Run ID: {result['run_id']}")
@@ -47,4 +47,11 @@ For more details on using the Exosphere dashboard see the **[Dashboard Guide](./
 ## Next Steps
 
 - **[Dashboard](./dashboard.md)** - Use the Exosphere dashboard for monitoring
-- **[ARchitecture](./architecture.md)** - Learn about fanout, unites
+- **[Architecture](./architecture.md)** - Learn about Exosphere's architecture
+
+## Related Concepts
+
+- **[Fanout](./fanout.md)** - Create parallel execution paths dynamically
+- **[Unite](./unite.md)** - Synchronize parallel execution paths
+- **[Retry Policy](./retry-policy.md)** - Build resilient workflows
+- **[Store](./store.md)** - Persist data across workflow execution

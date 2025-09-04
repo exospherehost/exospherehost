@@ -119,6 +119,16 @@ After running the Docker Compose command:
 - **MongoDB** (if using with-mongodb): `mongodb://localhost:27017` (not HTTP - use MongoDB clients like MongoDB Compass or mongosh)
 - **API Documentation**: `http://localhost:8000/docs`
 
+## Next Steps
+
+Now that your Exosphere services are running, continue with these guides:
+
+- **[Create a Node](./exosphere/register-node.md)** – Learn how to define and register your own node.
+- **[Create a Runtime](./exosphere/create-runtime.md)** – Set up and configure your runtime environment.
+- **[Create a Graph](./exosphere/create-graph.md)** – Build workflows by connecting nodes together.
+- **[Trigger a Graph](./exosphere/trigger-graph.md)** – Execute your workflows and monitor their progress.
+
+
 ## Development Commands
 
 === "Cloud Mongodb"
@@ -257,6 +267,7 @@ You can validate your docker-compose configuration before starting services:
 | `NEXT_PUBLIC_DEFAULT_NAMESPACE` | Default namespace for workflows | `default` |
 
 > **🔒 Security Note**: The dashboard now uses **Server-Side Rendering (SSR)** for enhanced security:
+>
 > - **API keys are never exposed** to the browser
 > - **All API calls go through** secure server-side routes
 > - **Production-ready security** architecture
@@ -457,27 +468,6 @@ alias 'docker compose'='docker-compose'
 3. **Authentication errors**: Verify your `STATE_MANAGER_SECRET` matches between the state manager and dashboard configuration.
 
 4. **SDK connection issues**: Make sure `EXOSPHERE_STATE_MANAGER_URI` points to the correct URL and `EXOSPHERE_API_KEY` matches your `STATE_MANAGER_SECRET`. The `EXOSPHERE_API_KEY` value is checked for equality with the `STATE_MANAGER_SECRET` value when making API requests.
-
-## Next Steps
-
-Once your Exosphere instance is running:
-
-1. **Set up your SDK environment variables**:
-   ```bash
-   export EXOSPHERE_STATE_MANAGER_URI=http://localhost:8000
-   export EXOSPHERE_API_KEY=exosphere@123
-   ```
-
-2. **Install the Python SDK**:
-   ```bash
-   uv add exospherehost
-   ```
-
-3. **Create your first workflow** following the [Getting Started Guide](https://docs.exosphere.host/getting-started)
-
-4. **Explore the dashboard** at `http://localhost:3000`
-
-5. **Check out the API documentation** at `http://localhost:8000/docs`
 
 ## Support
 

@@ -91,11 +91,24 @@ class Secrets(BaseModel):
     encryption_key: str
 ```
 
+## Node Signals
+
+Nodes can control workflow execution by raising **signals** during execution. We support two signals today:
+
+- **Prune**: kill further execution from that branch
+- **Requeue** : good for polling and scheduled flows
+
+These can be triggered by raising a signal in your node's `execute` method.
+
+>Please raise an issue to add more signals to Exosphere.
+
+Check the [Signals from a Node](./signals.md) guide
+
 ## Node Validation
 
 The runtime automatically validates your nodes:
 
-```python hl_lines="19"
+```python hl_lines="22"
 from exospherehost import BaseNode
 from pydantic import BaseModel
 
@@ -173,7 +186,19 @@ Runtime(
 ).start()
 ```
 
+
+
+
+
 ## Next Steps
 
+- **[Create Runtime](./create-runtime.md)** - Setting up your runtime to execute tasks
 - **[Create Graph](./create-graph.md)** - Learn how to connect nodes into workflows
 - **[Trigger Graph](./trigger-graph.md)** - Execute and monitor your workflows
+
+## Related Concepts
+
+- **[Fanout](./fanout.md)** - Create parallel execution paths dynamically
+- **[Unite](./unite.md)** - Synchronize parallel execution paths
+- **[Retry Policy](./retry-policy.md)** - Build resilient workflows
+- **[Store](./store.md)** - Persist data across workflow execution

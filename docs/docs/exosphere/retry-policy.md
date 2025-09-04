@@ -1,7 +1,5 @@
 # Retry Policy
 
-!!! beta "Beta Feature"
-    Retry Policy is currently available in beta. The API and functionality may change in future releases.
 
 The Retry Policy feature in Exosphere provides sophisticated retry mechanisms for handling transient failures in your workflow nodes. When a node execution fails, the retry policy automatically determines when and how to retry the execution based on configurable strategies.
 
@@ -388,14 +386,14 @@ If a retry policy configuration is invalid:
 - An error will be returned during graph creation
 - The graph will not be saved until the configuration is corrected
 
-## Model-Based Configuration (Beta)
+## Model-Based Configuration 
 
 With the new Exosphere Python SDK, you can define retry policies using Pydantic models for better type safety and validation:
 
 ```python
 from exospherehost import StateManager, GraphNodeModel, RetryPolicyModel, RetryStrategyEnum
 
-# Define retry policy using model (beta)
+# Define retry policy using model 
 retry_policy = RetryPolicyModel(
     max_retries=5,
     strategy=RetryStrategyEnum.EXPONENTIAL_FULL_JITTER,
@@ -417,12 +415,12 @@ async def create_graph_with_retry_policy():
         )
     ]
     
-    # Apply retry policy to the entire graph (beta)
+    # Apply retry policy to the entire graph
     result = await state_manager.upsert_graph(
         graph_name="resilient-workflow",
         graph_nodes=graph_nodes,
         secrets={"api_key": "your-key"},
-        retry_policy=retry_policy  # beta
+        retry_policy=retry_policy  
     )
 ```
 
@@ -483,3 +481,10 @@ Retry policies work alongside Exosphere's signaling system:
 - Nodes can still raise `PruneSignal` to stop retries immediately
 - Nodes can raise `ReQueueAfterSignal` to re-queue after some time. This will not mark nodes as failures.
 - When a node is re-queued using `ReQueueAfterSignal`, the `retry_count` is not incremented. The existing count is carried over to the new state.
+
+## Related Concepts
+
+- **[Fanout](./fanout.md)** - Create parallel execution paths dynamically
+- **[Unite](./unite.md)** - Synchronize parallel execution paths
+- **[Signals](./signals.md)** - Control workflow execution flow
+- **[Store](./store.md)** - Persist data across workflow execution
