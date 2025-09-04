@@ -11,6 +11,10 @@ on:
 
 jobs:
     test:
+        defaults:
+          run:
+            working-directory: integration-tests
+        if: github.repository == 'exospherehost/exospherehost'
         runs-on: ubuntu-latest
         services:
             mongodb:

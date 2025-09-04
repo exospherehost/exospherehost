@@ -90,6 +90,37 @@ jobs:
           print(f'Version {version} is valid for PyPI publishing (contains beta indicator)')
           "
 
+      - name: Generate requirements file for SBOM
+        run: |
+          uv export --format=requirements-txt --output-file=requirements.txt
+          echo "Generated requirements.txt for SBOM creation"
+
+      - name: Install SBOM generation tools
+        run: |
+          uv tool install cyclonedx-bom
+          uv tool install pip-audit
+
+      - name: Generate SBOM with CycloneDX
+        run: |
+          uv tool run cyclonedx-py requirements --format json --output-file sbom-cyclonedx.json requirements.txt
+          echo "Generated CycloneDX SBOM in JSON format"
+
+      - name: Generate vulnerability report with pip-audit
+        run: |
+          uv tool run pip-audit --format json --output vulnerability-report.json --requirement requirements.txt || true
+          echo "Generated vulnerability report (non-blocking)"
+
       - run: uv build
 
-      - run: uv publish
+      - name: Publish to PyPI with provenance
+        run: uv publish --provenance
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-artifacts-beta-${{ github.sha }}
+          path: |
+            python-sdk/sbom-cyclonedx.json
+            python-sdk/requirements.txt
+            python-sdk/vulnerability-report.json
+          retention-days: 30

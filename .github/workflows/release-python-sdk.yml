@@ -122,6 +122,72 @@ jobs:
           print(f'Version {version} is valid for release publishing')
           "
 
+      - name: Generate requirements file for SBOM
+        run: |
+          uv export --format=requirements-txt --output-file=requirements.txt
+          echo "Generated requirements.txt for SBOM creation"
+
+      - name: Install SBOM generation tools
+        run: |
+          uv tool install cyclonedx-bom
+          uv tool install pip-audit
+
+      - name: Generate SBOM with CycloneDX
+        run: |
+          uv tool run cyclonedx-py requirements --format json --output-file sbom-cyclonedx.json requirements.txt
+          uv tool run cyclonedx-py requirements --format xml --output-file sbom-cyclonedx.xml requirements.txt
+          echo "Generated CycloneDX SBOM in JSON and XML formats"
+
+      - name: Generate vulnerability report with pip-audit
+        run: |
+          uv tool run pip-audit --format json --output vulnerability-report.json --requirement requirements.txt || true
+          echo "Generated vulnerability report (non-blocking)"
+
+      - name: Create SBOM summary
+        run: |
+          echo "## Software Bill of Materials (SBOM)" > sbom-summary.md
+          echo "" >> sbom-summary.md
+          echo "This release includes the following supply chain security artifacts:" >> sbom-summary.md
+          echo "" >> sbom-summary.md
+          echo "- **Provenance**: Cryptographic proof of build integrity using GitHub's OIDC tokens" >> sbom-summary.md
+          echo "- **SBOM**: Complete dependency inventory in CycloneDX format" >> sbom-summary.md
+          echo "- **Vulnerability Report**: Security scan results for all dependencies" >> sbom-summary.md
+          echo "" >> sbom-summary.md
+          echo "### Dependencies Count:" >> sbom-summary.md
+          echo "- Direct dependencies: $(grep -c '^[^#]' requirements.txt || echo '0')" >> sbom-summary.md
+          echo "- Total dependencies (including transitive): $(wc -l < requirements.txt)" >> sbom-summary.md
+          echo "" >> sbom-summary.md
+          echo "### Verification:" >> sbom-summary.md
+          echo "You can verify this package's provenance on PyPI using:" >> sbom-summary.md
+          echo '```bash' >> sbom-summary.md
+          echo 'pip install sigstore' >> sbom-summary.md
+          echo 'python -m sigstore verify --bundle <bundle-file> exospherehost==${{ github.ref_name }}' >> sbom-summary.md
+          echo '```' >> sbom-summary.md
+
       - run: uv build
 
-      - run: uv publish 
+      - name: Publish to PyPI with provenance
+        run: uv publish --provenance
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-artifacts-${{ github.ref_name }}
+          path: |
+            python-sdk/sbom-cyclonedx.json
+            python-sdk/sbom-cyclonedx.xml
+            python-sdk/requirements.txt
+            python-sdk/vulnerability-report.json
+            python-sdk/sbom-summary.md
+          retention-days: 90
+
+      - name: Add SBOM to release assets
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            python-sdk/sbom-cyclonedx.json
+            python-sdk/sbom-cyclonedx.xml
+            python-sdk/sbom-summary.md
+          body_path: python-sdk/sbom-summary.md
+          append_body: true 

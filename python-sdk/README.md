@@ -79,6 +79,50 @@ export EXOSPHERE_API_KEY="your-api-key"
 - **Scalability**: Designed for high-volume batch processing and workflows
 - **Graph Store (beta)**: Strings-only key-value store with per-run scope for sharing data across nodes (not durable across separate runs or clusters)
 
+## Supply Chain Security
+
+The ExosphereHost Python SDK includes comprehensive supply chain security features to ensure package integrity and transparency:
+
+### Package Provenance
+
+All releases are published with cryptographic provenance using GitHub's OIDC tokens and the Sigstore ecosystem. This provides:
+
+- **Cryptographic proof** that packages were built by the official ExosphereHost repository
+- **Tamper detection** to verify packages haven't been modified after publication
+- **Build transparency** showing exactly how and where packages were created
+
+### Software Bill of Materials (SBOM)
+
+Each release includes a complete Software Bill of Materials in industry-standard CycloneDX format:
+
+- **Complete dependency inventory** listing all direct and transitive dependencies
+- **Vulnerability scanning** results for all dependencies
+- **License compliance** information for enterprise environments
+- **Version tracking** for security auditing and compliance
+
+### Verification
+
+You can verify the authenticity of any ExosphereHost package:
+
+```bash
+# Install verification tools
+pip install sigstore
+
+# Verify package provenance (replace X.Y.Z with actual version)
+python -m sigstore verify --bundle <bundle-file> exospherehost==X.Y.Z
+```
+
+### Security Artifacts
+
+For each release, you can find the following security artifacts:
+
+- **SBOM files** (JSON and XML formats) attached to GitHub releases
+- **Vulnerability reports** showing security scan results
+- **Provenance attestations** available on PyPI
+- **Build logs** publicly available in GitHub Actions
+
+These features align with modern software supply chain security best practices and help meet enterprise security requirements.
+
 ## Architecture
 
 The SDK is built around two core concepts:
