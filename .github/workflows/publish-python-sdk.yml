@@ -124,33 +124,17 @@ jobs:
           uv tool run pip-audit --format json --output vulnerability-report.json --requirement requirements.txt || true
           echo "Generated vulnerability report (non-blocking)"
 
-      - run: uv build
+      - run: uv build --no-source
+
+      - name: Sign the package
+        run: |
+          uv pip install -U pypi-attestations
+          uv run pypi_attestations sign dist/*
 
       - name: Publish to PyPI with provenance
         run: |
-          # Get the current version
-          VERSION=$(uv run python -c "
-          import sys
-          sys.path.append('.')
-          from exospherehost._version import version
-          print(version)
-          ")
-          
-          echo "Checking if exospherehost version $VERSION already exists on PyPI..."
-          
-          # Query PyPI JSON API to check if version exists
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/exospherehost/$VERSION/json")
-          
-          if [ "$HTTP_STATUS" = "200" ]; then
-            echo "Version $VERSION already exists on PyPI. Skipping publish."
-            exit 0
-          elif [ "$HTTP_STATUS" = "404" ]; then
-            echo "Version $VERSION not found on PyPI. Proceeding with publish."
-            uv publish
-          else
-            echo "Unexpected HTTP status $HTTP_STATUS when checking PyPI. Proceeding with publish."
-            uv publish
-          fi
+          uv pip install -U twine
+          uv run twine upload --attestations dist/*
 
       - name: Upload SBOM artifacts
         uses: actions/upload-artifact@v4
