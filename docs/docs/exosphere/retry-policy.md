@@ -388,6 +388,101 @@ If a retry policy configuration is invalid:
 - An error will be returned during graph creation
 - The graph will not be saved until the configuration is corrected
 
+## Model-Based Configuration (Beta)
+
+With the new Exosphere Python SDK, you can define retry policies using Pydantic models for better type safety and validation:
+
+```python
+from exospherehost import StateManager, GraphNodeModel, RetryPolicyModel, RetryStrategyEnum
+
+# Define retry policy using model (beta)
+retry_policy = RetryPolicyModel(
+    max_retries=5,
+    strategy=RetryStrategyEnum.EXPONENTIAL_FULL_JITTER,
+    backoff_factor=1000,
+    exponent=2,
+    max_delay=30000
+)
+
+async def create_graph_with_retry_policy():
+    state_manager = StateManager(namespace="MyProject")
+    
+    graph_nodes = [
+        GraphNodeModel(
+            node_name="ResilientNode",
+            namespace="MyProject", 
+            identifier="resilient_node",
+            inputs={"data": "initial"},
+            next_nodes=[]
+        )
+    ]
+    
+    # Apply retry policy to the entire graph (beta)
+    result = await state_manager.upsert_graph(
+        graph_name="resilient-workflow",
+        graph_nodes=graph_nodes,
+        secrets={"api_key": "your-key"},
+        retry_policy=retry_policy  # beta
+    )
+```
+
+**Benefits of Model-Based Approach:**
+
+- **Type Safety**: Pydantic validation catches configuration errors early
+- **IDE Support**: Better autocomplete and error detection
+- **Documentation**: Built-in field descriptions and validation rules
+- **Consistency**: Standardized parameter names and types
+
+**Available Retry Strategies:**
+
+```python
+from exospherehost import RetryStrategyEnum
+
+# Exponential strategies
+RetryStrategyEnum.EXPONENTIAL                  # Pure exponential backoff
+RetryStrategyEnum.EXPONENTIAL_FULL_JITTER      # Exponential with full randomization
+RetryStrategyEnum.EXPONENTIAL_EQUAL_JITTER     # Exponential with 50% randomization
+
+# Linear strategies  
+RetryStrategyEnum.LINEAR                       # Linear backoff
+RetryStrategyEnum.LINEAR_FULL_JITTER           # Linear with full randomization
+RetryStrategyEnum.LINEAR_EQUAL_JITTER          # Linear with 50% randomization
+
+# Fixed strategies
+RetryStrategyEnum.FIXED                        # Fixed delay
+RetryStrategyEnum.FIXED_FULL_JITTER            # Fixed with full randomization
+RetryStrategyEnum.FIXED_EQUAL_JITTER           # Fixed with 50% randomization
+```
+
+**Example Configurations:**
+
+```python
+# High-concurrency scenario (recommended)
+retry_policy = RetryPolicyModel(
+    max_retries=3,
+    strategy=RetryStrategyEnum.EXPONENTIAL_FULL_JITTER,
+    backoff_factor=1000,
+    exponent=2,
+    max_delay=30000
+)
+
+# Predictable timing requirements
+retry_policy = RetryPolicyModel(
+    max_retries=5,
+    strategy=RetryStrategyEnum.LINEAR,
+    backoff_factor=2000,
+    exponent=1  # Not used for LINEAR
+)
+
+# Rate limiting scenarios
+retry_policy = RetryPolicyModel(
+    max_retries=10,
+    strategy=RetryStrategyEnum.FIXED,
+    backoff_factor=5000,  # 5 second fixed delay
+    max_delay=5000
+)
+```
+
 ## Integration with Signals
 
 Retry policies work alongside Exosphere's signaling system:

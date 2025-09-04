@@ -9,6 +9,8 @@ A graph template consists of:
 - **Nodes**: The processing units in your workflow with their inputs and next nodes
 - **Secrets**: Configuration data shared across nodes
 - **Input Mapping**: How data flows between nodes using `${{ ... }}` syntax
+- **Retry Policy**: Optional failure handling configuration (beta)
+- **Store Configuration**: Optional graph-level key-value store (beta)
 
 ## Basic Graph Example
 
@@ -150,12 +152,12 @@ Graphs can include a retry policy to handle transient failures automatically. Th
 
 For detailed information about retry policies, including all available strategies and configuration options, see the [Retry Policy](retry-policy.md) documentation.
 
-## Creating Graph Templates
+## Creating Graph Templates (Beta)
 
-The recommended way to create graph templates is using the Exosphere Python SDK, which provides a clean interface to the State Manager API.
+The recommended way to create graph templates is using the Exosphere Python SDK with model-based parameters, which provides a clean interface to the State Manager API and includes beta features for enhanced workflow management.
 
-```python hl_lines="5-9 23-27"
-from exospherehost import StateManager
+```python hl_lines="1-3 8-12 15-35 38-44 47-53 56-70"
+from exospherehost import StateManager, GraphNodeModel, RetryPolicyModel, StoreConfigModel, RetryStrategyEnum
 
 async def create_graph_template():
     # Initialize the State Manager
@@ -165,31 +167,74 @@ async def create_graph_template():
         key=EXOSPHERE_API_KEY
     )
     
-    # Define the graph nodes
+    # Define graph nodes using models (beta)
     graph_nodes = [
-       ... #nodes from the namespace MyProject
+        GraphNodeModel(
+            node_name="DataLoaderNode",
+            namespace="MyProject",
+            identifier="data_loader",
+            inputs={
+                "source": "initial",
+                "format": "json"
+            },
+            next_nodes=["data_processor"]
+        ),
+        GraphNodeModel(
+            node_name="DataProcessorNode",
+            namespace="MyProject",
+            identifier="data_processor",
+            inputs={
+                "raw_data": "${{ data_loader.outputs.processed_data }}",
+                "config": "initial"
+            },
+            next_nodes=["data_validator"]
+        ),
+        GraphNodeModel(
+            node_name="DataValidatorNode",
+            namespace="MyProject",
+            identifier="data_validator",
+            inputs={
+                "data": "${{ data_processor.outputs.processed_data }}",
+                "validation_rules": "initial"
+            },
+            next_nodes=[]
+        )
     ]
     
     # Define secrets
     secrets = {
-        ...  # Store real values in a secret manager or environment variables, not in code.
+        "openai_api_key": "your-openai-key",
+        "database_url": "your-database-url"
+        # Store real values in a secret manager or environment variables, not in code.
     }
     
+    # Define retry policy using model (beta)
+    retry_policy = RetryPolicyModel(
+        max_retries=3,
+        strategy=RetryStrategyEnum.EXPONENTIAL,
+        backoff_factor=2000,
+        exponent=2
+    )
+    
+    # Define store configuration (beta)
+    store_config = StoreConfigModel(
+        required_keys=["cursor", "batch_id"],
+        default_values={
+            "cursor": "0",
+            "batch_size": "100"
+        }
+    )
+    
     try:
-        # Create or update the graph template (with optional store, beta)
+        # Create or update the graph template (beta)
         result = await state_manager.upsert_graph(
             graph_name="my-workflow",
             graph_nodes=graph_nodes,
             secrets=secrets,
-            retry_policy={
-                "max_retries": 3,
-                "strategy": "EXPONENTIAL",
-                "backoff_factor": 2000,
-                "exponent": 2
-            },
-            store_config={  # beta
-                "ttl": 7200  # seconds to keep key/values
-            }
+            retry_policy=retry_policy,  # beta
+            store_config=store_config,  # beta
+            validation_timeout=60,
+            polling_interval=1
         )
         print("Graph template created successfully!")
         print(f"Validation status: {result['validation_status']}")
@@ -202,6 +247,67 @@ async def create_graph_template():
 import asyncio
 asyncio.run(create_graph_template())
 ```
+
+### Model-Based Parameters (Beta)
+
+The new `upsert_graph` method uses Pydantic models for better type safety and validation:
+
+#### GraphNodeModel
+
+```python
+from exospherehost import GraphNodeModel
+
+node = GraphNodeModel(
+    node_name="MyNode",           # Class name of the node
+    namespace="MyProject",        # Namespace where node is registered
+    identifier="unique_id",       # Unique identifier in this graph
+    inputs={                      # Input values for the node
+        "field1": "value1",
+        "field2": "${{ other_node.outputs.field }}"
+    },
+    next_nodes=["next_node_id"]   # List of next node identifiers
+)
+```
+
+#### RetryPolicyModel (Beta)
+
+```python
+from exospherehost import RetryPolicyModel, RetryStrategyEnum
+
+retry_policy = RetryPolicyModel(
+    max_retries=3,                                    # Maximum number of retry attempts
+    strategy=RetryStrategyEnum.EXPONENTIAL,           # Retry strategy (use enum)
+    backoff_factor=2000,                              # Base delay in milliseconds
+    exponent=2,                                       # Exponential multiplier
+    max_delay=30000                                   # Maximum delay cap in milliseconds
+)
+```
+
+**Available Retry Strategies:**
+- `RetryStrategyEnum.EXPONENTIAL`
+- `RetryStrategyEnum.EXPONENTIAL_FULL_JITTER`
+- `RetryStrategyEnum.EXPONENTIAL_EQUAL_JITTER`
+- `RetryStrategyEnum.LINEAR`
+- `RetryStrategyEnum.LINEAR_FULL_JITTER`
+- `RetryStrategyEnum.LINEAR_EQUAL_JITTER`
+- `RetryStrategyEnum.FIXED`
+- `RetryStrategyEnum.FIXED_FULL_JITTER`
+- `RetryStrategyEnum.FIXED_EQUAL_JITTER`
+
+#### StoreConfigModel (Beta)
+
+```python
+from exospherehost import StoreConfigModel
+
+store_config = StoreConfigModel(
+    required_keys=["cursor", "batch_id"],  # Keys that must be present
+    default_values={                       # Default values for keys
+        "cursor": "0",
+        "batch_size": "100"
+    }
+)
+```
+
 ## Input Mapping Patterns
 
 === "Field Mapping"
@@ -277,7 +383,9 @@ The state manager validates your graph template:
 
 === "Update Graph Template"
 
-    ```python hl_lines="17 21-25"
+    ```python hl_lines="1-3 8-12 15-35 38-44 47-53 56-70"
+    from exospherehost import StateManager, GraphNodeModel, RetryPolicyModel, StoreConfigModel, RetryStrategyEnum
+    
     async def update_graph_template():
         state_manager = StateManager(
             namespace="MyProject",
@@ -285,9 +393,50 @@ The state manager validates your graph template:
             key=EXOSPHERE_API_KEY
         )
         
-        # Updated graph nodes
+        # Updated graph nodes using models (beta)
         updated_nodes = [
-            ...
+            GraphNodeModel(
+                node_name="DataLoaderNode",
+                namespace="MyProject",
+                identifier="data_loader",
+                inputs={
+                    "source": "initial",
+                    "format": "json",
+                    "batch_size": "200"  # Updated parameter
+                },
+                next_nodes=["data_processor"]
+            ),
+            GraphNodeModel(
+                node_name="DataProcessorNode",
+                namespace="MyProject",
+                identifier="data_processor",
+                inputs={
+                    "raw_data": "${{ data_loader.outputs.processed_data }}",
+                    "config": "initial",
+                    "optimization": "enabled"  # New parameter
+                },
+                next_nodes=["data_validator", "data_logger"]  # Added new next node
+            ),
+            GraphNodeModel(
+                node_name="DataValidatorNode",
+                namespace="MyProject",
+                identifier="data_validator",
+                inputs={
+                    "data": "${{ data_processor.outputs.processed_data }}",
+                    "validation_rules": "initial"
+                },
+                next_nodes=[]
+            ),
+            GraphNodeModel(
+                node_name="DataLoggerNode",  # New node
+                namespace="MyProject",
+                identifier="data_logger",
+                inputs={
+                    "log_data": "${{ data_processor.outputs.processed_data }}",
+                    "log_level": "info"
+                },
+                next_nodes=[]
+            )
         ]
         
         # Updated secrets
@@ -297,17 +446,34 @@ The state manager validates your graph template:
             "logging_endpoint": "your-logging-endpoint"  # Added new secret
         }
         
+        # Updated retry policy (beta)
+        retry_policy = RetryPolicyModel(
+            max_retries=5,           # Increased retries
+            strategy=RetryStrategyEnum.EXPONENTIAL_FULL_JITTER,
+            backoff_factor=1500,     # Reduced base delay
+            exponent=2,
+            max_delay=60000          # Increased max delay
+        )
+        
+        # Updated store configuration (beta)
+        store_config = StoreConfigModel(
+            required_keys=["cursor", "batch_id", "session_id"],  # Added session_id
+            default_values={
+                "cursor": "0",
+                "batch_size": "150",      # Updated default
+                "session_id": "default"   # New default
+            }
+        )
+        
         try:
             result = await state_manager.upsert_graph(
                 graph_name="my-workflow",
                 graph_nodes=updated_nodes,
                 secrets=updated_secrets,
-                retry_policy={
-                    "max_retries": 3,
-                    "strategy": "EXPONENTIAL",
-                    "backoff_factor": 2000,
-                    "exponent": 2
-                }
+                retry_policy=retry_policy,  # beta
+                store_config=store_config,  # beta
+                validation_timeout=120,     # Increased timeout
+                polling_interval=2          # Increased polling interval
             )
             print("Graph template updated successfully!")
             print(f"Validation status: {result['validation_status']}")

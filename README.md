@@ -71,9 +71,11 @@ This allows developers to deploy production agents that can scale beautifully to
    ).start()
   ```
 
-- ### Define your first graph
+- ### Define your first graph (Beta)
   
-  Graphs are then described connecting nodes with relationships in json objects. Exosphere runs graph as per defined trigger conditions. See [Graph definitions](https://docs.exosphere.host/exosphere/create-graph/) to see more examples.
+  Graphs can be defined using JSON objects or with the new model-based Python SDK (beta) for better type safety and validation. See [Graph definitions](https://docs.exosphere.host/exosphere/create-graph/) for more examples.
+
+  **JSON Definition (Traditional):**
   ```json
   {
     "secrets": {},
@@ -83,15 +85,45 @@ This allows developers to deploy production agents that can scale beautifully to
             "namespace": "hello-world",
             "identifier": "describe_city",
             "inputs": {
-                "bucket_name": "initial",
-                "prefix": "initial",
-                "files_only": "true",
-                "recursive": "false"
+                "city": "initial"
             },
             "next_nodes": []
         }
     ]
   }
+  ```
+
+  **Model-Based Definition (Beta):**
+  ```python
+  from exospherehost import StateManager, GraphNodeModel, RetryPolicyModel, RetryStrategyEnum
+
+  async def create_graph():
+      state_manager = StateManager(namespace="hello-world")
+      
+      graph_nodes = [
+          GraphNodeModel(
+              node_name="MyFirstNode",
+              namespace="hello-world", 
+              identifier="describe_city",
+              inputs={"city": "initial"},
+              next_nodes=[]
+          )
+      ]
+      
+      # Optional: Define retry policy (beta)
+      retry_policy = RetryPolicyModel(
+          max_retries=3,
+          strategy=RetryStrategyEnum.EXPONENTIAL,
+          backoff_factor=2000
+      )
+      
+      # Create graph with model-based approach (beta)
+      result = await state_manager.upsert_graph(
+          graph_name="my-first-graph",
+          graph_nodes=graph_nodes,
+          secrets={},
+          retry_policy=retry_policy  # beta
+      )
   ```
 
 ## Quick Start with Docker Compose

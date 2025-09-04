@@ -202,7 +202,7 @@ The SDK provides a `StateManager` class for programmatically triggering graph ex
 
 ### StateManager Class
 
-The `StateManager` class allows you to trigger graph executions with custom trigger states. It handles authentication and communication with the ExosphereHost state manager service.
+The `StateManager` class allows you to trigger graph executions with custom trigger states and create/update graph definitions using model-based parameters. It handles authentication and communication with the ExosphereHost state manager service.
 
 #### Initialization
 
@@ -226,6 +226,91 @@ state_manager = StateManager(namespace="MyProject")
 - `state_manager_uri` (str, optional): The URI of the state manager service. If not provided, reads from `EXOSPHERE_STATE_MANAGER_URI` environment variable
 - `key` (str, optional): Your API key. If not provided, reads from `EXOSPHERE_API_KEY` environment variable
 - `state_manager_version` (str): The API version to use (default: "v0")
+
+#### Creating/Updating Graph Definitions (Beta)
+
+```python
+from exospherehost import StateManager, GraphNodeModel, RetryPolicyModel, StoreConfigModel, RetryStrategyEnum
+
+async def create_graph():
+    state_manager = StateManager(namespace="MyProject")
+    
+    # Define graph nodes using models
+    graph_nodes = [
+        GraphNodeModel(
+            node_name="DataProcessorNode",
+            namespace="MyProject",
+            identifier="data_processor",
+            inputs={
+                "source": "initial",
+                "format": "json"
+            },
+            next_nodes=["data_validator"]
+        ),
+        GraphNodeModel(
+            node_name="DataValidatorNode", 
+            namespace="MyProject",
+            identifier="data_validator",
+            inputs={
+                "data": "${{ data_processor.outputs.processed_data }}",
+                "validation_rules": "initial"
+            },
+            next_nodes=[]
+        )
+    ]
+    
+    # Define retry policy using model (beta)
+    retry_policy = RetryPolicyModel(
+        max_retries=3,
+        strategy=RetryStrategyEnum.EXPONENTIAL,
+        backoff_factor=2000,
+        exponent=2
+    )
+    
+    # Define store configuration (beta)
+    store_config = StoreConfigModel(
+        required_keys=["cursor", "batch_id"],
+        default_values={
+            "cursor": "0",
+            "batch_size": "100"
+        }
+    )
+    
+    # Create or update the graph (beta)
+    result = await state_manager.upsert_graph(
+        graph_name="my-workflow",
+        graph_nodes=graph_nodes,
+        secrets={
+            "api_key": "your-api-key",
+            "database_url": "your-database-url"
+        },
+        retry_policy=retry_policy,  # beta
+        store_config=store_config,  # beta
+        validation_timeout=60,
+        polling_interval=1
+    )
+    
+    print(f"Graph created/updated: {result['validation_status']}")
+    return result
+```
+
+**Parameters:**
+
+- `graph_name` (str): Name of the graph to create/update
+- `graph_nodes` (list[GraphNodeModel]): List of graph node models defining the workflow (beta)
+- `secrets` (dict[str, str]): Key/value secrets available to all nodes
+- `retry_policy` (RetryPolicyModel | None): Optional retry policy configuration (beta)
+- `store_config` (StoreConfigModel | None): Graph-level store configuration (beta)
+- `validation_timeout` (int): Seconds to wait for validation (default: 60)
+- `polling_interval` (int): Polling interval in seconds (default: 1)
+
+**Returns:**
+
+- `dict`: Validated graph object returned by the API
+
+**Raises:**
+
+- `Exception`: If validation fails or times out
 
 #### Triggering Graph Execution
 

@@ -17,9 +17,9 @@ class GraphNodeModel(BaseModel):
     node_name: str = Field(..., description="Name of the node")
     namespace: str = Field(..., description="Namespace of the node")
     identifier: str = Field(..., description="Identifier of the node")
-    inputs: dict[str, Any] = Field(..., description="Inputs of the node")
-    next_nodes: Optional[List[str]] = Field(None, description="Next nodes to execute")
-    unites: Optional[UnitesModel] = Field(None, description="Unites of the node")
+    inputs: dict[str, Any] = Field(default_factory=dict, description="Inputs of the node")
+    next_nodes: Optional[List[str]] = Field(default=None, description="Next nodes to execute")
+    unites: Optional[UnitesModel] = Field(default=None, description="Unites of the node")
 
     @field_validator('node_name')
     @classmethod
