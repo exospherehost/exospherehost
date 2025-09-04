@@ -1,4 +1,4 @@
-name: Integration Tests for Exosphere
+name: Integration Tests
 
 on:
     push:
