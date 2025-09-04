@@ -37,7 +37,7 @@ The following diagram illustrates how states flow through the execution system u
 
 ```mermaid
 stateDiagram-v2
-    [*] --> CREATED : Graph Triggered and Depencies Met
+    [*] --> CREATED : Graph Triggered and Dependencies Met
     
     CREATED --> QUEUED : Runtime picked task
     
