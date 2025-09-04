@@ -102,6 +102,7 @@ class StoreConfigModel(BaseModel):
     default_values: dict[str, str] = Field(default_factory=dict, description="Default values of the store")
 
     @field_validator("required_keys")
+    @classmethod
     def validate_required_keys(cls, v: list[str]) -> list[str]:
         errors = []
         keys = set()
@@ -130,6 +131,7 @@ class StoreConfigModel(BaseModel):
         return trimmed_keys
 
     @field_validator("default_values")
+    @classmethod
     def validate_default_values(cls, v: dict[str, str]) -> dict[str, str]:
         errors = []
         keys = set()
