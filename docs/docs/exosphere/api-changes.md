@@ -95,24 +95,17 @@ retry_policy = RetryPolicyModel(
 
 ### Retry Strategy Enums
 
-```python
-from exospherehost import RetryStrategyEnum
+- `RetryStrategyEnum.EXPONENTIAL`: Pure exponential backoff
+- `RetryStrategyEnum.EXPONENTIAL_FULL_JITTER`: Exponential with full randomization
+- `RetryStrategyEnum.EXPONENTIAL_EQUAL_JITTER`: Exponential with 50% randomization
 
-# Exponential strategies
-RetryStrategyEnum.EXPONENTIAL                  # Pure exponential backoff
-RetryStrategyEnum.EXPONENTIAL_FULL_JITTER      # Exponential with full randomization
-RetryStrategyEnum.EXPONENTIAL_EQUAL_JITTER     # Exponential with 50% randomization
+- `RetryStrategyEnum.LINEAR`: Linear backoff
+- `RetryStrategyEnum.LINEAR_FULL_JITTER`: Linear with full randomization
+- `RetryStrategyEnum.LINEAR_EQUAL_JITTER`: Linear with 50% randomization
 
-# Linear strategies  
-RetryStrategyEnum.LINEAR                       # Linear backoff
-RetryStrategyEnum.LINEAR_FULL_JITTER           # Linear with full randomization
-RetryStrategyEnum.LINEAR_EQUAL_JITTER          # Linear with 50% randomization
-
-# Fixed strategies
-RetryStrategyEnum.FIXED                        # Fixed delay
-RetryStrategyEnum.FIXED_FULL_JITTER            # Fixed with full randomization
-RetryStrategyEnum.FIXED_EQUAL_JITTER           # Fixed with 50% randomization
-```
+- `RetryStrategyEnum.FIXED`: Fixed delay
+- `RetryStrategyEnum.FIXED_FULL_JITTER`: Fixed with full randomization
+- `RetryStrategyEnum.FIXED_EQUAL_JITTER`: Fixed with 50% randomization
 
 ### Complete Example
 
