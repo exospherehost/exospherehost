@@ -1,13 +1,29 @@
 # Signals
 
-!!! beta "Beta Feature"
-    Signals are currently available in beta. The API and functionality may change in future releases.
 
 Signals are a mechanism in Exosphere for controlling workflow execution flow and state management. They allow nodes to communicate with the state manager to perform specific actions like pruning states or requeuing them after a delay.
 
 ## Overview
 
 Signals are implemented as exceptions that should be raised from within node execution. When a signal is raised, the runtime automatically handles the communication with the state manager to perform the requested action.
+
+```mermaid
+graph TD
+    A[Node Execution] --> B{Signal Raised?}
+    B -->|Yes| C[Runtime Catches Signal]
+    B -->|No| D[Continue Normal Execution]
+    
+    C --> E{Signal Type}
+    E -->|PruneSignal| F[State Manager: Set Status to PRUNED]
+    E -->|ReQueueAfterSignal| G[State Manager: Schedule Requeue]
+    
+    F --> H[Workflow Branch Terminated]
+    G --> I[State Requeued After Delay]
+    
+    D --> J[Return Outputs]
+    J --> K[State Completed]
+    
+```
 
 ## Available Signals
 
@@ -17,7 +33,7 @@ The `PruneSignal` is used to permanently remove a state from the workflow execut
 
 #### Usage
 
-```python
+```python hl_lines="13"
 from exospherehost import PruneSignal
 
 class MyNode(BaseNode):
@@ -45,13 +61,13 @@ The `ReQueueAfterSignal` is used to requeue a state for execution after a specif
 
 #### Usage
 
-```python
+```python hl_lines="15"
 from exospherehost import ReQueueAfterSignal
 from datetime import timedelta
 
 class RetryNode(BaseNode):
     class Inputs(BaseModel):
-        retry_count: int
+        retry_count: str
         data: str
 
     class Outputs(BaseModel):
@@ -87,7 +103,7 @@ If signal sending fails (e.g., network issues), the runtime will log the error a
 
 ### Conditional Pruning
 
-```python
+```python hl_lines="7-12"
 class ValidationNode(BaseNode):
     class Inputs(BaseModel):
         user_id: str
@@ -106,7 +122,7 @@ class ValidationNode(BaseNode):
 
 ### Polling
 
-```python
+```python hl_lines="14"
 class PollingNode(BaseNode):
     class Inputs(BaseModel):
         job_id: str
@@ -118,14 +134,14 @@ class PollingNode(BaseNode):
         if job_status == "completed":
             result = await self._get_job_result(inputs.job_id)
             return self.Outputs(result=result)
-        elif job_status == "failed":
-            # Job failed, prune the state
-            raise PruneSignal({
-                "reason": "job_failed",
-                "job_id": inputs.job_id,
-                "poll_count": inputs.poll_count
-            })
         else:
             # Job still running, poll again in 30 seconds
             raise ReQueueAfterSignal(timedelta(seconds=30))
-``` 
+```
+
+## Related Concepts
+
+- **[Fanout](./fanout.md)** - Create parallel execution paths dynamically
+- **[Unite](./unite.md)** - Synchronize parallel execution paths
+- **[Retry Policy](./retry-policy.md)** - Build resilient workflows
+- **[Store](./store.md)** - Persist data across workflow execution 

@@ -4,33 +4,8 @@ The `Runtime` class is the core component that manages the execution environment
 
 > **📚 Getting Started**: For a complete local setup guide covering both the state manager and dashboard, see our [Local Setup Guide](./local-setup.md).
 
-## Runtime Setup
 
-Before creating a runtime, you need to set up the state manager and configure your environment variables.
-
-### Prerequisites
-
-1. **Start the State Manager**: Run the state manager using Docker Compose:
-   ```bash
-   docker-compose up -d
-   ```
-   For detailed setup instructions, see [State Manager Setup](./state-manager-setup.md).
-
-> **🔐 Authentication**: When making API requests to the state manager, the `EXOSPHERE_API_KEY` value is compared to the `STATE_MANAGER_SECRET` value in the state manager container.
-
-2. **Set Environment Variables**: Configure your authentication:
-   ```bash
-   export EXOSPHERE_STATE_MANAGER_URI="your-state-manager-uri"
-   export EXOSPHERE_API_KEY="your-api-key"
-   ```
-   
-   Or create a `.env` file:
-   ```bash
-   EXOSPHERE_STATE_MANAGER_URI=your-state-manager-uri
-   EXOSPHERE_API_KEY=your-api-key
-   ```
-
-### Creating a Runtime
+### Creating a Runtime 
 === "Basic"
 
     ```python hl_lines="17-22"
@@ -134,17 +109,6 @@ Create a `.env` file in your project root:
 ```bash
 EXOSPHERE_STATE_MANAGER_URI=https://your-state-manager.exosphere.host
 EXOSPHERE_API_KEY=your-api-key
-```
-
-Then load it in your code:
-
-```python
-from dotenv import load_dotenv
-load_dotenv()
-
-from exospherehost import Runtime, BaseNode
-
-# Your runtime code here...
 ```
 
 ## Runtime Lifecycle
@@ -313,6 +277,12 @@ Monitor your runtime using the Exosphere dashboard:
 
 ## Next Steps
 
-- **[Register Node](./register-node.md)** - Learn how to create custom nodes
 - **[Create Graph](./create-graph.md)** - Build workflows by connecting nodes
-- **[Trigger Graph](./trigger-graph.md)** - Execute and monitor workflows 
+- **[Trigger Graph](./trigger-graph.md)** - Execute and monitor workflows
+
+## Related Concepts
+
+- **[Fanout](./fanout.md)** - Create parallel execution paths dynamically
+- **[Unite](./unite.md)** - Synchronize parallel execution paths
+- **[Retry Policy](./retry-policy.md)** - Build resilient workflows
+- **[Store](./store.md)** - Persist data across workflow execution 

@@ -13,6 +13,8 @@ Exosphere is built around a **state-based execution model** where workflows are 
 - **Graph Templates**: Declarative workflow definitions
 - **States**: Individual execution units with inputs, outputs, and metadata
 
+> **📚 Core Concepts**: For a comprehensive overview of Exosphere's unique features, see **[Exosphere Concepts](./concepts.md)**.
+
 ## State Execution Model
 
 ### State Lifecycle
@@ -29,149 +31,48 @@ CREATED → QUEUED → EXECUTED/ERRORED → SUCCESS
 4. **ERRORED**: State failed during executionState and all its dependencies are complete
 5. **SUCCESS**: Workflow/branch-level success once all dependent states complete
 
+### State Execution Flow
 
-## Fanout Mechanism
+The following diagram illustrates how states flow through the execution system using the actual StateStatusEnum values:
 
-### Single vs Multiple Outputs
+```mermaid
+stateDiagram-v2
+    [*] --> CREATED : Graph Triggered and Depencies Met
+    
+    CREATED --> QUEUED : Runtime picked task
+    
+    QUEUED --> EXECUTED : Runtime Executes
+    QUEUED --> ERRORED : Runtime Fails
+    QUEUED --> PRUNED : State pruned
+    
+    EXECUTED --> SUCCESS : Executed and children created
+    EXECUTED --> NEXT_CREATED_ERROR : Error on creating next state
+    
+    ERRORED --> RETRY_CREATED : Retry Policy Allows  
 
-Exosphere supports two execution patterns:
 
-1. **Single Output**: A state produces one output and continues to the next stage
-2. **Multiple Outputs (Fanout)**: A state produces multiple outputs, creating parallel execution paths
-
-
-### Fanout Example
-
-Consider a data processing workflow:
-
-```python hl_lines="9-11"
-class DataSplitterNode(BaseNode):
-    async def execute(self) -> list[Outputs]:
-        data = json.loads(self.inputs.data)
-        chunk_size = 100
-        
-        outputs = []
-        for i in range(0, len(data), chunk_size):
-            chunk = data[i:i + chunk_size]
-            outputs.append(self.Outputs(
-                chunk=json.dumps(chunk)
-            ))
-        
-        return outputs  # This creates fanout on each output
 ```
 
-When this node executes:
-1. **Original state** gets the first chunk as output
-2. **Additional states** are created for each remaining chunk
-3. **All states** are marked as EXECUTED
-4. **Next stages** are created for each state independently
+### Runtime Interaction
 
-**This enables parallel processing of data chunks across multiple runtime instances.**
+States interact with runtimes through a pull-based model:
 
-## Unites Keyword
-
-### Purpose
-
-The `unites` keyword is a powerful mechanism for **synchronizing parallel execution paths**. It allows a node to wait for multiple parallel states to complete before executing.
-
-### Unites Logic
-
-When a node has a `unites` configuration:
-
-1. **Execution is deferred** until all states with the specified identifier are complete
-2. **State fingerprinting** ensures only one unites state is created per unique combination
-3. **Dependency validation** ensures the unites node depends on the specified identifier
-
-### Unites Strategy (Beta)
-
-The `unites` keyword supports different strategies to control when the uniting node should execute. This feature is currently in **beta**.
-
-#### Available Strategies
-
-- **`ALL_SUCCESS`** (default): The uniting node executes only when all states with the specified identifier have reached `SUCCESS` status. If any state fails or is still processing, the uniting node will wait.
-
-- **`ALL_DONE`**: The uniting node executes when all states with the specified identifier have reached any terminal status (`SUCCESS`, `ERRORED`, `CANCELLED`, `NEXT_CREATED_ERROR`, or `PRUNED`). This strategy allows the uniting node to proceed even if some states have failed.
-
-#### Strategy Configuration
-
-You can specify the strategy in your unites configuration:
-
-```json hl_lines="22-25"
-{
-  "nodes": [
-    {
-      "node_name": "DataSplitterNode",
-      "identifier": "data_splitter",
-      "next_nodes": ["processor_1"]
-    },
-    {
-      "node_name": "DataProcessorNode",
-      "identifier": "processor_1",
-      "inputs":{
-        "x":"${{data_splitter.outputs.data_chunk}}"
-      },
-      "next_nodes": ["result_merger"]
-    },    
-    {
-      "node_name": "ResultMergerNode",
-      "identifier": "result_merger",
-      "inputs":{
-        "x_processed":"${{processor_1.outputs.processed_data}}"
-      },
-      "unites": {
-        "identifier": "data_splitter",
-        "strategy": "ALL_SUCCESS"
-      },
-      "next_nodes": []
-    }
-  ]
-}
+```mermaid
+sequenceDiagram   
+    participant RT as Runtime
+    participant SM as State Manager
+    participant DB as Database
+    
+    RT->>SM: Request available states
+    SM->>DB: Query queued states
+    DB->>SM: Return eligible states
+    SM->>RT: Assign state for execution
+    RT->>RT: Execute state logic
+    RT->>SM: Report completion/failure
+    SM->>DB: Update state status
+    SM->>DB: Store outputs/errors
+    SM->>DB: Trigger dependent states
 ```
-
-#### Use Cases
-
-- **`ALL_SUCCESS`**: Use when you need all parallel processes to complete successfully before proceeding. Ideal for data processing workflows where partial failures are not acceptable. **Caution**: This strategy can block indefinitely if any parallel branch never reaches a SUCCESS terminal state. Consider adding timeouts, explicit failure-to-success fallbacks, or using ALL_DONE when partial results are acceptable. Implement watchdogs or retry/timeout policies in workflows to prevent permanent blocking.
-
-- **`ALL_DONE`**: Use when you want to proceed with partial results or when you have error handling logic in the uniting node. Useful for scenarios where you want to aggregate results from successful processes while handling failures separately.
-
-### Unites Example
-
-```json hl_lines="22-24"
-{
-  "nodes": [
-    {
-      "node_name": "DataSplitterNode",
-      "identifier": "data_splitter",
-      "next_nodes": ["processor_1"]
-    },
-    {
-      "node_name": "DataProcessorNode",
-      "identifier": "processor_1",
-      "inputs":{
-        "x":"${{data_splitter.outputs.data_chunk}}"
-      },
-      "next_nodes": ["result_merger"]
-    },    
-    {
-      "node_name": "ResultMergerNode",
-      "identifier": "result_merger",
-      "inputs":{
-        "x_processed":"${{processor_1.outputs.processed_data}}"
-      },
-      "unites": {
-        "identifier": "data_splitter"
-      },
-      "next_nodes": []
-    }
-  ]
-}
-```
-
-In this example:
-1. `data_splitter` creates fanout with 3 outputs
-2. `processor_1` executes in parallel for all three data chunks
-3. `result_merger` waits for all processors to complete (unites with `data_splitter`)
-4. Only one `result_merger` state is created due to fingerprinting
 
 ## Architecture Benefits
 
@@ -201,3 +102,12 @@ In this example:
 
 
 Exosphere's architecture provides a robust foundation for building distributed, scalable workflows. The combination of state-based execution, fanout mechanisms, and the unites keyword enables complex parallel processing patterns while maintaining simplicity and reliability.
+
+## Next Steps
+
+- **[Exosphere Concepts](./concepts.md)** - Explore Exosphere's core concepts and unique features
+- **[Fanout](./fanout.md)** - Learn about parallel execution and dynamic scaling
+- **[Unite](./unite.md)** - Understand synchronization of parallel paths
+- **[Signals](./signals.md)** - Control workflow execution flow
+- **[Retry Policy](./retry-policy.md)** - Build resilient workflows
+- **[Store](./store.md)** - Persist data across workflow execution
