@@ -1,7 +1,7 @@
 [project]
 name = "integration-tests"
 version = "0.1.0"
-description = "Add your description here"
+description = "Integration tests for the Exosphere API server"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
