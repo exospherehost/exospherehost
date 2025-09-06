@@ -95,7 +95,7 @@ class State(BaseDatabaseModel):
                 name="uniq_fanout_retry",
                 partialFilterExpression={
                     "fanout_id": { "$exists": True },
-                    "status": { "$in": ["CREATED", "QUEUED", "EXECUTED"] }
+                    "status": { "$in": [StateStatusEnum.CREATED, StateStatusEnum.QUEUED, StateStatusEnum.EXECUTED] }
                 }
             )
         ]
