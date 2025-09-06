@@ -9,7 +9,7 @@ import hashlib
 import json
 import time
 import uuid
-
+    
 class State(BaseDatabaseModel):
     node_name: str = Field(..., description="Name of the node of the state")
     namespace_name: str = Field(..., description="Name of the namespace of the state")
@@ -92,13 +92,10 @@ class State(BaseDatabaseModel):
                     ("fanout_id", 1),
                 ],
                 unique=True,
-                name="uniq_fanout_retry"
-            ),
-            IndexModel(
-                [
-                    ("run_id", 1),
-                    ("status", 1),
-                ],
-                name="run_id_status_index"
+                name="uniq_fanout_retry",
+                partialFilterExpression={
+                    "fanout_id": { "$exists": True },
+                    "status": { "$in": ["CREATED", "QUEUED", "EXECUTED"] }
+                }
             )
         ]
