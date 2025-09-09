@@ -6,15 +6,7 @@
 version: 2
 updates:
   - package-ecosystem: "uv" # See documentation for possible values
-    directory: "/api-server/" # Location of package manifests
-    schedule:
-      interval: "daily"
-  - package-ecosystem: "uv" # See documentation for possible values
     directory: "/docs/" # Location of package manifests
-    schedule:
-      interval: "daily"
-  - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/landing-page/" # Location of package manifests
     schedule:
       interval: "daily"
   - package-ecosystem: "npm" # See documentation for possible values
