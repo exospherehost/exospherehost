@@ -1,4 +1,4 @@
-name: Publish State Manager image to GHCR and Deploy to K8s
+name: Publish State Manager image to GHCR 
 
 on:
   push:

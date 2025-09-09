@@ -1,4 +1,4 @@
-name: Publish Dashboard image to GHCR and Deploy to K8s
+name: Publish Dashboard image to GHCR
 
 on:
   push:
