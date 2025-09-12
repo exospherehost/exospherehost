@@ -23,6 +23,14 @@ interface RunsTableProps {
   namespace: string;
 }
 
+const REFRESH_OPTIONS = [
+  { label: "Off", value: 0 },
+  { label: "5 seconds", value: 5000 },
+  { label: "10 seconds", value: 10000 },
+  { label: "30 seconds", value: 30000 },
+  { label: "1 minute", value: 60000 },
+];
+
 export const RunsTable: React.FC<RunsTableProps> = ({
   namespace
 }) => {
@@ -33,6 +41,7 @@ export const RunsTable: React.FC<RunsTableProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [showGraph, setShowGraph] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState(0);
 
   const loadRuns = useCallback(async (page: number, size: number) => {
     setIsLoading(true);
@@ -53,6 +62,16 @@ export const RunsTable: React.FC<RunsTableProps> = ({
       loadRuns(currentPage, pageSize);
     }
   }, [namespace, currentPage, pageSize, loadRuns]);
+
+  useEffect(() => {
+    if (refreshInterval === 0) return;
+
+    const interval = setInterval(() => {
+      loadRuns(currentPage, pageSize);
+    }, refreshInterval);
+
+    return () => clearInterval(interval);
+  }, [refreshInterval, currentPage, pageSize, loadRuns]);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -144,6 +163,22 @@ export const RunsTable: React.FC<RunsTableProps> = ({
             <p className="text-sm text-gray-600">Monitor and visualize workflow executions</p>
           </div>
         </div>
+
+        <div className="flex items-center space-x-2">
+          <label className="text-sm text-gray-700">Auto-refresh:</label>
+          <select
+            value={refreshInterval}
+            onChange={(e) => setRefreshInterval(Number(e.target.value))}
+            className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+          >
+            {REFRESH_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <button
           onClick={() => loadRuns(currentPage, pageSize)}
           className="flex items-center space-x-2 px-4 py-2 bg-[#031035] text-white rounded-lg hover:bg-[#0a1a4a] transition-colors"
