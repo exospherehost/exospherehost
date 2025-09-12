@@ -136,8 +136,8 @@ uv add exospherehost
            
            return self.Outputs(
                description=description,
-               key_features=features,
-               score=score
+               key_features=json.dumps(features),
+               score=str(score)
            )
    ```
 
