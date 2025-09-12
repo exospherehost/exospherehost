@@ -14,87 +14,165 @@
 
 ---
 
-Exosphere is open source infrastructure to run AI agents at scale for large data and long running flows.
+# Exosphere: Distributed AI Workflow Infrastructure
 
-Exosphere lets you define plug and playable nodes that can then be run on a reliable backbone in the form of a workflow, with:
-- Dynamic State Creation at runtime
-- Infinite parallel agents 
-- Persistent state management
-- Failure handling
+**Exosphere** is an open-source, Kubernetes-native infrastructure platform designed to run distributed AI workflows and autonomous agents at scale. Built with Python and based on a flexible node-based architecture, Exosphere enables developers to create, deploy, and manage robust AI workflows that can handle large-scale data processing and long-running operations.
 
-This allows developers to deploy production agents that can scale beautifully to build robust autonomous AI workflows.
+![Example Workflow Run](/assets/workflow-run.png)
 
+## 🚀 What Exosphere Can Do
 
+Exosphere provides a powerful foundation for building and orchestrating AI applications with these key capabilities:
 
-## Getting Started
+### **Reliable AI Workflows at Scale**
+- **Infinite Parallel Agents**: Run multiple AI agents simultaneously across distributed infrastructure
+- **Dynamic State Management**: Create and manage state at runtime with persistent storage
+- **Fault Tolerance**: Built-in failure handling and recovery mechanisms for production reliability
+- **Core Concepts**: Fanout, Unite, Signals, Retry Policy, Store
 
-- ### Installation
-  ```bash
-  uv add exospherehost
-  ```
+### **Smooth Developer Experience**
+- **Plug-and-Play Nodes**: Create reusable, atomic workflow components that can be mixed and matched
+- **Python-First**: Native Python support with Pydantic models for type-safe inputs/outputs
+- **Interactive Dashboard**: Visual workflow management, monitoring, and debugging tools
 
-- ### Define your first node
-   Each node is an atomic reusable unit on Exosphere. Once registered, you can plug it into any workflow going forward. This could be an agent, an api call, or existing code, anything you want to be a unit of your workflow. 
-  ```python
-    from exospherehost import BaseNode
-    from pydantic import BaseModel
+### **Production Ready Infrastructure**
+- **Kubernetes Native**: Deploy seamlessly on Kubernetes clusters for enterprise-grade scalability
+- **State Persistence**: Maintain workflow state across restarts and failures
+- **API Integration**: Connect to external services and APIs through configurable nodes
 
-    class MyFirstNode(BaseNode):
+### **Built for AI Agents**
+- **Autonomous Execution**: Build agents that can make decisions and execute complex workflows
+- **Data Processing**: Handle large datasets with distributed processing capabilities
+- **Long-Running Operations**: Support for workflows that run for hours, days, or indefinitely
 
-        class Inputs(BaseModel):
-            city:str
-            #Define inputs taken by node
+Whether you're building data pipelines, AI agents, or complex workflow orchestrations, Exosphere provides the infrastructure backbone to make your AI applications production-ready and scalable.
 
-        class Outputs(BaseModel):
-            description:str
-            #Output fields from this node            
+## 🎯 Use Cases & Applications
 
-        async def execute(self) -> Outputs:    
-            return Outputs(descriptor_agent(self.inputs.city))        
-            #Execution function:
-            # >>Agent
-            # >>Existing Code
-            # >>Anything else you want to do!
-  ```
+Exosphere is perfect for a wide range of AI and automation scenarios:
+
+- **Data Processing & ETL Pipelines**
+- **AI Agent Orchestration**
+- **Content Generation & Analysis**
+- **API Integration & Automation**
+
+##  Architecture Overview
+
+Exosphere is built on a flexible, node-based architecture that makes it easy to create complex workflows:
+
+![Exosphere Architecture](assets/exosphere-concepts.png)
+
+### **Core Components**
+
+- **Nodes**: Atomic, reusable units of work that can be AI agents, API calls, data processors, or any custom logic
+- **Runtime**: The execution environment that manages and orchestrates your nodes
+- **State Manager**: Handles persistent state across workflow executions
+- **Dashboard**: Visual interface for monitoring and managing workflows
+- **Graphs**: Define the flow and dependencies between nodes
+
+### **Key Concepts**
+
+![Building blocks of Exosphere](assets/exosphere-components.png)
+
+- **Fanout**: Distribute work across multiple parallel instances of a node
+- **Unite**: Combine results from multiple parallel executions
+- **Signals**: Inter-node communication and event handling
+- **Retry Policy**: Configurable failure handling and recovery
+- **Store**: Persistent storage for workflow state and data
+
+### **Deployment Options**
+
+- **Local Development**: Run with Docker Compose for quick setup
+- **Kubernetes**: Production-ready deployment on K8s clusters
+- **Cloud**: Deploy on any cloud provider with Kubernetes support
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/) (recommended) or pip
+
+### Step 1: Installation
+
+```bash
+uv add exospherehost
+```
+
+### Step 2: Create Your First Node
+   
+   Each node is an atomic, reusable unit in Exosphere. Once registered, you can plug it into any workflow. Nodes can be AI agents, API calls, data processors, or any custom logic you want to execute.
+   
+   ```python
+   from exospherehost import BaseNode
+   from pydantic import BaseModel
+
+   class CityAnalyzerNode(BaseNode):
+       """A node that analyzes and describes a city using AI"""
+       
+       class Inputs(BaseModel):
+           city: str
+           analysis_type: str = "general"  # general, tourism, business, etc.
+
+       class Outputs(BaseModel):
+           description: str
+           key_features: str
+           score: str
+
+       class Secrets(BaseModel):
+           openai_api_key: str  # Optional: for AI-powered analysis
+
+       async def execute(self) -> Outputs:
+           # Your custom logic here - could be:
+           # - AI agent calls
+           # - API requests
+           # - Data processing
+           # - Database queries
+           # - Any Python code!
+           
+           description = f"Analysis of {self.inputs.city}"
+           features = ["culture", "economy", "lifestyle"]
+           score = 8.5
+           
+           return self.Outputs(
+               description=description,
+               key_features=json.dumps(features),
+               score=str(score)
+           )
+   ```
 
  
 
-  Create the node and add it to a runtime to enable execution:
+### Step 3: Create and Start the Runtime
+
+Create the runtime and register your nodes:
   ```python
   from exospherehost import Runtime
 
-  Runtime(
-    name="my-first-runtime",
-    namespace="hello-world",
-    nodes=[
-       MyFirstNode
-    ]
-   ).start()
+  # Initialize the runtime with your nodes
+  runtime = Runtime(
+      name="city-analysis-runtime",
+      namespace="my-project",
+      nodes=[CityAnalyzerNode]
+  )
+
+  # Start the runtime (this will block the main thread)
+  runtime.start()
   ```
 
-- ### Define your first graph (Beta)
+  **Run your application:**
+  ```bash
+  uv run main.py
+  ```
+
+  Your runtime is now running and ready to process workflows! 🎉
+
+### Step 4: Define Your First Graph
   
   Graphs can be defined using JSON objects or with the new model-based Python SDK (beta) for better type safety and validation. See [Graph definitions](https://docs.exosphere.host/exosphere/create-graph/) for more examples.
 
-  **JSON Definition (Traditional):**
-  ```json
-  {
-    "secrets": {},
-    "nodes": [
-        {
-            "node_name": "MyFirstNode",
-            "namespace": "hello-world",
-            "identifier": "describe_city",
-            "inputs": {
-                "city": "initial"
-            },
-            "next_nodes": []
-        }
-    ]
-  }
-  ```
 
-  **Model-Based Definition (Beta):**
+
   ```python
   from exospherehost import StateManager, GraphNodeModel, RetryPolicyModel, RetryStrategyEnum
 
@@ -146,8 +224,6 @@ docker compose -f docker-compose-with-mongodb.yml up -d
 - Docker Compose automatically loads `.env` files from the working directory
 - Create your `.env` file in the same directory as your docker-compose file
 
-> **⚠️ Security Note**: Variables prefixed with `NEXT_PUBLIC_` are embedded in client bundles and visible to browsers. Never store real secrets in `NEXT_PUBLIC_` variables - use server-side environment variables instead.
-
 Access your services:
 
 - **Dashboard**: `http://localhost:3000`
@@ -155,31 +231,61 @@ Access your services:
 
 > **📝 Note**: This configuration is for **development and testing only**. For production deployments, environment variable customization, and advanced configuration options, please read the complete **[Docker Compose Setup Guide](https://docs.exosphere.host/docker-compose-setup)**.
 
-## Documentation
+## 📚 Documentation & Resources
 
-For comprehensive documentation and guides, check out:
+### **Essential Guides**
+- **[Getting Started Guide](https://docs.exosphere.host/getting-started)**: Complete walkthrough for new users
+- **[Docker Compose Setup](https://docs.exosphere.host/docker-compose-setup)**: Run Exosphere locally in minutes
+- **[Architecture Guide](https://docs.exosphere.host/exosphere/architecture)**: Understand core concepts like fanout and unite
+- **[Youtube Walkthroughs](https://www.youtube.com/@exospherehost)**: Step by step demos on Exosphere and how to build reliable flows with sample code.
+- **[Featured Exosphere Projects](https://github.com/exospherehost/exosphereprojects)**: Templates on common projects on Exosphere, pull and run!
 
-- **[Docker Compose Setup](https://docs.exosphere.host/docker-compose-setup)**: Complete guide for running Exosphere locally with Docker Compose.
-- **[Getting Started Guide](https://docs.exosphere.host/getting-started)**
-- **[State Manager Setup Guide](https://docs.exosphere.host/exosphere/state-manager-setup)**: Step-by-step instructions for running the Exosphere backend locally or in production.
-- **[Dashboard Guide](https://docs.exosphere.host/exosphere/dashboard)**: Learn how to set up and use the Exosphere web dashboard.
-- **[Architecture](https://docs.exosphere.host/exosphere/architecture)**: Understand core ideas on building graphs like fanout and unite.
+### **Advanced Topics**
+- **[State Manager Setup](https://docs.exosphere.host/exosphere/state-manager-setup)**: Production deployment guide
+- **[Dashboard Guide](https://docs.exosphere.host/exosphere/dashboard)**: Visual workflow management
+- **[Graph Definitions](https://docs.exosphere.host/exosphere/create-graph/)**: Building complex workflows
 
-You can also visit the [official documentation site](https://docs.exosphere.host) for the latest updates and more resources.
+### **Community & Support**
+- **[Official Documentation](https://docs.exosphere.host)**: Complete reference and tutorials
+- **[Discord Community](https://discord.com/invite/zT92CAgvkj)**: Get help and connect with other developers
+- **[GitHub Issues](https://github.com/exospherehost/exospherehost/issues)**: Report bugs and request features
+- **[PyPI Package](https://pypi.org/project/exospherehost/)**: Latest stable releases
 
 
 
 
-## Open Source Commitment
+## 🌟 Open Source Commitment
 
-We believe that humanity would not have been able to achieve the level of innovation and progress we have today without the support of open source and community, we want to be a part of this movement and support the open source community. In following ways: 
+We believe that open source is the foundation of innovation and progress. Exosphere is our contribution to this movement, and we're committed to supporting the community in multiple ways:
 
-1. We will be open sourcing majority of our codebase for exosphere.host and making it available to the community. We welcome all sort of contributions and feedback from the community and will be happy to collaborate with you.
-2. For whatever the profits which we generate from exosphere.host, we will be donating a portion of it to open source projects and communities. If you have any questions, suggestions or ideas.
-3. We would be further collaborating with various open source student programs to provide with the support and encourage and mentor the next generation of open source contributors.
+### **Our Promise to the Community**
 
-Please feel free to reach out to us at [nivedit@exosphere.host](mailto:nivedit@exosphere.host). Lets push the boundaries of possibilities for humanity together!
+1. **🔄 Open Source First**: The majority of our codebase is open source and available to everyone
+2. **💰 Giving Back**: A portion of our profits goes directly to supporting open source projects and communities
+3. **🎓 Mentorship**: We actively collaborate with student programs to mentor the next generation of developers
+4. **🤝 Community Driven**: We welcome contributions, feedback, and collaboration from developers worldwide
 
+### **Get Involved**
+
+- **Contributors**: Help us build the future of AI infrastructure
+- **Users**: Your feedback shapes our roadmap and priorities  
+- **Students**: Join our mentorship programs and grow your skills
+- **Organizations**: Partner with us to advance open source AI tools
+
+**Ready to make a difference?** Reach out to us at [nivedit@exosphere.host](mailto:nivedit@exosphere.host) and let's push the boundaries of what's possible together! 🚀
+
+## 🎯 Ready to Get Started?
+
+Exosphere is designed to make AI workflow development accessible, scalable, and production-ready. Whether you're building your first AI agent or scaling to thousands of parallel workflows, Exosphere provides the infrastructure you need.
+
+### **Next Steps:**
+1. **⭐ Star this repository** to show your support
+2. **🚀 Try the quick start** with our Docker Compose setup
+3. **💬 Join our Discord** community for help and discussions
+4. **📖 Read the docs** for comprehensive guides and examples
+5. **🤝 Contribute** to help us build the future of AI infrastructure
+
+---
 
 ## Contributing
 
