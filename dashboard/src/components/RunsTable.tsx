@@ -181,29 +181,37 @@ export const RunsTable: React.FC<RunsTableProps> = ({
         </div>
 
         <div className="flex items-center space-x-2">
-          <label htmlFor='auto-refresh-select' className="text-sm text-gray-700">Auto-refresh:</label>
+          <label 
+          htmlFor="auto-refresh-select" 
+          className="text-xs font-medium text-gray-600"
+          >
+            Auto-refresh
+          </label>
           <select
-            id='auto-refresh-select'
+            id="auto-refresh-select"
             value={refreshInterval}
             onChange={(e) => setRefreshInterval(Number(e.target.value) as RefreshMs)}
-            className="border border-gray-300 rounded-md px-2 py-1 text-sm"
-          >
-            {REFRESH_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+            className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white shadow-sm 
+               focus:outline-none focus:ring-2 focus:ring-[#031035] focus:border-[#031035] 
+               hover:border-gray-400 transition"
+            >
+              {REFRESH_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
           </select>
-        </div>
 
-        <button
-          onClick={() => loadRuns(currentPage, pageSize)}
-          className="flex items-center space-x-2 px-4 py-2 bg-[#031035] text-white rounded-lg hover:bg-[#0a1a4a] transition-colors"
-        >
-          <RefreshCw className="w-4 h-4" />
-          <span>Refresh</span>
-        </button>
+          <button
+            onClick={() => loadRuns(currentPage, pageSize)}
+            className="flex items-center space-x-2 px-4 py-2 bg-[#031035] text-white rounded-lg hover:bg-[#0a1a4a] transition-colors shadow-sm"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
+
 
       {/* Graph Visualization */}
       {showGraph && selectedRunId && (
