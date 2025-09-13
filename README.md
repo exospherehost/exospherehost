@@ -11,41 +11,34 @@ npm install exosphere-ts-sdk
 ## Usage
 
 ```ts
-import { ExosphereClient, awaitRun, streamRunEvents } from "exosphere-ts-sdk";
+import { ExosphereClient, StateManager, awaitRun, streamRunEvents } from "exosphere-ts-sdk";
 
 const client = new ExosphereClient({ apiKey: process.env.EXOSPHERE_API_KEY! });
+const sm = new StateManager(client, "hello-world");
 
-// 1) Upsert a graph
-await client.upsertGraph({
-  name: "example-graph",
-  nodes: [
-    { key: "start", type: "input" },
-    { key: "llm", type: "llm", model: "gpt-4o", prompt: "Hello, {{name}}" },
+// 1) Upsert a graph (Python parity)
+await sm.upsert_graph({
+  graph_name: "my-first-graph",
+  graph_nodes: [
+    {
+      node_name: "MyFirstNode",
+      namespace: "hello-world",
+      identifier: "describe_city",
+      inputs: { city: "initial" },
+      next_nodes: [],
+    },
   ],
-  edges: [
-    { from: "start", to: "llm" },
-  ],
+  secrets: {},
 });
 
-// 2) Upsert a node model in the graph
-await client.upsertNodeModel("example-graph", {
-  key: "llm",
-  type: "llm",
-  model: "gpt-4o",
-  prompt: "Hello, {{name}}",
-});
+// 2) Trigger a run
+const { runId } = await sm.trigger("my-first-graph", { city: "World" });
 
-// 3) Trigger a run
-const { runId } = await client.trigger({
-  graphId: "example-graph",
-  input: { name: "World" },
-});
-
-// 4a) Poll until completion
+// 3a) Poll until completion
 const finalRun = await awaitRun(client, runId, { pollIntervalMs: 1000 });
 console.log(finalRun.status, finalRun.output);
 
-// 4b) Or stream events (Server-Sent Events)
+// 3b) Or stream events (Server-Sent Events)
 await streamRunEvents(client, runId, (evt) => {
   console.log("event", evt.type, evt.data);
 });

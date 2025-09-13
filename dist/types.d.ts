@@ -10,6 +10,22 @@ export interface EdgeDefinition {
     conditionExpression?: string;
     metadata?: Record<string, unknown>;
 }
+export interface GraphNodeModel {
+    node_name: string;
+    namespace: string;
+    identifier: string;
+    inputs?: Record<string, unknown>;
+    next_nodes?: string[];
+}
+export declare enum RetryStrategyEnum {
+    FIXED = "FIXED",
+    EXPONENTIAL = "EXPONENTIAL"
+}
+export interface RetryPolicyModel {
+    max_retries?: number;
+    strategy?: RetryStrategyEnum;
+    backoff_factor?: number;
+}
 export interface NodeModelDefinition {
     key: string;
     type: string;

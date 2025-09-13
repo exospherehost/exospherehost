@@ -12,6 +12,26 @@ export interface EdgeDefinition {
   metadata?: Record<string, unknown>;
 }
 
+// Python-parity models (beta): GraphNodeModel, RetryPolicyModel, RetryStrategyEnum
+export interface GraphNodeModel {
+  node_name: string;
+  namespace: string;
+  identifier: string;
+  inputs?: Record<string, unknown>;
+  next_nodes?: string[];
+}
+
+export enum RetryStrategyEnum {
+  FIXED = "FIXED",
+  EXPONENTIAL = "EXPONENTIAL",
+}
+
+export interface RetryPolicyModel {
+  max_retries?: number;
+  strategy?: RetryStrategyEnum;
+  backoff_factor?: number; // milliseconds or factor depending on API
+}
+
 export interface NodeModelDefinition {
   key: string;
   type: string;
