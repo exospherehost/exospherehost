@@ -23,6 +23,16 @@ interface RunsTableProps {
   namespace: string;
 }
 
+const REFRESH_OPTIONS = [
+  { label: "Off", value: 0 },
+  { label: "5 seconds", value: 5000 },
+  { label: "10 seconds", value: 10000 },
+  { label: "30 seconds", value: 30000 },
+  { label: "1 minute", value: 60000 },
+] as const;
+
+type RefreshMs = typeof REFRESH_OPTIONS[number]['value'];
+
 export const RunsTable: React.FC<RunsTableProps> = ({
   namespace
 }) => {
@@ -33,6 +43,7 @@ export const RunsTable: React.FC<RunsTableProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [showGraph, setShowGraph] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState<RefreshMs>(0);
 
   const loadRuns = useCallback(async (page: number, size: number) => {
     setIsLoading(true);
@@ -53,6 +64,30 @@ export const RunsTable: React.FC<RunsTableProps> = ({
       loadRuns(currentPage, pageSize);
     }
   }, [namespace, currentPage, pageSize, loadRuns]);
+
+  useEffect(() => {
+    if (refreshInterval === 0) {
+      return;
+    }
+
+    let isCancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const poll = () => {
+      loadRuns(currentPage, pageSize).finally(() => {
+        if (!isCancelled) {
+          timeoutId = setTimeout(poll, refreshInterval);
+        }
+      });
+    };
+
+    timeoutId = setTimeout(poll, refreshInterval);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [refreshInterval, currentPage, pageSize, loadRuns]);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -144,14 +179,39 @@ export const RunsTable: React.FC<RunsTableProps> = ({
             <p className="text-sm text-gray-600">Monitor and visualize workflow executions</p>
           </div>
         </div>
-        <button
-          onClick={() => loadRuns(currentPage, pageSize)}
-          className="flex items-center space-x-2 px-4 py-2 bg-[#031035] text-white rounded-lg hover:bg-[#0a1a4a] transition-colors"
-        >
-          <RefreshCw className="w-4 h-4" />
-          <span>Refresh</span>
-        </button>
+
+        <div className="flex items-center space-x-2">
+          <label 
+          htmlFor="auto-refresh-select" 
+          className="text-xs font-medium text-gray-600"
+          >
+            Auto-refresh
+          </label>
+          <select
+            id="auto-refresh-select"
+            value={refreshInterval}
+            onChange={(e) => setRefreshInterval(Number(e.target.value) as RefreshMs)}
+            className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white shadow-sm 
+               focus:outline-none focus:ring-2 focus:ring-[#031035] focus:border-[#031035] 
+               hover:border-gray-400 transition"
+            >
+              {REFRESH_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+          </select>
+
+          <button
+            onClick={() => loadRuns(currentPage, pageSize)}
+            className="flex items-center space-x-2 px-4 py-2 bg-[#031035] text-white rounded-lg hover:bg-[#0a1a4a] transition-colors shadow-sm"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
+
 
       {/* Graph Visualization */}
       {showGraph && selectedRunId && (
