@@ -1,3 +1,68 @@
+# Exosphere TypeScript SDK (unofficial)
+
+TypeScript SDK mirroring the Python SDK concepts: upsert graphs, upsert node models, trigger runs, await completion, and stream events. Built for Node 18+ and modern bundlers.
+
+## Install
+
+```bash
+npm install exosphere-ts-sdk
+```
+
+## Usage
+
+```ts
+import { ExosphereClient, StateManager, awaitRun, streamRunEvents } from "exosphere-ts-sdk";
+
+const client = new ExosphereClient({ apiKey: process.env.EXOSPHERE_API_KEY! });
+const sm = new StateManager(client, "hello-world");
+
+// 1) Upsert a graph (Python parity)
+await sm.upsert_graph({
+  graph_name: "my-first-graph",
+  graph_nodes: [
+    {
+      node_name: "MyFirstNode",
+      namespace: "hello-world",
+      identifier: "describe_city",
+      inputs: { city: "initial" },
+      next_nodes: [],
+    },
+  ],
+  secrets: {},
+});
+
+// 2) Trigger a run
+const { runId } = await sm.trigger("my-first-graph", { city: "World" });
+
+// 3a) Poll until completion
+const finalRun = await awaitRun(client, runId, { pollIntervalMs: 1000 });
+console.log(finalRun.status, finalRun.output);
+
+// 3b) Or stream events (Server-Sent Events)
+await streamRunEvents(client, runId, (evt) => {
+  console.log("event", evt.type, evt.data);
+});
+```
+
+## Runtime and Event Loop
+
+- All methods are `async` and non-blocking; they use Node's event loop correctly.
+- Streaming uses the Fetch ReadableStream with an SSE parser; cancellation is supported via `AbortSignal`.
+
+## Build
+
+```bash
+npm run build
+```
+
+## Node Support
+
+- Requires Node 18+ (built-in `fetch`). Provide `fetchImpl` in the client options if you need a custom fetch.
+
+## Disclaimer
+
+This is an unofficial TypeScript SDK. Endpoints may need adjustment to match your Exosphere deployment.
+
 ![logo light](assets/logo-light.svg#gh-light-mode-only)
 ![logo dark](assets/logo-dark.svg#gh-dark-mode-only)
 
