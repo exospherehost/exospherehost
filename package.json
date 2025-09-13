@@ -1,0 +1,47 @@
+{
+  "name": "exosphere-ts-sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for Exosphere (unofficial) - graphs, node models, triggers, runs.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "prepare": "npm run build",
+    "lint": "echo \"No linter configured\""
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "exosphere",
+    "sdk",
+    "typescript",
+    "ai",
+    "workflows",
+    "graphs"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/exosphere-ts-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/exosphere-ts-sdk/issues"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}
+
