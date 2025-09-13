@@ -31,6 +31,8 @@ const REFRESH_OPTIONS = [
   { label: "1 minute", value: 60000 },
 ] as const;
 
+type RefreshMs = typeof REFRESH_OPTIONS[number]['value'];
+
 export const RunsTable: React.FC<RunsTableProps> = ({
   namespace
 }) => {
@@ -41,7 +43,7 @@ export const RunsTable: React.FC<RunsTableProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [showGraph, setShowGraph] = useState(false);
-  const [refreshInterval, setRefreshInterval] = useState(0);
+  const [refreshInterval, setRefreshInterval] = useState<RefreshMs>(0);
 
   const loadRuns = useCallback(async (page: number, size: number) => {
     setIsLoading(true);
@@ -183,7 +185,7 @@ export const RunsTable: React.FC<RunsTableProps> = ({
           <select
             id='auto-refresh-select'
             value={refreshInterval}
-            onChange={(e) => setRefreshInterval(Number(e.target.value))}
+            onChange={(e) => setRefreshInterval(Number(e.target.value) as RefreshMs)}
             className="border border-gray-300 rounded-md px-2 py-1 text-sm"
           >
             {REFRESH_OPTIONS.map((option) => (
