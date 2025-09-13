@@ -29,7 +29,7 @@ const REFRESH_OPTIONS = [
   { label: "10 seconds", value: 10000 },
   { label: "30 seconds", value: 30000 },
   { label: "1 minute", value: 60000 },
-];
+] as const;
 
 export const RunsTable: React.FC<RunsTableProps> = ({
   namespace
@@ -64,13 +64,27 @@ export const RunsTable: React.FC<RunsTableProps> = ({
   }, [namespace, currentPage, pageSize, loadRuns]);
 
   useEffect(() => {
-    if (refreshInterval === 0) return;
+    if (refreshInterval === 0) {
+      return;
+    }
 
-    const interval = setInterval(() => {
-      loadRuns(currentPage, pageSize);
-    }, refreshInterval);
+    let isCancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
-    return () => clearInterval(interval);
+    const poll = () => {
+      loadRuns(currentPage, pageSize).finally(() => {
+        if (!isCancelled) {
+          timeoutId = setTimeout(poll, refreshInterval);
+        }
+      });
+    };
+
+    timeoutId = setTimeout(poll, refreshInterval);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+    };
   }, [refreshInterval, currentPage, pageSize, loadRuns]);
 
   const handlePageChange = (newPage: number) => {
@@ -165,8 +179,9 @@ export const RunsTable: React.FC<RunsTableProps> = ({
         </div>
 
         <div className="flex items-center space-x-2">
-          <label className="text-sm text-gray-700">Auto-refresh:</label>
+          <label htmlFor='auto-refresh-select' className="text-sm text-gray-700">Auto-refresh:</label>
           <select
+            id='auto-refresh-select'
             value={refreshInterval}
             onChange={(e) => setRefreshInterval(Number(e.target.value))}
             className="border border-gray-300 rounded-md px-2 py-1 text-sm"
