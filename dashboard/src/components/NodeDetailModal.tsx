@@ -119,7 +119,7 @@ export const NodeDetailModal: React.FC<NodeDetailModalProps> = ({
       <Card className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <CardHeader className="bg-primary/10 border-b">
-          <div className="flex items-center justify-between p-8">
+          <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-xl">{node.name}</CardTitle>
               <CardDescription className="mt-1">

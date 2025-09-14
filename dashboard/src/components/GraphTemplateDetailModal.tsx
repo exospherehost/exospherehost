@@ -1,8 +1,19 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { UpsertGraphTemplateResponse, NodeTemplate } from '@/types/state-manager';
 import { X, GitBranch, Settings, ArrowRight, Key, Code, Database, Workflow, Clock } from 'lucide-react';
+import ReactFlow, { 
+  Node, 
+  Edge, 
+  Controls, 
+  useNodesState, 
+  useEdgesState,
+  Position,
+  MarkerType,
+  Handle
+} from 'reactflow';
+import 'reactflow/dist/style.css';
 
 // Shadcn components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,42 +39,223 @@ const RETRY_STRATEGIES = [
   { value: 'FIXED_EQUAL_JITTER', label: 'Fixed Equal Jitter' },
 ];
 
+// Custom node component for React Flow
+const CustomNode: React.FC<{ data: NodeTemplate & { index: number } }> = ({ data }) => {
+  return (
+    <div className="px-4 py-3 shadow-sm rounded-xl border border-border min-w-[180px] relative bg-background">
+      {/* Target Handle (Left side) */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="target"
+        style={{ background: 'hsl(var(--primary))', width: '12px', height: '12px' }}
+      />
+      
+      {/* Source Handle (Right side) - only show if node has next_nodes */}
+      {data.next_nodes && data.next_nodes.length > 0 && (
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="source"
+          style={{ background: 'hsl(var(--primary))', width: '12px', height: '12px' }}
+        />
+      )}
+      
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center space-x-2">
+          <Badge variant="outline" className="text-xs">
+            #{data.index + 1}
+          </Badge>
+        </div>
+      </div>
+      
+      <div className="text-sm font-medium text-card-foreground mb-1">{data.identifier}</div>
+      <div className="text-xs text-muted-foreground mb-2">{data.node_name}</div>
+      
+      <div className="text-xs text-muted-foreground space-y-1">
+        <div><span className="font-medium">Namespace:</span> {data.namespace}</div>
+        <div><span className="font-medium">Inputs:</span> {Object.keys(data.inputs).length}</div>
+      </div>
+    </div>
+  );
+};
+
+// Node types for React Flow
+const nodeTypes = {
+  custom: CustomNode,
+};
+
 const GraphVisualizer: React.FC<{ nodes: NodeTemplate[] }> = ({ nodes }) => {
-  const renderNode = (node: NodeTemplate, index: number) => {
-    const connections = node.next_nodes.map(nextNodeId => {
-      const nextNodeIndex = nodes.findIndex(n => n.identifier === nextNodeId);
-      return { from: index, to: nextNodeIndex, label: nextNodeId };
+  const { flowNodes, flowEdges } = useMemo(() => {
+    if (!nodes || nodes.length === 0) {
+      return { flowNodes: [], flowEdges: [] };
+    }
+
+    // Create a map of node identifiers for easier lookup
+    const nodeMap = new Map(nodes.map((node, index) => [node.identifier, { node, index }]));
+
+    // Build adjacency lists for layout calculation
+    const childrenMap = new Map<string, string[]>();
+    const parentMap = new Map<string, string[]>();
+
+    // Initialize maps
+    nodes.forEach(node => {
+      childrenMap.set(node.identifier, []);
+      parentMap.set(node.identifier, []);
     });
 
-    return (
-      <div key={index} className="relative">
-        <Card className="border-2 border-primary/30 shadow-md">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm">{node.identifier}</CardTitle>
-              <Badge variant="outline" className="text-xs">
-                {index + 1}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-xs text-muted-foreground space-y-1">
-              <div><span className="font-medium">Node:</span> {node.node_name}</div>
-              <div><span className="font-medium">Namespace:</span> {node.namespace}</div>
-              <div><span className="font-medium">Inputs:</span> {Object.keys(node.inputs).length}</div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Connection lines */}
-        {connections.map((connection, connIndex) => (
-          <div key={connIndex} className="absolute top-1/2 left-full w-8 h-0.5 bg-primary/30 transform -translate-y-1/2">
-            <ArrowRight className="absolute right-0 top-1/2 transform -translate-y-1/2 w-4 h-4 text-primary" />
-          </div>
-        ))}
-      </div>
+    // Build relationships based on next_nodes
+    nodes.forEach((node) => {
+      if (node.next_nodes && Array.isArray(node.next_nodes)) {
+        node.next_nodes.forEach((nextNodeId) => {
+          if (nodeMap.has(nextNodeId)) {
+            const children = childrenMap.get(node.identifier) || [];
+            children.push(nextNodeId);
+            childrenMap.set(node.identifier, children);
+
+            const parents = parentMap.get(nextNodeId) || [];
+            parents.push(node.identifier);
+            parentMap.set(nextNodeId, parents);
+          }
+        });
+      }
+    });
+
+    // Find root nodes (nodes with no parents)
+    const rootNodes = nodes.filter(node => 
+      (parentMap.get(node.identifier) || []).length === 0
     );
-  };
+
+    // Build layers for horizontal layout
+    const layers: NodeTemplate[][] = [];
+    const visited = new Set<string>();
+
+    // Start with root nodes
+    if (rootNodes.length > 0) {
+      layers.push(rootNodes);
+      rootNodes.forEach(node => visited.add(node.identifier));
+    }
+
+    // Build layers
+    let currentLayer = 0;
+    while (visited.size < nodes.length && currentLayer < nodes.length) {
+      const currentLayerNodes = layers[currentLayer] || [];
+      const nextLayer: NodeTemplate[] = [];
+
+      currentLayerNodes.forEach(node => {
+        const children = childrenMap.get(node.identifier) || [];
+        children.forEach(childId => {
+          if (!visited.has(childId)) {
+            const childNodeData = nodeMap.get(childId);
+            if (childNodeData && !nextLayer.find(n => n.identifier === childId)) {
+              nextLayer.push(childNodeData.node);
+            }
+          }
+        });
+      });
+
+      if (nextLayer.length > 0) {
+        layers.push(nextLayer);
+        nextLayer.forEach(node => visited.add(node.identifier));
+      }
+
+      currentLayer++;
+    }
+
+    // Add any remaining nodes
+    const remainingNodes = nodes.filter(node => !visited.has(node.identifier));
+    if (remainingNodes.length > 0) {
+      layers.push(remainingNodes);
+    }
+
+    // Convert to React Flow nodes with horizontal positioning
+    const flowNodes: Node[] = [];
+    const layerWidth = 400; // Horizontal spacing between layers
+    const nodeHeight = 150; // Vertical spacing between nodes
+
+    layers.forEach((layer, layerIndex) => {
+      const layerX = layerIndex * layerWidth + 150;
+      const totalHeight = layer.length * nodeHeight;
+      const startY = (800 - totalHeight) / 2; // Center vertically
+
+      layer.forEach((node, nodeIndex) => {
+        const originalIndex = nodeMap.get(node.identifier)?.index || 0;
+        const y = startY + nodeIndex * nodeHeight + nodeHeight / 2;
+
+        flowNodes.push({
+          id: node.identifier,
+          type: 'custom',
+          position: { x: layerX, y },
+          data: { ...node, index: originalIndex },
+          sourcePosition: Position.Right,
+          targetPosition: Position.Left,
+          connectable: false,
+          draggable: false,
+        });
+      });
+    });
+
+    // Create edges based on next_nodes relationships
+    const flowEdges: Edge[] = [];
+    nodes.forEach((node) => {
+      // Ensure next_nodes exists and is an array
+      if (node.next_nodes && Array.isArray(node.next_nodes)) {
+        node.next_nodes.forEach((nextNodeId) => {
+          // Only create edge if target node exists in the graph
+          if (nodeMap.has(nextNodeId)) {
+            flowEdges.push({
+              id: `${node.identifier}-${nextNodeId}`,
+              source: node.identifier,
+              target: nextNodeId,
+              sourceHandle: 'source',
+              targetHandle: 'target',
+              type: 'default',
+              animated: false,
+              style: { 
+                stroke: '#87ceeb',
+                strokeWidth: 2,
+                strokeDasharray: 'none',
+              },
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+                width: 10,
+                height: 10,
+                color: '#87ceeb',
+              },
+            });
+          } else {
+            // Log warning for dangling references (optional - for debugging)
+            console.warn(`Node "${node.identifier}" references non-existent next node: "${nextNodeId}"`);
+          }
+        });
+      }
+    });
+
+    return { flowNodes, flowEdges };
+  }, [nodes]);
+
+  const [flowNodesState, , onNodesChange] = useNodesState(flowNodes);
+  const [flowEdgesState, , onEdgesChange] = useEdgesState(flowEdges);
+
+  if (nodes.length === 0) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center space-x-2">
+            <GitBranch className="w-4 h-4" />
+            <span>Graph Structure</span>
+          </CardTitle>
+          <CardDescription>Visual representation of the workflow nodes</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            <Settings className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>No nodes in this graph template.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -72,19 +264,29 @@ const GraphVisualizer: React.FC<{ nodes: NodeTemplate[] }> = ({ nodes }) => {
           <GitBranch className="w-4 h-4" />
           <span>Graph Structure</span>
         </CardTitle>
-        <CardDescription>Visual representation of the workflow nodes</CardDescription>
+        <CardDescription>Interactive visualization of the workflow nodes and their connections</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {nodes.map((node, index) => renderNode(node, index))}
+        <div className="border border-border rounded-xl overflow-hidden" style={{ height: '400px' }}>
+          <ReactFlow
+            nodes={flowNodesState}
+            edges={flowEdgesState}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            nodeTypes={nodeTypes}
+            fitView
+            fitViewOptions={{ padding: 0.3 }}
+            minZoom={0.1}
+            maxZoom={2}
+            defaultViewport={{ x: 0, y: 0, zoom: 1.5 }}
+            elementsSelectable={true}
+            nodesConnectable={false}
+            nodesDraggable={false}
+            className="bg-background"
+          >
+            <Controls />
+          </ReactFlow>
         </div>
-        
-        {nodes.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            <Settings className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No nodes in this graph template.</p>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

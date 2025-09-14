@@ -3,6 +3,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Custom Font Face Declarations */
+@font-face {
+  font-family: "Dark Grotesque";
+  src: url("/DarkerGrotesque-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --accent: #031035;
   --accent-light: #0a1a4a;
@@ -113,7 +122,7 @@
   --color-accent-light: var(--accent-light);
   --color-accent-lighter: var(--accent-lighter);
   --color-accent-lightest: var(--accent-lightest);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: "Dark Grotesque", sans-serif;
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
