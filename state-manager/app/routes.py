@@ -39,6 +39,9 @@ from .controller.get_runs import get_runs
 from .models.graph_structure_models import GraphStructureResponse
 from .controller.get_graph_structure import get_graph_structure
 
+from .models.node_run_details_models import NodeRunDetailsResponse
+from .controller.get_node_run_details import get_node_run_details
+
 ### signals
 from .models.signal_models import SignalResponseModel
 from .models.signal_models import PruneRequestModel
@@ -330,3 +333,22 @@ async def get_graph_structure_route(namespace_name: str, run_id: str, request: R
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
 
     return await get_graph_structure(namespace_name, run_id, x_exosphere_request_id)
+
+
+@router.get(
+    "/graph/{graph_name}/run/{run_id}/node/{node_id}",
+    response_model=NodeRunDetailsResponse,
+    status_code=status.HTTP_200_OK,
+    response_description="Node run details retrieved successfully",
+    tags=["runs"]
+)
+async def get_node_run_details_route(namespace_name: str, graph_name: str, run_id: str, node_id: str, request: Request, api_key: str = Depends(check_api_key)):
+    x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
+
+    if api_key:
+        logger.info(f"API key is valid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+    else:
+        logger.error(f"API key is invalid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+
+    return await get_node_run_details(namespace_name, graph_name, run_id, node_id, x_exosphere_request_id)

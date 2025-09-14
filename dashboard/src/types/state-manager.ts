@@ -5,6 +5,19 @@ export interface NodeRegistration {
   secrets: string[];
 }
 
+export interface RetryPolicyModel {
+  max_retries: number;
+  strategy: string;
+  backoff_factor: number;
+  exponent: number;
+  max_delay: number;
+}
+
+export interface StoreConfig {
+  required_keys: string[];
+  default_values: Record<string, string>;
+}
+
 export interface RegisterNodesRequest {
   runtime_name: string;
   nodes: NodeRegistration[];
@@ -30,9 +43,11 @@ export interface UpsertGraphTemplateRequest {
 
 export interface UpsertGraphTemplateResponse {
   name: string;
-  namespace: string;
+  namespace: string;  
   nodes: NodeTemplate[];
   secrets: Record<string, boolean>;
+  retry_policy: RetryPolicyModel;
+  store_config: StoreConfig;
   created_at: string;
   updated_at: string;
   validation_status: GraphTemplateValidationStatus;
@@ -164,6 +179,8 @@ export interface GraphNode {
   node_name: string;
   identifier: string;
   status: StateStatus;
+  inputs: Record<string, unknown>;
+  outputs: Record<string, unknown>;
   error?: string;
 }
 
@@ -180,6 +197,21 @@ export interface GraphStructureResponse {
   node_count: number;
   edge_count: number;
   execution_summary: Record<string, number>;
+}
+
+export interface NodeRunDetailsResponse {
+  id: string;
+  node_name: string;
+  identifier: string;
+  graph_name: string;
+  run_id: string;
+  status: StateStatus;
+  inputs: Record<string, unknown>;
+  outputs: Record<string, unknown>;
+  error?: string;
+  parents: Record<string, string>;
+  created_at: string;
+  updated_at: string;
 }
 
 // Runs Types
