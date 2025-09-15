@@ -23,6 +23,12 @@ class ListGraphTemplatesResponse(BaseModel):
     templates: List[GraphTemplate] = Field(..., description="List of graph templates")
 
 
+class ListNamespacesResponse(BaseModel):
+    """Response model for listing namespaces"""
+    namespaces: List[str] = Field(..., description="List of namespaces")
+    count: int = Field(..., description="Number of namespaces")
+
+
 class NamespaceSummaryResponse(BaseModel):
     """Response model for namespace summary"""
     namespace: str = Field(..., description="The namespace")

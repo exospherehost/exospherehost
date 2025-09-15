@@ -138,6 +138,11 @@ export interface ListGraphTemplatesResponse {
   templates: UpsertGraphTemplateResponse[];
 }
 
+export interface ListNamespacesResponse {
+  namespaces: string[];
+  count: number;
+}
+
 export interface StateListItem {
   id: string;
   node_name: string;

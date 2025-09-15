@@ -24,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select } from './ui/select';
 
 interface RunsTableProps {
   namespace: string;
@@ -193,7 +194,7 @@ export const RunsTable: React.FC<RunsTableProps> = ({
             >
               Auto-refresh:
             </label>
-            <select
+            <Select
               id="auto-refresh-select"
               value={refreshInterval}
               onChange={(e) => setRefreshInterval(Number(e.target.value) as RefreshMs)}
@@ -206,7 +207,7 @@ export const RunsTable: React.FC<RunsTableProps> = ({
                   {option.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <Button

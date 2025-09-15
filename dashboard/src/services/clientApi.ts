@@ -61,6 +61,15 @@ export class ClientApiService {
     }
     return response.json();
   }
+
+  // Namespaces
+  async getNamespaces() {
+    const response = await fetch('/api/namespaces');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch namespaces: ${response.statusText}`);
+    }
+    return response.json();
+  }
 }
 
 export const clientApiService = new ClientApiService(); 

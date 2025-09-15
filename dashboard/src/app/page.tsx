@@ -11,6 +11,7 @@ import {
   NodeRegistration, 
   UpsertGraphTemplateRequest,
   UpsertGraphTemplateResponse,
+  ListNamespacesResponse,
 } from '@/types/state-manager';
 import { 
   GitBranch, 
@@ -23,12 +24,14 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState< 'overview' | 'graph' |'runs'>('overview');
   const [namespace, setNamespace] = useState('default');
+  const [availableNamespaces, setAvailableNamespaces] = useState<string[]>([]);
   const [graphName, setGraphName] = useState('test-graph');
   const [graphTemplate, setGraphTemplate] = useState<UpsertGraphTemplateRequest | null>(null);
 
@@ -41,21 +44,32 @@ export default function Dashboard() {
   const [selectedGraphTemplate, setSelectedGraphTemplate] = useState<UpsertGraphTemplateResponse | null>(null);
   const [isGraphModalOpen, setIsGraphModalOpen] = useState(false);
 
-  // Fetch configuration on component mount
+  // Fetch configuration and namespaces on component mount
   useEffect(() => {
-    const fetchConfig = async () => {
+    const fetchConfigAndNamespaces = async () => {
       try {
-        const response = await fetch('/api/config');
-        if (response.ok) {
-          const config = await response.json();
+        // Fetch configuration
+        const configResponse = await fetch('/api/config');
+        if (configResponse.ok) {
+          const config = await configResponse.json();
           setNamespace(config.defaultNamespace);
         }
+
+        // Fetch available namespaces
+        const namespacesData = await clientApiService.getNamespaces();
+        setAvailableNamespaces(namespacesData.namespaces || []);
+        
+        // If no namespaces available and we have a default, add it
+        if (namespacesData.namespaces?.length === 0) {
+          setAvailableNamespaces(['default']);
+        }
       } catch (error) {
-        console.warn('Failed to fetch config, using default namespace');
+        console.warn('Failed to fetch config or namespaces, using defaults');
+        setAvailableNamespaces(['default']);
       }
     };
 
-    fetchConfig();
+    fetchConfigAndNamespaces();
   }, []);
 
   const handleSaveGraphTemplate = async (template: UpsertGraphTemplateRequest) => {
@@ -117,12 +131,23 @@ export default function Dashboard() {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-muted-foreground">Namespace:</span>
-                <Input
-                  type="text"
+                <Select
                   value={namespace}
                   onChange={(e) => setNamespace(e.target.value)}
                   className="w-32 h-8"
-                />
+                >
+                  {availableNamespaces.map((ns) => (
+                    <option key={ns} value={ns}>
+                      {ns}
+                    </option>
+                  ))}
+                  {/* Show current namespace even if not in the list */}
+                  {!availableNamespaces.includes(namespace) && (
+                    <option key={namespace} value={namespace}>
+                      {namespace}
+                    </option>
+                  )}
+                </Select>
               </div>
             </div>
           </div>

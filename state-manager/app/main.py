@@ -24,7 +24,7 @@ from .models.db.store import Store
 from .models.db.run import Run
 
 # injecting routes
-from .routes import router
+from .routes import router, global_router
 
 # importing CORS config
 from .config.cors import get_cors_config
@@ -87,4 +87,5 @@ app.add_middleware(CORSMiddleware, **get_cors_config())
 def health() -> dict:
     return {"message": "OK"}
 
+app.include_router(global_router)
 app.include_router(router)
