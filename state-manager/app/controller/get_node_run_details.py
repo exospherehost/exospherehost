@@ -84,5 +84,5 @@ async def get_node_run_details(namespace: str, graph_name: str, run_id: str, nod
         logger.error(f"Error getting node run details for node ID: {node_id}: {str(e)}", x_exosphere_request_id=request_id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Internal server error while retrieving node details"
+            detail="Internal server error while retrieving node details"
         ) 
