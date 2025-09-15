@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { GraphTemplateBuilder } from '@/components/GraphTemplateBuilder';
 import { NamespaceOverview } from '@/components/NamespaceOverview';
 import { RunsTable } from '@/components/RunsTable';
@@ -11,10 +12,8 @@ import {
   NodeRegistration, 
   UpsertGraphTemplateRequest,
   UpsertGraphTemplateResponse,
-  ListNamespacesResponse,
 } from '@/types/state-manager';
 import { 
-  GitBranch, 
   BarChart3,
   AlertCircle,
   Filter
@@ -23,7 +22,6 @@ import {
 // Shadcn components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -32,7 +30,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState< 'overview' | 'graph' |'runs'>('overview');
   const [namespace, setNamespace] = useState('default');
   const [availableNamespaces, setAvailableNamespaces] = useState<string[]>([]);
-  const [graphName, setGraphName] = useState('test-graph');
+  const [graphName] = useState('test-graph');
   const [graphTemplate, setGraphTemplate] = useState<UpsertGraphTemplateRequest | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -83,8 +81,8 @@ export default function Dashboard() {
         if (availableNamespaces.length === 0) {
           setAvailableNamespaces([selectedNamespace]);
         }
-      } catch (error) {
-        console.warn('Failed to fetch config or namespaces, using defaults');
+      } catch (err) {
+        console.warn('Failed to fetch config or namespaces, using defaults:', err);
         setNamespace('default');
         setAvailableNamespaces(['default']);
       }
@@ -141,7 +139,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
-                <img src="/exospheresmall.png" alt="Exosphere Logo" className="w-8 h-8" />
+                <Image src="/exospheresmall.png" alt="Exosphere Logo" width={32} height={32} />
                 <div>
                   <h1 className="text-xl font-bold text-foreground">Exosphere Dashboard</h1>
                   <p className="text-sm text-muted-foreground">AI Workflow State Manager</p>

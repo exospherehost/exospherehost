@@ -7,7 +7,6 @@ import { GraphVisualization } from './GraphVisualization';
 import { 
   ChevronLeft, 
   ChevronRight, 
-  Eye, 
   Clock, 
   CheckCircle, 
   XCircle, 
@@ -16,7 +15,8 @@ import {
   AlertCircle,
   BarChart3,
   Calendar,
-  Hash
+  Hash,
+  ChevronDown
 } from 'lucide-react';
 
 // Shadcn components
@@ -32,10 +32,10 @@ interface RunsTableProps {
 
 const REFRESH_OPTIONS = [
   { label: "Off", value: 0 },
-  { label: "5 seconds", value: 5000 },
-  { label: "10 seconds", value: 10000 },
-  { label: "30 seconds", value: 30000 },
-  { label: "1 minute", value: 60000 },
+  { label: "5 sec", value: 5000 },
+  { label: "10 sec", value: 10000 },
+  { label: "30 sec", value: 30000 },
+  { label: "1 min", value: 60000 },
 ] as const;
 
 type RefreshMs = typeof REFRESH_OPTIONS[number]['value'];
@@ -198,9 +198,7 @@ export const RunsTable: React.FC<RunsTableProps> = ({
               id="auto-refresh-select"
               value={refreshInterval}
               onChange={(e) => setRefreshInterval(Number(e.target.value) as RefreshMs)}
-              className="px-3 py-2 text-sm border border-input rounded-md bg-background shadow-sm 
-                 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary 
-                 hover:border-muted-foreground transition-colors"
+              className="h-9 text-sm"
             >
               {REFRESH_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -253,16 +251,19 @@ export const RunsTable: React.FC<RunsTableProps> = ({
           </CardTitle>
           <div className="flex items-center space-x-4">
             <label className="text-sm text-muted-foreground">Page size:</label>
-            <select
-              value={pageSize}
-              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-              className="border border-input rounded-md px-2 py-1 text-sm bg-background"
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
+            <div className="relative">
+              <select
+                value={pageSize}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                className="border border-input rounded-md px-3 pr-10 py-1 text-sm bg-background appearance-none"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">

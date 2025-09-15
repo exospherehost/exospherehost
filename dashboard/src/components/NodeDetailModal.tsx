@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { NodeRegistration } from '@/types/state-manager';
-import { X, Code, Eye, EyeOff, Key, ChevronDown, ChevronRight } from 'lucide-react';
+import { X, ChevronDown, ChevronRight } from 'lucide-react';
 
 // Shadcn components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -110,8 +110,6 @@ export const NodeDetailModal: React.FC<NodeDetailModalProps> = ({
   isOpen,
   onClose
 }) => {
-  const [showSecrets, setShowSecrets] = React.useState(false);
-
   if (!isOpen || !node) return null;
 
   return (

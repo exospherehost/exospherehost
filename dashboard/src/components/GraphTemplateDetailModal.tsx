@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { UpsertGraphTemplateResponse, NodeTemplate } from '@/types/state-manager';
-import { X, GitBranch, Settings, ArrowRight, Key, Code, Database, Workflow, Clock } from 'lucide-react';
+import { X, GitBranch, Settings, Database, Workflow, Clock } from 'lucide-react';
 import ReactFlow, { 
   Node, 
   Edge, 
@@ -349,8 +349,16 @@ const NodeDetailView: React.FC<{ node: NodeTemplate; index: number }> = ({ node,
   );
 };
 
+interface RetryPolicy {
+  max_retries: number;
+  strategy: string;
+  backoff_factor: number;
+  exponent: number;
+  max_delay?: number;
+}
+
 const RetryPolicyViewer: React.FC<{ 
-  retryPolicy: any;
+  retryPolicy: RetryPolicy;
 }> = ({ retryPolicy }) => {
   const getStrategyLabel = (strategy: string) => {
     return RETRY_STRATEGIES.find(s => s.value === strategy)?.label || strategy;
@@ -412,8 +420,13 @@ const RetryPolicyViewer: React.FC<{
   );
 };
 
+interface StoreConfig {
+  required_keys?: string[];
+  default_values?: Record<string, unknown>;
+}
+
 const StoreConfigViewer: React.FC<{ 
-  storeConfig: any;
+  storeConfig: StoreConfig;
 }> = ({ storeConfig }) => {
   return (
     <div className="space-y-6">
@@ -459,7 +472,7 @@ const StoreConfigViewer: React.FC<{
                     {key}
                   </div>
                   <div className="text-sm font-mono bg-muted p-2 rounded">
-                    {value as string}
+                    {String(value)}
                   </div>
                 </div>
               ))
@@ -600,7 +613,7 @@ export const GraphTemplateDetailModal: React.FC<GraphTemplateDetailModalProps> =
                   <CardContent className="text-center py-8">
                     <Database className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
                     <h3 className="text-lg font-medium text-foreground mb-2">No Nodes</h3>
-                    <p className="text-muted-foreground">This graph template doesn't have any nodes configured.</p>
+                    <p className="text-muted-foreground">This graph template doesn&apos;t have any nodes configured.</p>
                   </CardContent>
                 </Card>
               )}

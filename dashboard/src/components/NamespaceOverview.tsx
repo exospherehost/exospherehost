@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { clientApiService } from '@/services/clientApi';
 import { 
   ListRegisteredNodesResponse, 
   ListGraphTemplatesResponse,
   NodeRegistration,
-  UpsertGraphTemplateResponse
 } from '@/types/state-manager';
 import { 
   Database, 
@@ -40,7 +39,7 @@ export const NamespaceOverview: React.FC<NamespaceOverviewProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadNamespaceData = async () => {
+  const loadNamespaceData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
@@ -54,13 +53,13 @@ export const NamespaceOverview: React.FC<NamespaceOverviewProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [namespace]);
 
   useEffect(() => {
     if (namespace) {
       loadNamespaceData();
     }
-  }, [namespace]);
+  }, [namespace, loadNamespaceData]);
 
   const getValidationStatusColor = (status: string) => {
     switch (status) {
