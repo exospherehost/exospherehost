@@ -168,4 +168,14 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
+  
+  /* Custom select dropdown styling for better dark theme support */
+  select {
+    color-scheme: dark;
+  }
+  
+  select option {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+  }
 }
