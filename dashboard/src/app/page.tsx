@@ -48,23 +48,44 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchConfigAndNamespaces = async () => {
       try {
-        // Fetch configuration
-        const configResponse = await fetch('/api/config');
+        // Fetch both configuration and available namespaces
+        const [configResponse, namespacesData] = await Promise.all([
+          fetch('/api/config'),
+          clientApiService.getNamespaces()
+        ]);
+
+        const availableNamespaces = namespacesData.namespaces || [];
+        setAvailableNamespaces(availableNamespaces);
+
+        // Determine which namespace to select
+        let selectedNamespace = 'default';
+        
         if (configResponse.ok) {
           const config = await configResponse.json();
-          setNamespace(config.defaultNamespace);
+          const defaultNamespace = config.defaultNamespace;
+          
+          // If default namespace exists in available namespaces, use it
+          if (availableNamespaces.includes(defaultNamespace)) {
+            selectedNamespace = defaultNamespace;
+          } else if (availableNamespaces.length > 0) {
+            // If default namespace doesn't exist but we have other namespaces, select the first one
+            selectedNamespace = availableNamespaces[0];
+          }
+          // If no namespaces available from database, keep 'default' as fallback
+        } else if (availableNamespaces.length > 0) {
+          // If config fetch failed but we have namespaces, select the first one
+          selectedNamespace = availableNamespaces[0];
         }
 
-        // Fetch available namespaces
-        const namespacesData = await clientApiService.getNamespaces();
-        setAvailableNamespaces(namespacesData.namespaces || []);
+        setNamespace(selectedNamespace);
         
-        // If no namespaces available and we have a default, add it
-        if (namespacesData.namespaces?.length === 0) {
-          setAvailableNamespaces(['default']);
+        // If no namespaces available from database, add the selected namespace to the list
+        if (availableNamespaces.length === 0) {
+          setAvailableNamespaces([selectedNamespace]);
         }
       } catch (error) {
         console.warn('Failed to fetch config or namespaces, using defaults');
+        setNamespace('default');
         setAvailableNamespaces(['default']);
       }
     };
