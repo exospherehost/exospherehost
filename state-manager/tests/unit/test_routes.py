@@ -48,6 +48,9 @@ class TestRouteStructure:
         assert any('/v0/namespace/{namespace_name}/runs/{page}/{size}' in path for path in paths)
         assert any('/v0/namespace/{namespace_name}/states/run/{run_id}' in path for path in paths)
         assert any('/v0/namespace/{namespace_name}/states' in path for path in paths)
+        
+        # Node run details route
+        assert any('/v0/namespace/{namespace_name}/graph/{graph_name}/run/{run_id}/node/{node_id}' in path for path in paths)
 
     def test_router_tags(self):
         """Test that router has correct tags"""
@@ -291,7 +294,8 @@ class TestRouteHandlers:
             list_registered_nodes_route,
             list_graph_templates_route,
             get_runs_route,
-            get_graph_structure_route
+            get_graph_structure_route,
+            get_node_run_details_route
 
         )
         
@@ -308,6 +312,7 @@ class TestRouteHandlers:
         assert callable(list_graph_templates_route)
         assert callable(get_runs_route)
         assert callable(get_graph_structure_route)
+        assert callable(get_node_run_details_route)
 
 
 
@@ -997,3 +1002,35 @@ class TestRouteHandlerAPIKeyValidation:
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Invalid API key"
         mock_get_graph_structure.assert_not_called()
+
+    @patch('app.routes.get_node_run_details')
+    async def test_get_node_run_details_route_with_valid_api_key(self, mock_get_node_run_details, mock_request):
+        """Test get_node_run_details_route with valid API key"""
+        from app.routes import get_node_run_details_route
+        
+        # Arrange
+        mock_get_node_run_details.return_value = MagicMock()
+        
+        # Act
+        result = await get_node_run_details_route("test_namespace", "test_graph", "test_run_id", "test_node_id", mock_request, "valid_key")
+        
+        # Assert
+        mock_get_node_run_details.assert_called_once_with("test_namespace", "test_graph", "test_run_id", "test_node_id", "test-request-id")
+        assert result == mock_get_node_run_details.return_value
+
+    @patch('app.routes.get_node_run_details')
+    async def test_get_node_run_details_route_with_invalid_api_key(self, mock_get_node_run_details, mock_request):
+        """Test get_node_run_details_route with invalid API key"""
+        from app.routes import get_node_run_details_route
+        from fastapi import HTTPException
+        
+        # Arrange
+        mock_get_node_run_details.return_value = MagicMock()
+        
+        # Act & Assert
+        with pytest.raises(HTTPException) as exc_info:
+            await get_node_run_details_route("test_namespace", "test_graph", "test_run_id", "test_node_id", mock_request, None) # type: ignore
+        
+        assert exc_info.value.status_code == 401
+        assert exc_info.value.detail == "Invalid API key"
+        mock_get_node_run_details.assert_not_called()

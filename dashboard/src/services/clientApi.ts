@@ -21,6 +21,15 @@ export class ClientApiService {
     return response.json();
   }
 
+  // Node Run Details
+  async getNodeRunDetails(namespace: string, graphName: string, runId: string, nodeId: string) {
+    const response = await fetch(`/api/node-run-details?namespace=${encodeURIComponent(namespace)}&graphName=${encodeURIComponent(graphName)}&runId=${encodeURIComponent(runId)}&nodeId=${encodeURIComponent(nodeId)}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch node run details: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
   // Namespace Overview
   async getNamespaceOverview(namespace: string) {
     const response = await fetch(`/api/namespace-overview?namespace=${encodeURIComponent(namespace)}`);
@@ -49,6 +58,15 @@ export class ClientApiService {
     });
     if (!response.ok) {
       throw new Error(`Failed to update graph template: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  // Namespaces
+  async getNamespaces() {
+    const response = await fetch('/api/namespaces');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch namespaces: ${response.statusText}`);
     }
     return response.json();
   }

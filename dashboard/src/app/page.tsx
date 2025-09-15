@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { GraphTemplateBuilder } from '@/components/GraphTemplateBuilder';
 import { NamespaceOverview } from '@/components/NamespaceOverview';
 import { RunsTable } from '@/components/RunsTable';
@@ -13,16 +14,23 @@ import {
   UpsertGraphTemplateResponse,
 } from '@/types/state-manager';
 import { 
-  GitBranch, 
   BarChart3,
   AlertCircle,
   Filter
 } from 'lucide-react';
 
+// Shadcn components
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Select } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState< 'overview' | 'graph' |'runs'>('overview');
   const [namespace, setNamespace] = useState('default');
-  const [graphName, setGraphName] = useState('test-graph');
+  const [availableNamespaces, setAvailableNamespaces] = useState<string[]>([]);
+  const [graphName] = useState('test-graph');
   const [graphTemplate, setGraphTemplate] = useState<UpsertGraphTemplateRequest | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -34,21 +42,53 @@ export default function Dashboard() {
   const [selectedGraphTemplate, setSelectedGraphTemplate] = useState<UpsertGraphTemplateResponse | null>(null);
   const [isGraphModalOpen, setIsGraphModalOpen] = useState(false);
 
-  // Fetch configuration on component mount
+  // Fetch configuration and namespaces on component mount
   useEffect(() => {
-    const fetchConfig = async () => {
+    const fetchConfigAndNamespaces = async () => {
       try {
-        const response = await fetch('/api/config');
-        if (response.ok) {
-          const config = await response.json();
-          setNamespace(config.defaultNamespace);
+        // Fetch both configuration and available namespaces
+        const [configResponse, namespacesData] = await Promise.all([
+          fetch('/api/config'),
+          clientApiService.getNamespaces()
+        ]);
+
+        const availableNamespaces = namespacesData.namespaces || [];
+        setAvailableNamespaces(availableNamespaces);
+
+        // Determine which namespace to select
+        let selectedNamespace = 'default';
+        
+        if (configResponse.ok) {
+          const config = await configResponse.json();
+          const defaultNamespace = config.defaultNamespace;
+          
+          // If default namespace exists in available namespaces, use it
+          if (availableNamespaces.includes(defaultNamespace)) {
+            selectedNamespace = defaultNamespace;
+          } else if (availableNamespaces.length > 0) {
+            // If default namespace doesn't exist but we have other namespaces, select the first one
+            selectedNamespace = availableNamespaces[0];
+          }
+          // If no namespaces available from database, keep 'default' as fallback
+        } else if (availableNamespaces.length > 0) {
+          // If config fetch failed but we have namespaces, select the first one
+          selectedNamespace = availableNamespaces[0];
         }
-      } catch (error) {
-        console.warn('Failed to fetch config, using default namespace');
+
+        setNamespace(selectedNamespace);
+        
+        // If no namespaces available from database, add the selected namespace to the list
+        if (availableNamespaces.length === 0) {
+          setAvailableNamespaces([selectedNamespace]);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch config or namespaces, using defaults:', err);
+        setNamespace('default');
+        setAvailableNamespaces(['default']);
       }
     };
 
-    fetchConfig();
+    fetchConfigAndNamespaces();
   }, []);
 
   const handleSaveGraphTemplate = async (template: UpsertGraphTemplateRequest) => {
@@ -75,6 +115,8 @@ export default function Dashboard() {
     try {
       setIsLoading(true);
       const graphTemplate = await clientApiService.getGraphTemplate(namespace, graphName);
+      graphTemplate.name = graphName;
+      graphTemplate.namespace = namespace;
       setSelectedGraphTemplate(graphTemplate);
       setIsGraphModalOpen(true);
     } catch (err) {
@@ -89,125 +131,133 @@ export default function Dashboard() {
     setSelectedGraphTemplate(null);
   };
 
-  const tabs = [    
-    { id: 'overview', label: 'Overview', icon: BarChart3 },    
-    { id: 'graph', label: 'Graph Template', icon: GitBranch },    
-    { id: 'runs', label: 'Runs', icon: Filter }
-  ] as const;
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-[#031035] shadow-sm border-b border-gray-200">
+      <header className="border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <img src="/exospheresmall.png" alt="Exosphere Logo" className="w-8 h-8" />
-                <h1 className="text-xl font-bold text-white">Exosphere Dashboard</h1>
+              <div className="flex items-center space-x-3">
+                <Image src="/exospheresmall.png" alt="Exosphere Logo" width={32} height={32} />
+                <div>
+                  <h1 className="text-xl font-bold text-foreground">Exosphere Dashboard</h1>
+                  <p className="text-sm text-muted-foreground">AI Workflow State Manager</p>
+                </div>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-white">Namespace:</span>
-                <input
-                  type="text"
+                <span className="text-sm text-muted-foreground">Namespace:</span>
+                <Select
                   value={namespace}
                   onChange={(e) => setNamespace(e.target.value)}
-                  className="px-2 py-1 text-sm text-white border border-gray-300 rounded"
-                />
+                  className="w-32 h-8"
+                >
+                  {availableNamespaces.map((ns) => (
+                    <option key={ns} value={ns}>
+                      {ns}
+                    </option>
+                  ))}
+                  {/* Show current namespace even if not in the list */}
+                  {!availableNamespaces.includes(namespace) && (
+                    <option key={namespace} value={namespace}>
+                      {namespace}
+                    </option>
+                  )}
+                </Select>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Navigation Tabs */}
-      <nav className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
-                      ? 'border-[#031035] text-[#031035]'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </nav>
-
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Error Display */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="flex">
-              <AlertCircle className="w-5 h-5 text-red-400" />
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <div className="mt-2 text-sm text-red-700">{error}</div>
-              </div>
-            </div>
-          </div>
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         {/* Loading Indicator */}
         {isLoading && (
-          <div className="mb-6 bg-[#031035]/10 border border-[#031035]/20 rounded-md p-4">
+          <Alert className="mb-6">
             <div className="flex items-center">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#031035]"></div>
-              <span className="ml-2 text-sm text-[#031035]">Processing...</span>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+              <AlertDescription className="ml-2">Processing...</AlertDescription>
             </div>
-          </div>
+          </Alert>
         )}
 
+        {/* Navigation Tabs */}
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'overview' | 'runs')} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsTrigger value="overview" className="flex items-center space-x-2">
+              <BarChart3 className="w-4 h-4" />
+              <span>Overview</span>
+            </TabsTrigger>
+            {/* <TabsTrigger value="graph" className="flex items-center space-x-2">
+              <GitBranch className="w-4 h-4" />
+              <span>Graph Template</span>
+            </TabsTrigger> */}
+            <TabsTrigger value="runs" className="flex items-center space-x-2">
+              <Filter className="w-4 h-4" />
+              <span>Runs</span>
+            </TabsTrigger>
+          </TabsList>
 
-        {activeTab === 'graph' && (
-          <div>
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Graph Template Builder</h2>
-              {graphTemplate && (
-                <button
-                  onClick={() => handleOpenGraphModal(graphName)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  View Graph Template
-                </button>
-              )}
-            </div>
-            <GraphTemplateBuilder
-              graphTemplate={graphTemplate || undefined}
-              onSave={handleSaveGraphTemplate}
-              readOnly={false}
-            />
-          </div>
-        )}
+          <TabsContent value="overview" className="space-y-6">
+            <Card>
+              <CardContent>
+                <NamespaceOverview
+                  namespace={namespace}
+                  onOpenNode={handleOpenNodeModal}
+                  onOpenGraphTemplate={handleOpenGraphModal}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        {activeTab === 'overview' && (
-          <NamespaceOverview
-            namespace={namespace}
-            onOpenNode={handleOpenNodeModal}
-            onOpenGraphTemplate={handleOpenGraphModal}
-          />
-        )}
+          <TabsContent value="graph" className="space-y-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
+                <div>
+                  <CardTitle>Graph Template Builder</CardTitle>
+                  <CardDescription>
+                    Design and configure your AI workflow graph templates
+                  </CardDescription>
+                </div>
+                {graphTemplate && (
+                  <Button
+                    onClick={() => handleOpenGraphModal(graphName)}
+                    variant="outline"
+                  >
+                    View Template
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent>
+                <GraphTemplateBuilder
+                  graphTemplate={graphTemplate || undefined}
+                  onSave={handleSaveGraphTemplate}
+                  readOnly={false}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        {activeTab === 'runs' && (
-          <RunsTable
-            namespace={namespace}
-          />
-        )}
+          <TabsContent value="runs" className="space-y-6">
+            <Card>
+              <CardContent>
+                <RunsTable namespace={namespace} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Modals */}

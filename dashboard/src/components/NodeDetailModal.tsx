@@ -2,7 +2,13 @@
 
 import React from 'react';
 import { NodeRegistration } from '@/types/state-manager';
-import { X, Code, Eye, EyeOff, Key } from 'lucide-react';
+import { X, ChevronDown, ChevronRight } from 'lucide-react';
+
+// Shadcn components
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface SchemaProperty {
   type: string;
@@ -27,71 +33,75 @@ const SchemaRenderer: React.FC<{ schema: Schema; title: string }> = ({ schema, t
 
   const renderSchemaProperties = (properties: Record<string, SchemaProperty>, required: string[] = []) => {
     return Object.entries(properties).map(([key, value]: [string, SchemaProperty]) => (
-      <div key={key} className="border-l-2 border-gray-200 pl-4 py-2">
+      <div key={key} className="border-l-2 border-primary/30 pl-4 py-2 bg-card/50 rounded-r-md">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="font-mono text-sm font-medium text-gray-800">
+            <span className="font-mono text-sm font-medium text-foreground">
               {key}
             </span>
             {required.includes(key) && (
-              <span className="text-xs bg-red-100 text-red-800 px-1 py-0.5 rounded">
+              <Badge variant="destructive" className="text-xs">
                 required
-              </span>
+              </Badge>
             )}
           </div>
-          <span className="text-xs text-gray-500 font-mono">
+          <Badge variant="outline" className="text-xs font-mono">
             {value.type}
-          </span>
+          </Badge>
         </div>
         {value.description && (
-          <p className="text-xs text-gray-600 mt-1">{value.description}</p>
+          <p className="text-xs text-muted-foreground mt-1">{value.description}</p>
         )}
         {value.enum && (
           <div className="mt-1">
-            <span className="text-xs text-gray-500">Values: </span>
-            <span className="text-xs font-mono text-[#031035]">
-              {value.enum.join(', ')}
-            </span>
+            <span className="text-xs text-muted-foreground">Options: </span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {value.enum.map((option, idx) => (
+                <Badge key={idx} variant="secondary" className="text-xs">
+                  {option}
+                </Badge>
+              ))}
+            </div>
           </div>
         )}
       </div>
     ));
   };
 
+  if (!schema || !schema.properties) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No schema defined</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div className="bg-gray-50 rounded-lg p-4">
-      <div 
-        className="flex items-center justify-between cursor-pointer"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <h4 className="text-sm font-semibold text-gray-700 flex items-center">
-          <Code className="w-4 h-4 mr-2" />
-          {title}
-        </h4>
-        {isExpanded ? (
-          <EyeOff className="w-4 h-4 text-gray-500" />
-        ) : (
-          <Eye className="w-4 h-4 text-gray-500" />
-        )}
-      </div>
-      
+    <Card>
+      <CardHeader className="pb-3">
+        <Button
+          variant="ghost"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center justify-between w-full p-0 h-auto"
+        >
+          <CardTitle className="text-sm flex items-center space-x-2">
+            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            <span>{title}</span>
+          </CardTitle>
+          <Badge variant="outline">{Object.keys(schema.properties).length} fields</Badge>
+        </Button>
+      </CardHeader>
       {isExpanded && (
-        <div className="mt-3 space-y-2">
-          {schema.properties && (
-            <div>
-              <h5 className="text-xs font-medium text-gray-600 mb-2">Properties:</h5>
-              {renderSchemaProperties(schema.properties, schema.required || [])}
-            </div>
-          )}
-          
-          {schema.type && (
-            <div className="text-xs text-gray-500">
-              <span className="font-medium">Type:</span> {schema.type}
-            </div>
-          )}
-        </div>
+        <CardContent className="pt-0 space-y-3">
+          {renderSchemaProperties(schema.properties, schema.required)}
+        </CardContent>
       )}
-    </div>
+    </Card>
   );
 };
 
@@ -103,100 +113,65 @@ export const NodeDetailModal: React.FC<NodeDetailModalProps> = ({
   if (!isOpen || !node) return null;
 
   return (
-    <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <Card className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="bg-[#031035] p-6 text-white">
+        <CardHeader className="bg-primary/10 border-b">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold">{node.name}</h2>
-              <p className="text-[#031035]/80 text-sm mt-1">
+              <CardTitle className="text-xl">{node.name}</CardTitle>
+              <CardDescription className="mt-1">
                 Node Schema Details
-              </p>
+              </CardDescription>
             </div>
-            <button
+            <Button
               onClick={onClose}
-              className="text-white hover:text-gray-200 transition-colors"
+              variant="ghost"
+              size="sm"
             >
-              <X className="w-6 h-6" />
-            </button>
+              <X className="w-5 h-5" />
+            </Button>
           </div>
-        </div>
+        </CardHeader>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Secrets Section */}
-          {node.secrets.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                <Key className="w-5 h-5 mr-2 text-yellow-600" />
-                Required Secrets
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {node.secrets.map((secret, index) => (
-                  <span
-                    key={index}
-                    className="text-sm bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-medium"
-                  >
-                    {secret}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+        <CardContent className="p-6">
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="inputs">Inputs</TabsTrigger>
+              <TabsTrigger value="outputs">Outputs</TabsTrigger>
 
-          {/* Input Schema */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Input Schema</h3>
-            <SchemaRenderer 
-              schema={node.inputs_schema} 
-              title="Input Schema" 
-            />
-          </div>
+            </TabsList>
 
-          {/* Output Schema */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Output Schema</h3>
-            <SchemaRenderer 
-              schema={node.outputs_schema} 
-              title="Output Schema" 
-            />
-          </div>
+            <TabsContent value="overview" className="space-y-4 mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Node Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">Name</label>
+                      <div className="text-sm font-mono bg-muted p-2 rounded mt-1">{node.name}</div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-          {/* Summary */}
-          <div className="bg-[#031035]/5 border border-[#031035]/20 rounded-lg p-4">
-            <h4 className="text-sm font-semibold text-[#031035] mb-2">Node Summary</h4>
-            <div className="grid grid-cols-3 gap-4 text-sm">
-              <div>
-                <span className="text-[#031035] font-medium">Secrets:</span>
-                <span className="ml-2 text-[#031035]">{node.secrets.length}</span>
               </div>
-              <div>
-                <span className="text-[#031035] font-medium">Inputs:</span>
-                <span className="ml-2 text-[#031035]">
-                  {Object.keys(node.inputs_schema.properties || {}).length}
-                </span>
-              </div>
-              <div>
-                <span className="text-[#031035] font-medium">Outputs:</span>
-                <span className="ml-2 text-[#031035]">
-                  {Object.keys(node.outputs_schema.properties || {}).length}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+            </TabsContent>
 
-        {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 rounded-b-lg">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            Close
-          </button>
-        </div>
-      </div>
+            <TabsContent value="inputs" className="mt-6">
+              <SchemaRenderer schema={node.inputs_schema} title="Input Schema" />
+            </TabsContent>
+
+            <TabsContent value="outputs" className="mt-6">
+              <SchemaRenderer schema={node.outputs_schema} title="Output Schema" />
+            </TabsContent>
+
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };

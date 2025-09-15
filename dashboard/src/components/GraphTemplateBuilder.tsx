@@ -21,7 +21,6 @@ export const GraphTemplateBuilder: React.FC<GraphTemplateBuilderProps> = ({
   const [secrets, setSecrets] = React.useState<Record<string, string>>(
     graphTemplate?.secrets || {}
   );
-  const [editingNode, setEditingNode] = React.useState<number | null>(null);
 
   const addNode = () => {
     const newNode: NodeTemplate = {
@@ -32,7 +31,6 @@ export const GraphTemplateBuilder: React.FC<GraphTemplateBuilderProps> = ({
       next_nodes: []
     };
     setNodes([...nodes, newNode]);
-    setEditingNode(nodes.length);
   };
 
   const updateNode = (index: number, updates: Partial<NodeTemplate>) => {
@@ -66,24 +64,16 @@ export const GraphTemplateBuilder: React.FC<GraphTemplateBuilderProps> = ({
   };
 
   const removeSecret = (key: string) => {
-    const { [key]: removed, ...remaining } = secrets;
-    setSecrets(remaining);
+    const newSecrets = Object.fromEntries(
+      Object.entries(secrets).filter(([k]) => k !== key)
+    );
+    setSecrets(newSecrets);
   };
 
   const handleSave = () => {
     if (onSave) {
       onSave({ nodes, secrets });
     }
-  };
-
-  const getNodeConnections = (nodeIndex: number) => {
-    const node = nodes[nodeIndex];
-    if (!node) return [];
-    
-    return node.next_nodes.map(nextNodeId => {
-      const nextNodeIndex = nodes.findIndex(n => n.identifier === nextNodeId);
-      return { from: nodeIndex, to: nextNodeIndex, label: nextNodeId };
-    });
   };
 
   return (
@@ -100,189 +90,193 @@ export const GraphTemplateBuilder: React.FC<GraphTemplateBuilderProps> = ({
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Nodes Section */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">Nodes</h3>
+      {/* Nodes Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-700">Workflow Nodes</h3>
+          {!readOnly && (
+            <button
+              onClick={addNode}
+              className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Node</span>
+            </button>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          {nodes.map((node, index) => (
+            <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-md font-medium text-gray-800">Node {index + 1}</h4>
+                {!readOnly && (
+                  <button
+                    onClick={() => removeNode(index)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Node Name
+                  </label>
+                  <input
+                    type="text"
+                    value={node.node_name}
+                    onChange={(e) => updateNode(index, { node_name: e.target.value })}
+                    disabled={readOnly}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                    placeholder="Enter node name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Namespace
+                  </label>
+                  <input
+                    type="text"
+                    value={node.namespace}
+                    onChange={(e) => updateNode(index, { namespace: e.target.value })}
+                    disabled={readOnly}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                    placeholder="Enter namespace"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Identifier
+                  </label>
+                  <input
+                    type="text"
+                    value={node.identifier}
+                    onChange={(e) => updateNode(index, { identifier: e.target.value })}
+                    disabled={readOnly}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                    placeholder="Enter unique identifier"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Next Nodes (comma-separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={node.next_nodes.join(', ')}
+                    onChange={(e) => updateNode(index, { 
+                      next_nodes: e.target.value.split(',').map(s => s.trim()).filter(Boolean) 
+                    })}
+                    disabled={readOnly}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                    placeholder="node2, node3"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Node Inputs (JSON)
+                </label>
+                <textarea
+                  value={JSON.stringify(node.inputs, null, 2)}
+                  onChange={(e) => {
+                    try {
+                      const inputs = JSON.parse(e.target.value);
+                      updateNode(index, { inputs });
+                    } catch (error) {
+                      console.warn('Invalid JSON:', error);
+                      // Keep the text as is for user to fix
+                    }
+                  }}
+                  disabled={readOnly}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm disabled:bg-gray-100"
+                  rows={4}
+                  placeholder='{"key": "value"}'
+                />
+              </div>
+            </div>
+          ))}
+
+          {nodes.length === 0 && (
+            <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+              <Settings className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No nodes yet</h3>
+              <p className="text-gray-600 mb-4">Get started by adding your first workflow node.</p>
               {!readOnly && (
                 <button
                   onClick={addNode}
-                  className="flex items-center space-x-2 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Add Node</span>
+                  <span>Add First Node</span>
                 </button>
               )}
             </div>
+          )}
+        </div>
+      </div>
 
-            <div className="space-y-4">
-              {nodes.map((node, index) => (
-                <div
-                  key={index}
-                  className="border border-gray-200 rounded-lg p-4 bg-gray-50"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-gray-800">
-                      Node {index + 1}: {node.identifier}
-                    </h4>
-                    {!readOnly && (
-                      <button
-                        onClick={() => removeNode(index)}
-                        className="p-1 text-red-600 hover:bg-red-50 rounded"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Node Name
-                      </label>
-                      <input
-                        type="text"
-                        value={node.node_name}
-                        onChange={(e) => updateNode(index, { node_name: e.target.value })}
-                        disabled={readOnly}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#031035]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Namespace
-                      </label>
-                      <input
-                        type="text"
-                        value={node.namespace}
-                        onChange={(e) => updateNode(index, { namespace: e.target.value })}
-                        disabled={readOnly}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#031035]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Identifier
-                      </label>
-                      <input
-                        type="text"
-                        value={node.identifier}
-                        onChange={(e) => updateNode(index, { identifier: e.target.value })}
-                        disabled={readOnly}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Next Nodes
-                      </label>
-                      <input
-                        type="text"
-                        value={node.next_nodes.join(', ')}
-                        onChange={(e) => updateNode(index, { 
-                          next_nodes: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
-                        })}
-                        disabled={readOnly}
-                        placeholder="node1, node2, node3"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#031035]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Inputs (JSON)
-                    </label>
-                    <textarea
-                      value={JSON.stringify(node.inputs, null, 2)}
-                      onChange={(e) => {
-                        try {
-                          const inputs = JSON.parse(e.target.value);
-                          updateNode(index, { inputs });
-                        } catch (error) {
-                          // Invalid JSON, ignore
-                        }
-                      }}
-                      disabled={readOnly}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#031035] font-mono text-sm"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {nodes.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <Settings className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p>No nodes added yet. Click &quot;Add Node&quot; to get started.</p>
-              </div>
-            )}
-          </div>
+      {/* Secrets Section */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-700">Template Secrets</h3>
+          {!readOnly && (
+            <button
+              onClick={addSecret}
+              className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Secret</span>
+            </button>
+          )}
         </div>
 
-        {/* Secrets Section */}
-        <div>
-          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">Secrets</h3>
+        <div className="space-y-3">
+          {Object.entries(secrets).map(([key, value]) => (
+            <div key={key} className="flex items-center space-x-3 bg-white border border-gray-200 rounded-lg p-3">
+              <input
+                type="text"
+                value={key}
+                onChange={(e) => {
+                  const newKey = e.target.value;
+                  const { [key]: oldValue, ...rest } = secrets;
+                  setSecrets({ ...rest, [newKey]: oldValue });
+                }}
+                disabled={readOnly}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                placeholder="Secret key"
+              />
+              <input
+                type="password"
+                value={value}
+                onChange={(e) => updateSecret(key, e.target.value)}
+                disabled={readOnly}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                placeholder="Secret value"
+              />
               {!readOnly && (
                 <button
-                  onClick={addSecret}
-                  className="flex items-center space-x-2 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  onClick={() => removeSecret(key)}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Secret</span>
+                  <Trash2 className="w-4 h-4" />
                 </button>
               )}
             </div>
+          ))}
 
-            <div className="space-y-3">
-              {Object.entries(secrets).map(([key, value]) => (
-                <div key={key} className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    value={key}
-                    onChange={(e) => {
-                      const newSecrets = { ...secrets };
-                      delete newSecrets[key];
-                      newSecrets[e.target.value] = value;
-                      setSecrets(newSecrets);
-                    }}
-                    disabled={readOnly}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#031035] text-sm"
-                  />
-                  <span className="text-gray-500">:</span>
-                  <input
-                    type="password"
-                    value={value}
-                    onChange={(e) => updateSecret(key, e.target.value)}
-                    disabled={readOnly}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#031035] text-sm"
-                  />
-                  {!readOnly && (
-                    <button
-                      onClick={() => removeSecret(key)}
-                      className="p-1 text-red-600 hover:bg-red-50 rounded"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
+          {Object.keys(secrets).length === 0 && (
+            <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+              <p className="text-gray-600">No secrets configured for this template.</p>
             </div>
-
-            {Object.keys(secrets).length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <p>No secrets configured.</p>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>
