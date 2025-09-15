@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
     }
 
-    const response = await fetch(`${API_BASE_URL}/v0/namespace/${namespace}/graph/${graphName}/run/${runId}/node/${nodeId}`, {
+    const response = await fetch(`${API_BASE_URL}/v0/namespace/${encodeURIComponent(namespace)}/graph/${encodeURIComponent(graphName)}/run/${encodeURIComponent(runId)}/node/${encodeURIComponent(nodeId)}`, {
       headers: {
         'X-API-Key': API_KEY,
         'Content-Type': 'application/json',
@@ -27,7 +27,27 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
-      throw new Error(`State manager API error: ${response.status} ${response.statusText}`);
+      // Propagate upstream error with original status and body
+      let upstreamBody: string;
+      const contentType = response.headers.get('Content-Type');
+      
+      try {
+        if (contentType?.includes('application/json')) {
+          const jsonData = await response.json();
+          upstreamBody = JSON.stringify(jsonData);
+        } else {
+          upstreamBody = await response.text();
+        }
+      } catch {
+        upstreamBody = `Upstream error: ${response.status} ${response.statusText}`;
+      }
+
+      return new Response(upstreamBody, {
+        status: response.status,
+        headers: {
+          'Content-Type': contentType || 'text/plain',
+        },
+      });
     }
 
     const data = await response.json();
