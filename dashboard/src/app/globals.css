@@ -162,6 +162,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    font-size: 25px; /* Increased from default 16px */
+  }
   body {
     @apply bg-background text-foreground font-sans;
   }

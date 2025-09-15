@@ -129,7 +129,7 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
   const [isLoadingNodeDetails, setIsLoadingNodeDetails] = useState(false);
   const [nodeDetailsError, setNodeDetailsError] = useState<string | null>(null);
 
-  const loadGraphStructure = async () => {
+  const loadGraphStructure = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
@@ -141,9 +141,9 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [namespace, runId]);
 
-  const loadNodeDetails = async (nodeId: string, graphName: string) => {
+  const loadNodeDetails = useCallback(async (nodeId: string, graphName: string) => {
     setIsLoadingNodeDetails(true);
     setNodeDetailsError(null);
     
@@ -155,13 +155,13 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
     } finally {
       setIsLoadingNodeDetails(false);
     }
-  };
+  }, [namespace, runId]);
 
   useEffect(() => {
     if (namespace && runId) {
       loadGraphStructure();
     }
-  }, [namespace, runId]);
+  }, [namespace, runId, loadGraphStructure]);
 
   // Convert graph data to React Flow format with horizontal layout
   const { nodes, edges } = useMemo(() => {
@@ -239,11 +239,11 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
 
     // Convert to React Flow nodes with horizontal positioning
     const reactFlowNodes: Node[] = [];
-    const layerWidth = 400; // Increased horizontal spacing between layers
-    const nodeHeight = 150; // Increased vertical spacing between nodes
+    const layerWidth = 450; // Increased horizontal spacing between layers
+    const nodeHeight = 250; // Increased vertical spacing between nodes
 
     layers.forEach((layer, layerIndex) => {
-      const layerX = layerIndex * layerWidth + 150;
+      const layerX = layerIndex * layerWidth + 200;
       const totalHeight = layer.length * nodeHeight;
       const startY = (800 - totalHeight) / 2; // Center vertically
 
@@ -309,7 +309,7 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
     if (graphData?.graph_name) {
       loadNodeDetails(graphNode.id, graphData.graph_name);
     }
-  }, [graphData?.graph_name]);
+  }, [graphData?.graph_name, loadNodeDetails]);
 
   if (isLoading) {
     return (
@@ -427,6 +427,7 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
               nodesConnectable={false}
               nodesDraggable={false}
             >
+              <Background color="#031035" />
               <Controls />
             </ReactFlow>
           </div>
