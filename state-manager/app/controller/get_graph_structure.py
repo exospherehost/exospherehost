@@ -41,7 +41,7 @@ async def get_graph_structure(namespace: str, run_id: str, request_id: str) -> G
                 edges=[],
                 node_count=0,
                 edge_count=0,
-                execution_summary={}
+                execution_summary={status.value: 0 for status in StateStatusEnum}
             )
         
         # Get graph name from first state (all states in a run should have same graph name)
