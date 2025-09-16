@@ -14,6 +14,7 @@ tests/
 │       ├── test_errored_state.py
 │       ├── test_get_graph_template.py
 │       ├── test_get_secrets.py
+│       ├── test_manual_retry_state.py
 │       ├── test_register_nodes.py
 │       └── test_upsert_graph_template.py
 └── README.md
@@ -80,7 +81,21 @@ The unit tests cover all controller functions in the state-manager:
 - ✅ Complex schema handling
 - ✅ Database error handling
 
-### 8. `upsert_graph_template.py`
+### 8. `manual_retry_state.py`
+- ✅ Successful manual retry state creation
+- ✅ State not found scenarios
+- ✅ Duplicate retry state detection (DuplicateKeyError)
+- ✅ Different fanout_id handling
+- ✅ Complex inputs and multiple parents preservation
+- ✅ Database errors during state lookup
+- ✅ Database errors during state save
+- ✅ Database errors during retry state insert
+- ✅ Empty inputs and parents handling
+- ✅ Namespace mismatch scenarios
+- ✅ Field preservation and reset logic
+- ✅ Logging verification
+
+### 9. `upsert_graph_template.py`
 - ✅ Existing template updates
 - ✅ New template creation
 - ✅ Empty nodes handling
