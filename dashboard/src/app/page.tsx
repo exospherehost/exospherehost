@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { GraphTemplateBuilder } from '@/components/GraphTemplateBuilder';
 import { NamespaceOverview } from '@/components/NamespaceOverview';
 import { RunsTable } from '@/components/RunsTable';
 import { NodeDetailModal } from '@/components/NodeDetailModal';
 import { GraphTemplateDetailModal} from '@/components/GraphTemplateDetailModal';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { Logo } from '@/components/Logo';
 import { clientApiService } from '@/services/clientApi';
 import {
   NodeRegistration, 
@@ -140,7 +140,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
-                <Image src="/exospheresmall.png" alt="Exosphere Logo" width={32} height={32} />
+                <Logo width={32} height={32} />
                 <div>
                   <h1 className="text-xl font-bold text-foreground">Exosphere Dashboard</h1>
                   <p className="text-sm text-muted-foreground">AI Workflow State Manager</p>
