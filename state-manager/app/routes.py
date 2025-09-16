@@ -50,6 +50,10 @@ from .controller.prune_signal import prune_signal
 from .models.signal_models import ReEnqueueAfterRequestModel
 from .controller.re_queue_after_signal import re_queue_after_signal
 
+# manual_retry
+from .models.manual_retry import ManualRetryRequestModel, ManualRetryResponseModel
+from .controller.manual_retry_state import manual_retry_state
+
 
 logger = LogsManager().get_logger()
 
@@ -175,6 +179,24 @@ async def re_enqueue_after_state_route(namespace_name: str, state_id: str, body:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
     
     return await re_queue_after_signal(namespace_name, PydanticObjectId(state_id), body, x_exosphere_request_id)
+
+@router.post(
+    "/state/{state_id}/manual-retry",
+    response_model=ManualRetryResponseModel,
+    status_code=status.HTTP_200_OK,
+    response_description="State manual retry successfully",
+    tags=["state"]
+)
+async def manual_retry_state_route(namespace_name: str, state_id: str, body: ManualRetryRequestModel, request: Request, api_key: str = Depends(check_api_key)):
+    x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
+    
+    if api_key:
+        logger.info(f"API key is valid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+    else:
+        logger.error(f"API key is invalid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+    
+    return await manual_retry_state(namespace_name, PydanticObjectId(state_id), body, x_exosphere_request_id)
 
 
 @router.put(
