@@ -48,7 +48,7 @@ const CustomNode: React.FC<{ data: NodeTemplate & { index: number } }> = ({ data
         type="target"
         position={Position.Left}
         id="target"
-        style={{ background: 'hsl(var(--primary))', width: '12px', height: '12px' }}
+        style={{ background: 'var(--primary)', width: '12px', height: '12px' }}
       />
       
       {/* Source Handle (Right side) - only show if node has next_nodes */}
