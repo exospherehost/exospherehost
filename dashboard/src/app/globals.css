@@ -38,8 +38,8 @@
   --input: #1a2a5a; /* Navy input background */
   --ring: #87ceeb; /* Sky blue focus ring */
   --chart-1: #87ceeb; /* Sky blue */
-  --chart-2: #4ade80; /* Green accent */
-  --chart-3: #fbbf24; /* Yellow accent */
+  --chart-2: #66d1b5; /* Green accent */
+  --chart-3: #ffed9e; /* Yellow accent */
   --chart-4: #ff6b8a; /* Pink accent */
   --chart-5: #a78bfa; /* Purple accent */
   --sidebar: #0a1a4a;
@@ -49,6 +49,44 @@
   --sidebar-accent: #1a2a5a;
   --sidebar-accent-foreground: #f8fafc;
   --sidebar-border: #1a2a5a;
+  --sidebar-ring: #87ceeb;
+}
+
+/* Light Mode Variables */
+.light {
+  --background: #ffffff; /* White background */
+  --foreground: #031035; /* Dark navy text */
+  --card: #f2f7fb; /* Light card background */
+  --card-foreground: #031035;
+  --popover: #ffffff;
+  --popover-foreground: #031035;
+  --primary: #031035; /* Dark navy primary (keeping dark blue accent) */
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9; /* Light gray secondary */
+  --secondary-foreground: #031035;
+  --muted: #f1f5f9; /* Light muted background */
+  --muted-foreground: #64748b; /* Medium gray text */
+  --accent: #031035; /* Keep dark blue accent */
+  --accent-light: #0a1a4a; /* Keep dark blue accent */
+  --accent-lighter: #1a2a5a; /* Keep dark blue accent */
+  --accent-lightest: #2a3a6a; /* Keep dark blue accent */
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626; /* Red for errors in light mode */
+  --border: #e2e8f0; /* Light border */
+  --input: #ffffff; /* White input background */
+  --ring: #87ceeb; /* Keep sky blue focus ring */
+  --chart-1: #87ceeb; /* Sky blue */
+  --chart-2: #4ade80; /* Green accent */
+  --chart-3: #cca301; /* Yellow accent */
+  --chart-4: #ff6b8a; /* Pink accent */
+  --chart-5: #a78bfa; /* Purple accent */
+  --sidebar: #f8fafc;
+  --sidebar-foreground: #031035;
+  --sidebar-primary: #031035; /* Dark navy for sidebar primary in light mode */
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #031035;
+  --sidebar-border: #e2e8f0;
   --sidebar-ring: #87ceeb;
 }
 
@@ -113,7 +151,18 @@
   }
 }
 
-
+/* Light mode react-flow nodes */
+.light .react-flow__node{
+  background-color: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  &:hover{
+    background-color: var(--muted);
+  }
+  &:active{
+    background-color: var(--muted);
+  }
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -169,9 +218,13 @@
     @apply bg-background text-foreground font-sans;
   }
   
-  /* Custom select dropdown styling for better dark theme support */
+  /* Custom select dropdown styling for better theme support */
   select {
-    color-scheme: dark;
+    color-scheme: light dark;
+  }
+  
+  .light select {
+    color-scheme: light;
   }
   
   select option {

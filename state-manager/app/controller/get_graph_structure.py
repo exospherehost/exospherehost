@@ -5,6 +5,7 @@ from typing import List, Dict
 
 from ..models.db.state import State
 from ..models.graph_structure_models import GraphStructureResponse, GraphNode, GraphEdge
+from ..models.state_status_enum import StateStatusEnum
 from ..singletons.logs_manager import LogsManager
 
 
@@ -40,7 +41,7 @@ async def get_graph_structure(namespace: str, run_id: str, request_id: str) -> G
                 edges=[],
                 node_count=0,
                 edge_count=0,
-                execution_summary={}
+                execution_summary={status.value: 0 for status in StateStatusEnum}
             )
         
         # Get graph name from first state (all states in a run should have same graph name)
@@ -96,11 +97,11 @@ async def get_graph_structure(namespace: str, run_id: str, request_id: str) -> G
                         edges.append(edge)
                         edge_id_counter += 1
         
-        # Build execution summary
-        execution_summary: Dict[str, int] = {}
+        # Build execution summary - initialize all possible states with zero counts
+        execution_summary: Dict[str, int] = {status.value: 0 for status in StateStatusEnum}
         for state in states:
             status = state.status.value
-            execution_summary[status] = execution_summary.get(status, 0) + 1
+            execution_summary[status] += 1
         
         logger.info(f"Built graph structure with {len(nodes)} nodes and {len(edges)} edges for run ID: {run_id}", x_exosphere_request_id=request_id)
         
