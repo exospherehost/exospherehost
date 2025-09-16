@@ -212,7 +212,7 @@ const GraphVisualizer: React.FC<{ nodes: NodeTemplate[] }> = ({ nodes }) => {
               type: 'default',
               animated: false,
               style: { 
-                stroke: '#87ceeb',
+                stroke: 'var(--chart-1)',
                 strokeWidth: 2,
                 strokeDasharray: 'none',
               },
@@ -220,7 +220,7 @@ const GraphVisualizer: React.FC<{ nodes: NodeTemplate[] }> = ({ nodes }) => {
                 type: MarkerType.ArrowClosed,
                 width: 10,
                 height: 10,
-                color: '#87ceeb',
+                color: 'var(--chart-1)',
               },
             });
           } else {
