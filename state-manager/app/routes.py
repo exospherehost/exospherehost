@@ -52,7 +52,7 @@ from .controller.re_queue_after_signal import re_queue_after_signal
 
 # manual_retry
 from .models.manual_retry import ManualRetryRequestModel, ManualRetryResponseModel
-from .controller.manul_retry_state import manual_retry_state
+from .controller.manual_retry_state import manual_retry_state
 
 
 logger = LogsManager().get_logger()
@@ -181,7 +181,7 @@ async def re_enqueue_after_state_route(namespace_name: str, state_id: str, body:
     return await re_queue_after_signal(namespace_name, PydanticObjectId(state_id), body, x_exosphere_request_id)
 
 @router.post(
-    "state/{state_id}/manual-retry",
+    "/state/{state_id}/manual-retry",
     response_model=ManualRetryResponseModel,
     status_code=status.HTTP_200_OK,
     response_description="State manual retry successfully",
