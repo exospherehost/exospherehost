@@ -245,3 +245,9 @@ export interface RunsResponse {
   size: number;
   runs: RunListItem[];
 }
+
+// Manual Retry Types
+export interface ManualRetryResponseModel {
+  id: string;
+  status: StateStatus;
+}

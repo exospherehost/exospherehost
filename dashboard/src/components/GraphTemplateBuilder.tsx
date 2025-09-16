@@ -79,11 +79,11 @@ export const GraphTemplateBuilder: React.FC<GraphTemplateBuilderProps> = ({
   return (
     <div className="w-full max-w-6xl mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Graph Template Builder</h2>
+        <h2 className="text-2xl font-bold text-foreground">Graph Template Builder</h2>
         {!readOnly && (
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-[#031035] text-white rounded-lg hover:bg-[#0a1a4a] transition-colors"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             Save Template
           </button>
@@ -93,11 +93,11 @@ export const GraphTemplateBuilder: React.FC<GraphTemplateBuilderProps> = ({
       {/* Nodes Section */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-700">Workflow Nodes</h3>
+          <h3 className="text-lg font-semibold text-foreground">Workflow Nodes</h3>
           {!readOnly && (
             <button
               onClick={addNode}
-              className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="flex items-center space-x-2 px-3 py-2 bg-chart-1 text-primary-foreground rounded-md hover:bg-chart-1/90 transition-colors"
             >
               <Plus className="w-4 h-4" />
               <span>Add Node</span>
@@ -107,9 +107,9 @@ export const GraphTemplateBuilder: React.FC<GraphTemplateBuilderProps> = ({
 
         <div className="space-y-4">
           {nodes.map((node, index) => (
-            <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
+            <div key={index} className="bg-card border border-border rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-md font-medium text-gray-800">Node {index + 1}</h4>
+                <h4 className="text-md font-medium text-card-foreground">Node {index + 1}</h4>
                 {!readOnly && (
                   <button
                     onClick={() => removeNode(index)}
@@ -122,7 +122,7 @@ export const GraphTemplateBuilder: React.FC<GraphTemplateBuilderProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-card-foreground mb-1">
                     Node Name
                   </label>
                   <input
@@ -130,7 +130,7 @@ export const GraphTemplateBuilder: React.FC<GraphTemplateBuilderProps> = ({
                     value={node.node_name}
                     onChange={(e) => updateNode(index, { node_name: e.target.value })}
                     disabled={readOnly}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:bg-muted bg-input text-foreground"
                     placeholder="Enter node name"
                   />
                 </div>

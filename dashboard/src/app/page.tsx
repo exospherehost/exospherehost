@@ -6,7 +6,8 @@ import { GraphTemplateBuilder } from '@/components/GraphTemplateBuilder';
 import { NamespaceOverview } from '@/components/NamespaceOverview';
 import { RunsTable } from '@/components/RunsTable';
 import { NodeDetailModal } from '@/components/NodeDetailModal';
-import { GraphTemplateDetailModal } from '@/components/GraphTemplateDetailModal';
+import { GraphTemplateDetailModal} from '@/components/GraphTemplateDetailModal';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { clientApiService } from '@/services/clientApi';
 import {
   NodeRegistration, 
@@ -168,6 +169,7 @@ export default function Dashboard() {
                   )}
                 </Select>
               </div>
+              <ThemeToggle />
             </div>
           </div>
         </div>

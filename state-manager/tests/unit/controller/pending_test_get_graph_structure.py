@@ -138,7 +138,9 @@ async def test_get_graph_structure_no_states():
         assert result.edge_count == 0
         assert len(result.nodes) == 0
         assert len(result.edges) == 0
-        assert result.execution_summary == {}
+        # All states should be initialized to 0
+        expected_summary = {status.value: 0 for status in StateStatusEnum}
+        assert result.execution_summary == expected_summary
         assert result.root_states == [] 
 
 

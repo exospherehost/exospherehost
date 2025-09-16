@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { clientApiService } from '@/services/clientApi';
 import { RunsResponse, RunListItem, RunStatusEnum } from '@/types/state-manager';
-import { GraphVisualization } from './GraphVisualization';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -48,8 +47,6 @@ export const RunsTable: React.FC<RunsTableProps> = ({
   const [pageSize, setPageSize] = useState(20);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
-  const [showGraph, setShowGraph] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState<RefreshMs>(0);
 
   const loadRuns = useCallback(async (page: number, size: number) => {
@@ -98,20 +95,17 @@ export const RunsTable: React.FC<RunsTableProps> = ({
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
-    setSelectedRunId(null);
-    setShowGraph(false);
   };
 
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize);
     setCurrentPage(1);
-    setSelectedRunId(null);
-    setShowGraph(false);
   };
 
   const handleRowClick = (runId: string) => {
-    setSelectedRunId(runId);
-    setShowGraph(true);
+    // Open graph visualization in a new tab
+    const url = `/graph/${namespace}/${runId}`;
+    window.open(url, '_blank');
   };
 
   const getStatusIcon = (status: RunStatusEnum) => {
@@ -220,28 +214,6 @@ export const RunsTable: React.FC<RunsTableProps> = ({
         </div>
       </div>
 
-
-      {/* Graph Visualization */}
-      {showGraph && selectedRunId && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle>Graph Visualization for Run: {selectedRunId}</CardTitle>
-            <Button
-              onClick={() => setShowGraph(false)}
-              variant="ghost"
-              size="sm"
-            >
-              <XCircle className="w-5 h-5" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <GraphVisualization
-              namespace={namespace}
-              runId={selectedRunId}
-            />
-          </CardContent>
-        </Card>
-      )}
 
       {/* Runs Table */}
       <Card>
