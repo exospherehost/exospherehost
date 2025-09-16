@@ -506,6 +506,13 @@ export const GraphTemplateDetail: React.FC<GraphTemplateDetailProps> = ({
               Graph Template Configuration
             </CardDescription>
           </div>
+          <Button
+            onClick={onClose}
+            variant="ghost"
+            size="sm"
+          >
+            <X className="w-5 h-5" />
+          </Button>
         </div>
       </CardHeader>
 
