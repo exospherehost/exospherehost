@@ -13,7 +13,7 @@ async def manual_retry_state(namespace_name: str, state_id: PydanticObjectId, bo
     try:
         logger.info(f"Manual retry state {state_id} for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
 
-        state = await State.find_one(State.id == state_id)
+        state = await State.find_one(State.id == state_id, State.namespace_name == namespace_name)
         if not state:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="State not found")
         
@@ -41,9 +41,9 @@ async def manual_retry_state(namespace_name: str, state_id: PydanticObjectId, bo
             return ManualRetryResponseModel(id=str(retry_state.id), status=retry_state.status)
         except DuplicateKeyError:
             logger.info(f"Duplicate retry state detected for state {state_id}. A retry state with the same unique key already exists.", x_exosphere_request_id=x_exosphere_request_id)
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Duplicate retry state detected")
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Duplicate retry state detected")
 
 
-    except Exception as e:
+    except Exception as _:
         logger.error(f"Error manual retry state {state_id} for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
-        raise e
+        raise

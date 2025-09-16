@@ -91,7 +91,7 @@ class TestModelValidation:
             "store": {"s1": "v1"},
             "inputs": {"input1": "value1"}
         }
-        model = TriggerGraphRequestModel(**valid_data)
+        model = TriggerGraphRequestModel(**valid_data) # type: ignore
         assert model.store == {"s1": "v1"}
         assert model.inputs == {"input1": "value1"}
 
