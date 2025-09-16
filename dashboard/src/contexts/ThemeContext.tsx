@@ -24,14 +24,16 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+  // Initialize with dark theme to match the server-rendered state
   const [theme, setThemeState] = useState<Theme>('dark');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    
     // Get the theme that was already set by the head script
     const currentTheme = document.documentElement.classList.contains('light') ? 'light' : 'dark';
     setThemeState(currentTheme);
-    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -54,12 +56,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     theme,
     setTheme,
   };
-
-  // Prevent rendering children until mounted to avoid hydration mismatch
-  if (!mounted) {
-    // Return null or a minimal placeholder that won't cause layout shift
-    return null;
-  }
 
   return (
     <ThemeContext.Provider value={value}>

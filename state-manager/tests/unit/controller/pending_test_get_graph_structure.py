@@ -95,8 +95,8 @@ async def test_get_graph_structure_success(mock_states):
         assert call_args[1] == State.namespace_name == namespace
         
         # Verify result structure
-        assert result.namespace == namespace
-        assert result.run_id == run_id
+        assert result.namespace == namespace # type: ignore
+        assert result.run_id == run_id # type: ignore
         assert result.graph_name == "test_graph"
         assert result.node_count == 3
         assert result.edge_count == 2
@@ -131,8 +131,8 @@ async def test_get_graph_structure_no_states():
         result = await get_graph_structure(namespace, run_id, request_id)
         
         # Verify result structure for empty states
-        assert result.namespace == namespace
-        assert result.run_id == run_id
+        assert result.namespace == namespace # type: ignore
+        assert result.run_id == run_id # type: ignore
         assert result.graph_name == ""
         assert result.node_count == 0
         assert result.edge_count == 0

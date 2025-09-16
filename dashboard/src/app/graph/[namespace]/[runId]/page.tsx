@@ -24,10 +24,15 @@ export default function GraphPage() {
 
   const handleBack = () => {
     // Go back to the previous page or close the tab if opened from external link
-    if (window.history.length > 1) {
-      router.back();
+    if (typeof window !== 'undefined') {
+      if (window.history.length > 1) {
+        router.back();
+      } else {
+        window.close();
+      }
     } else {
-      window.close();
+      // Fallback for SSR
+      router.back();
     }
   };
 

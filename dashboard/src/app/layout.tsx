@@ -31,6 +31,9 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
+                  // Ensure we don't add duplicate classes
+                  document.documentElement.classList.remove('light', 'dark');
+                  
                   var theme = localStorage.getItem('theme');
                   if (theme && (theme === 'light' || theme === 'dark')) {
                     document.documentElement.classList.add(theme);
@@ -40,6 +43,7 @@ export default function RootLayout({
                   }
                 } catch (e) {
                   // Fallback to dark theme if there's any error
+                  document.documentElement.classList.remove('light', 'dark');
                   document.documentElement.classList.add('dark');
                 }
               })();
