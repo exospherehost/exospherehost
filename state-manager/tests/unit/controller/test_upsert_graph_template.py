@@ -8,6 +8,7 @@ from app.models.graph_models import UpsertGraphTemplateRequest
 from app.models.graph_template_validation_status import GraphTemplateValidationStatus
 from app.models.node_template_model import NodeTemplate
 from app.models.retry_policy_model import RetryPolicyModel
+from app.models.store_config_model import StoreConfig
 
 
 class TestUpsertGraphTemplate:
@@ -83,6 +84,9 @@ class TestUpsertGraphTemplate:
             max_delay=30000
         )
         
+        # Add store_config
+        template.store_config = StoreConfig()
+        
         return template
 
     @patch('app.controller.upsert_graph_template.GraphTemplate')
@@ -101,7 +105,7 @@ class TestUpsertGraphTemplate:
         """Test successful update of existing graph template"""
         # Arrange
 
-        mock_existing_template.update = AsyncMock()
+        mock_existing_template.save = AsyncMock()
         mock_existing_template.set_secrets = MagicMock(return_value=mock_existing_template)
         mock_graph_template_class.find_one = AsyncMock(return_value=mock_existing_template)
 
@@ -118,7 +122,7 @@ class TestUpsertGraphTemplate:
 
         # Assert
         assert result.nodes == mock_upsert_request.nodes
-        assert result.validation_status == GraphTemplateValidationStatus.VALID
+        assert result.validation_status == GraphTemplateValidationStatus.PENDING
         assert result.validation_errors == []
         assert result.secrets == {"api_key": True, "database_url": True}
         assert result.created_at == mock_existing_template.created_at
@@ -126,7 +130,7 @@ class TestUpsertGraphTemplate:
 
         # Verify template was updated
         mock_existing_template.set_secrets.assert_called_once_with(mock_upsert_request.secrets)
-        mock_existing_template.update.assert_called_once()
+        mock_existing_template.save.assert_called_once()
         
         # Verify background task was added
         mock_background_tasks.add_task.assert_called_once_with(mock_verify_graph, mock_existing_template)
@@ -164,6 +168,9 @@ class TestUpsertGraphTemplate:
             max_delay=30000
         )
         mock_new_template.retry_policy = mock_retry_policy
+        
+        # Add store_config
+        mock_new_template.store_config = StoreConfig()
         
         mock_graph_template_class.insert = AsyncMock(return_value=mock_new_template)
 
@@ -242,7 +249,7 @@ class TestUpsertGraphTemplate:
         mock_existing_template.get_secrets.return_value = {}
         mock_existing_template.set_secrets.return_value = mock_existing_template
         
-        # Add proper retry_policy mock
+                # Add proper retry_policy mock
         mock_retry_policy = RetryPolicyModel(
             max_retries=3,
             backoff_factor=1000,
@@ -250,7 +257,10 @@ class TestUpsertGraphTemplate:
         )
         mock_existing_template.retry_policy = mock_retry_policy
         
-        mock_existing_template.update = AsyncMock()
+        # Add store_config
+        mock_existing_template.store_config = StoreConfig()
+
+        mock_existing_template.save = AsyncMock()
 
         mock_graph_template_class.find_one = AsyncMock(return_value=mock_existing_template)
 
@@ -266,7 +276,7 @@ class TestUpsertGraphTemplate:
         sleep(1) # wait for the background task to complete
         # Assert
         assert result.nodes == []
-        assert result.validation_status == GraphTemplateValidationStatus.VALID
+        assert result.validation_status == GraphTemplateValidationStatus.PENDING
         assert result.validation_errors == []
         assert result.secrets == {}
 
@@ -301,8 +311,11 @@ class TestUpsertGraphTemplate:
             max_delay=30000
         )
         mock_existing_template.retry_policy = mock_retry_policy
+        
+        # Add store_config
+        mock_existing_template.store_config = StoreConfig()
 
-        mock_existing_template.update = AsyncMock()
+        mock_existing_template.save = AsyncMock()
         
         mock_graph_template_class.find_one = AsyncMock(return_value=mock_existing_template)
 
@@ -318,8 +331,8 @@ class TestUpsertGraphTemplate:
         sleep(1) # wait for the background task to complete
 
         # Assert
-        assert result.validation_status == GraphTemplateValidationStatus.INVALID
-        assert result.validation_errors == ["Previous error 1", "Previous error 2"]  # Should be reset to empty
+        assert result.validation_status == GraphTemplateValidationStatus.PENDING
+        assert result.validation_errors == []  # Should be reset to empty
 
     @patch('app.controller.upsert_graph_template.GraphTemplate')
     async def test_upsert_graph_template_validation_error(

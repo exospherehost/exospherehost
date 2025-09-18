@@ -5,7 +5,6 @@ from app.models.graph_template_validation_status import GraphTemplateValidationS
 from app.tasks.verify_graph import verify_graph
 
 from fastapi import BackgroundTasks, HTTPException
-from beanie.operators import Set
 
 logger = LogsManager().get_logger()
 
@@ -23,15 +22,13 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
                     namespace_name=namespace_name,
                     x_exosphere_request_id=x_exosphere_request_id)
                 
-                await graph_template.set_secrets(body.secrets).update(
-                    Set({
-                        GraphTemplate.nodes: body.nodes, # type: ignore
-                        GraphTemplate.validation_status: GraphTemplateValidationStatus.PENDING, # type: ignore
-                        GraphTemplate.validation_errors: [], # type: ignore
-                        GraphTemplate.retry_policy: body.retry_policy, # type: ignore
-                        GraphTemplate.store_config: body.store_config # type: ignore
-                    })
-                )
+                graph_template.set_secrets(body.secrets)
+                graph_template.validation_status = GraphTemplateValidationStatus.PENDING
+                graph_template.validation_errors = []
+                graph_template.retry_policy = body.retry_policy
+                graph_template.store_config = body.store_config
+                graph_template.nodes = body.nodes
+                await graph_template.save()
                 
             else:
                 logger.info(
@@ -63,6 +60,7 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
             validation_errors=graph_template.validation_errors,
             secrets={secret_name: True for secret_name in graph_template.get_secrets().keys()},
             retry_policy=graph_template.retry_policy,
+            store_config=graph_template.store_config,
             created_at=graph_template.created_at,
             updated_at=graph_template.updated_at
         )
