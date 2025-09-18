@@ -60,6 +60,7 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
             validation_errors=graph_template.validation_errors,
             secrets={secret_name: True for secret_name in graph_template.get_secrets().keys()},
             retry_policy=graph_template.retry_policy,
+            store_config=graph_template.store_config,
             created_at=graph_template.created_at,
             updated_at=graph_template.updated_at
         )

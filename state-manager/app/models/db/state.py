@@ -63,6 +63,7 @@ class State(BaseDatabaseModel):
         return await super().insert_many(documents) # type: ignore
         
     class Settings:
+        validate_on_save = True
         indexes = [
             IndexModel(
                 [
