@@ -43,7 +43,7 @@ class State(BaseDatabaseModel):
             "run_id": self.run_id,
             "retry_count": self.retry_count,
             "parents": {k: str(v) for k, v in self.parents.items()},
-            "manul_retry_fanout_id": self.manul_retry_fanout_id,
+            "manual_retry_fanout_id": self.manual_retry_fanout_id,
         }
         payload = json.dumps(
             data,
