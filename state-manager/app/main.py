@@ -29,6 +29,9 @@ from .routes import router
 # importing CORS config
 from .config.cors import get_cors_config
 from .config.settings import get_settings
+
+# importing database health check function
+from .utils.check_database_health import check_database_health
  
 
 @asynccontextmanager
@@ -50,6 +53,9 @@ async def lifespan(app: FastAPI):
     if not settings.state_manager_secret:
         raise ValueError("STATE_MANAGER_SECRET is not set")
     logger.info("secret initialized")
+
+    # perform database health check
+    await check_database_health(logger)
 
     # main logic of the server
     yield
