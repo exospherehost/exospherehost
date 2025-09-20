@@ -29,15 +29,19 @@ from .controller.register_nodes import register_nodes
 from .models.secrets_response import SecretsResponseModel
 from .controller.get_secrets import get_secrets
 
-from .models.list_models import ListRegisteredNodesResponse, ListGraphTemplatesResponse
+from .models.list_models import ListRegisteredNodesResponse, ListGraphTemplatesResponse, ListNamespacesResponse
 from .controller.list_registered_nodes import list_registered_nodes
 from .controller.list_graph_templates import list_graph_templates
+from .controller.list_namespaces import list_namespaces
 
 from .models.run_models import RunsResponse
 from .controller.get_runs import get_runs
 
 from .models.graph_structure_models import GraphStructureResponse
 from .controller.get_graph_structure import get_graph_structure
+
+from .models.node_run_details_models import NodeRunDetailsResponse
+from .controller.get_node_run_details import get_node_run_details
 
 ### signals
 from .models.signal_models import SignalResponseModel
@@ -46,9 +50,17 @@ from .controller.prune_signal import prune_signal
 from .models.signal_models import ReEnqueueAfterRequestModel
 from .controller.re_queue_after_signal import re_queue_after_signal
 
+# manual_retry
+from .models.manual_retry import ManualRetryRequestModel, ManualRetryResponseModel
+from .controller.manual_retry_state import manual_retry_state
+
 
 logger = LogsManager().get_logger()
 
+# Global router for non-namespace specific endpoints
+global_router = APIRouter(prefix="/v0")
+
+# Namespace-specific router
 router = APIRouter(prefix="/v0/namespace/{namespace_name}")
 
 
@@ -167,6 +179,24 @@ async def re_enqueue_after_state_route(namespace_name: str, state_id: str, body:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
     
     return await re_queue_after_signal(namespace_name, PydanticObjectId(state_id), body, x_exosphere_request_id)
+
+@router.post(
+    "/state/{state_id}/manual-retry",
+    response_model=ManualRetryResponseModel,
+    status_code=status.HTTP_200_OK,
+    response_description="State manual retry successfully",
+    tags=["state"]
+)
+async def manual_retry_state_route(namespace_name: str, state_id: str, body: ManualRetryRequestModel, request: Request, api_key: str = Depends(check_api_key)):
+    x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
+    
+    if api_key:
+        logger.info(f"API key is valid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+    else:
+        logger.error(f"API key is invalid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+    
+    return await manual_retry_state(namespace_name, PydanticObjectId(state_id), body, x_exosphere_request_id)
 
 
 @router.put(
@@ -330,3 +360,46 @@ async def get_graph_structure_route(namespace_name: str, run_id: str, request: R
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
 
     return await get_graph_structure(namespace_name, run_id, x_exosphere_request_id)
+
+
+@router.get(
+    "/graph/{graph_name}/run/{run_id}/node/{node_id}",
+    response_model=NodeRunDetailsResponse,
+    status_code=status.HTTP_200_OK,
+    response_description="Node run details retrieved successfully",
+    tags=["runs"]
+)
+async def get_node_run_details_route(namespace_name: str, graph_name: str, run_id: str, node_id: str, request: Request, api_key: str = Depends(check_api_key)):
+    x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
+
+    if api_key:
+        logger.info(f"API key is valid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+    else:
+        logger.error(f"API key is invalid for namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+
+    return await get_node_run_details(namespace_name, graph_name, run_id, node_id, x_exosphere_request_id)
+
+
+# Global endpoints (not namespace-specific)
+@global_router.get(
+    "/namespaces",
+    response_model=ListNamespacesResponse,
+    status_code=status.HTTP_200_OK,
+    response_description="Namespaces listed successfully",
+    tags=["namespaces"]
+)
+async def list_namespaces_route(request: Request, api_key: str = Depends(check_api_key)):
+    x_exosphere_request_id = getattr(request.state, "x_exosphere_request_id", str(uuid4()))
+
+    if api_key:
+        logger.info("API key is valid for listing namespaces", x_exosphere_request_id=x_exosphere_request_id)
+    else:
+        logger.error("API key is invalid for listing namespaces", x_exosphere_request_id=x_exosphere_request_id)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+
+    namespaces = await list_namespaces(x_exosphere_request_id)
+    return ListNamespacesResponse(
+        namespaces=namespaces,
+        count=len(namespaces)
+    )

@@ -27,6 +27,7 @@ class State(BaseDatabaseModel):
     enqueue_after: int = Field(default_factory=lambda: int(time.time() * 1000), gt=0, description="Unix time in milliseconds after which the state should be enqueued")
     retry_count: int = Field(default=0, description="Number of times the state has been retried")
     fanout_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Fanout ID of the state")
+    manual_retry_fanout_id: str = Field(default="", description="Fanout ID from a manual retry request, ensuring unique retries for unite nodes.")
 
     @before_event([Insert, Replace, Save])
     def _generate_fingerprint(self):
@@ -42,6 +43,7 @@ class State(BaseDatabaseModel):
             "run_id": self.run_id,
             "retry_count": self.retry_count,
             "parents": {k: str(v) for k, v in self.parents.items()},
+            "manual_retry_fanout_id": self.manual_retry_fanout_id,
         }
         payload = json.dumps(
             data,

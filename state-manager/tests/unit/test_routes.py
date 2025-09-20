@@ -8,6 +8,7 @@ from app.models.register_nodes_request import RegisterNodesRequestModel
 from app.models.secrets_response import SecretsResponseModel
 from app.models.list_models import ListRegisteredNodesResponse, ListGraphTemplatesResponse
 from app.models.run_models import RunsResponse, RunListItem, RunStatusEnum
+from app.models.manual_retry import ManualRetryRequestModel, ManualRetryResponseModel
 
 
 import pytest
@@ -32,6 +33,7 @@ class TestRouteStructure:
         assert any('/v0/namespace/{namespace_name}/state/{state_id}/errored' in path for path in paths)
         assert any('/v0/namespace/{namespace_name}/state/{state_id}/prune' in path for path in paths)
         assert any('/v0/namespace/{namespace_name}/state/{state_id}/re-enqueue-after' in path for path in paths)
+        assert any('/v0/namespace/{namespace_name}/state/{state_id}/manual-retry' in path for path in paths)
         
         # Graph template routes (there are two /graph/{graph_name} routes - GET and PUT)
         assert any('/v0/namespace/{namespace_name}/graph/{graph_name}' in path for path in paths)
@@ -48,6 +50,9 @@ class TestRouteStructure:
         assert any('/v0/namespace/{namespace_name}/runs/{page}/{size}' in path for path in paths)
         assert any('/v0/namespace/{namespace_name}/states/run/{run_id}' in path for path in paths)
         assert any('/v0/namespace/{namespace_name}/states' in path for path in paths)
+        
+        # Node run details route
+        assert any('/v0/namespace/{namespace_name}/graph/{graph_name}/run/{run_id}/node/{node_id}' in path for path in paths)
 
     def test_router_tags(self):
         """Test that router has correct tags"""
@@ -86,7 +91,7 @@ class TestModelValidation:
             "store": {"s1": "v1"},
             "inputs": {"input1": "value1"}
         }
-        model = TriggerGraphRequestModel(**valid_data)
+        model = TriggerGraphRequestModel(**valid_data) # type: ignore
         assert model.store == {"s1": "v1"}
         assert model.inputs == {"input1": "value1"}
 
@@ -270,6 +275,26 @@ class TestResponseModels:
         assert model.namespace == "test"
         assert model.count == 0
 
+    def test_manual_retry_request_model_validation(self):
+        """Test ManualRetryRequestModel validation"""
+        # Test with valid data
+        valid_data = {"fanout_id": "test-fanout-id-123"}
+        model = ManualRetryRequestModel(**valid_data)
+        assert model.fanout_id == "test-fanout-id-123"
+
+    def test_manual_retry_response_model_validation(self):
+        """Test ManualRetryResponseModel validation"""
+        from app.models.state_status_enum import StateStatusEnum
+        
+        # Test with valid data
+        valid_data = {
+            "id": "507f1f77bcf86cd799439011",
+            "status": StateStatusEnum.CREATED
+        }
+        model = ManualRetryResponseModel(**valid_data)
+        assert model.id == "507f1f77bcf86cd799439011"
+        assert model.status == StateStatusEnum.CREATED
+
 
 
 
@@ -291,7 +316,9 @@ class TestRouteHandlers:
             list_registered_nodes_route,
             list_graph_templates_route,
             get_runs_route,
-            get_graph_structure_route
+            get_graph_structure_route,
+            get_node_run_details_route,
+            manual_retry_state_route
 
         )
         
@@ -308,6 +335,8 @@ class TestRouteHandlers:
         assert callable(list_graph_templates_route)
         assert callable(get_runs_route)
         assert callable(get_graph_structure_route)
+        assert callable(get_node_run_details_route)
+        assert callable(manual_retry_state_route)
 
 
 
@@ -997,3 +1026,95 @@ class TestRouteHandlerAPIKeyValidation:
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Invalid API key"
         mock_get_graph_structure.assert_not_called()
+
+    @patch('app.routes.get_node_run_details')
+    async def test_get_node_run_details_route_with_valid_api_key(self, mock_get_node_run_details, mock_request):
+        """Test get_node_run_details_route with valid API key"""
+        from app.routes import get_node_run_details_route
+        
+        # Arrange
+        mock_get_node_run_details.return_value = MagicMock()
+        
+        # Act
+        result = await get_node_run_details_route("test_namespace", "test_graph", "test_run_id", "test_node_id", mock_request, "valid_key")
+        
+        # Assert
+        mock_get_node_run_details.assert_called_once_with("test_namespace", "test_graph", "test_run_id", "test_node_id", "test-request-id")
+        assert result == mock_get_node_run_details.return_value
+
+    @patch('app.routes.get_node_run_details')
+    async def test_get_node_run_details_route_with_invalid_api_key(self, mock_get_node_run_details, mock_request):
+        """Test get_node_run_details_route with invalid API key"""
+        from app.routes import get_node_run_details_route
+        from fastapi import HTTPException
+        
+        # Arrange
+        mock_get_node_run_details.return_value = MagicMock()
+        
+        # Act & Assert
+        with pytest.raises(HTTPException) as exc_info:
+            await get_node_run_details_route("test_namespace", "test_graph", "test_run_id", "test_node_id", mock_request, None) # type: ignore
+        
+        assert exc_info.value.status_code == 401
+        assert exc_info.value.detail == "Invalid API key"
+        mock_get_node_run_details.assert_not_called()
+
+    @patch('app.routes.manual_retry_state')
+    async def test_manual_retry_state_route_with_valid_api_key(self, mock_manual_retry_state, mock_request):
+        """Test manual_retry_state_route with valid API key"""
+        from app.routes import manual_retry_state_route
+        
+        # Arrange
+        mock_manual_retry_state.return_value = MagicMock()
+        body = ManualRetryRequestModel(fanout_id="test-fanout-id")
+        
+        # Act
+        result = await manual_retry_state_route("test_namespace", "507f1f77bcf86cd799439011", body, mock_request, "valid_key")
+        
+        # Assert
+        mock_manual_retry_state.assert_called_once()
+        call_args = mock_manual_retry_state.call_args
+        assert call_args[0][0] == "test_namespace"  # namespace_name
+        assert str(call_args[0][1]) == "507f1f77bcf86cd799439011"  # state_id as PydanticObjectId
+        assert call_args[0][2] == body  # body
+        assert call_args[0][3] == "test-request-id"  # x_exosphere_request_id
+        assert result == mock_manual_retry_state.return_value
+
+    @patch('app.routes.manual_retry_state')
+    async def test_manual_retry_state_route_with_invalid_api_key(self, mock_manual_retry_state, mock_request):
+        """Test manual_retry_state_route with invalid API key"""
+        from app.routes import manual_retry_state_route
+        from fastapi import HTTPException
+        
+        # Arrange
+        body = ManualRetryRequestModel(fanout_id="test-fanout-id")
+        
+        # Act & Assert
+        with pytest.raises(HTTPException) as exc_info:
+            await manual_retry_state_route("test_namespace", "507f1f77bcf86cd799439011", body, mock_request, None) # type: ignore
+        
+        assert exc_info.value.status_code == 401
+        assert exc_info.value.detail == "Invalid API key"
+        mock_manual_retry_state.assert_not_called()
+
+    @patch('app.routes.manual_retry_state')
+    async def test_manual_retry_state_route_without_request_id(self, mock_manual_retry_state, mock_request_no_id):
+        """Test manual_retry_state_route without x_exosphere_request_id"""
+        from app.routes import manual_retry_state_route
+        
+        # Arrange
+        mock_manual_retry_state.return_value = MagicMock()
+        body = ManualRetryRequestModel(fanout_id="test-fanout-id")
+        
+        # Act
+        result = await manual_retry_state_route("test_namespace", "507f1f77bcf86cd799439011", body, mock_request_no_id, "valid_key")
+        
+        # Assert
+        mock_manual_retry_state.assert_called_once()
+        call_args = mock_manual_retry_state.call_args
+        assert call_args[0][0] == "test_namespace"  # namespace_name
+        assert str(call_args[0][1]) == "507f1f77bcf86cd799439011"  # state_id as PydanticObjectId
+        assert call_args[0][2] == body  # body
+        # Should generate a UUID when no request ID is present
+        assert len(call_args[0][3]) > 0  # x_exosphere_request_id should be generated
+        assert result == mock_manual_retry_state.return_value

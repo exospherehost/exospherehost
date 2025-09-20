@@ -18,7 +18,8 @@ import 'reactflow/dist/style.css';
 import { clientApiService } from '@/services/clientApi';
 import { 
   GraphStructureResponse,
-  GraphNode as GraphNodeType
+  GraphNode as GraphNodeType,
+  NodeRunDetailsResponse
 } from '@/types/state-manager';
 import {  
   RefreshCw, 
@@ -30,10 +31,15 @@ import {
   Network,
   BarChart3
 } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { NodeDetailsModal } from '@/components/NodeDetailsModal';
 
 interface GraphVisualizationProps {
   namespace: string;
   runId: string;
+  onGraphTemplateRequest?: (graphName: string) => void;
 }
 
 // Custom Node Component
@@ -45,68 +51,66 @@ const CustomNode: React.FC<{
     node: GraphNodeType;
   };
 }> = ({ data }) => {
-  const getStatusColor = (status: string) => {
+  const getStatusVariant = (status: string): "default" | "success" | "destructive" | "secondary" => {
     switch (status) {
-      case 'CREATED':
-        return 'bg-[#031035]';
-      case 'QUEUED':
-        return 'bg-[#0a1a4a]';
       case 'EXECUTED':
       case 'SUCCESS':
-        return 'bg-green-400';
+        return 'success';
       case 'ERRORED':
       case 'TIMEDOUT':
       case 'CANCELLED':
-        return 'bg-red-500';
+        return 'destructive';
+      case 'QUEUED':
+        return 'secondary';
       default:
-        return 'bg-gray-500';
+        return 'default';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'CREATED':
-        return <Clock className="w-4 h-4 text-[#031035]" />;
+        return <Clock className="w-4 h-4" />;
       case 'QUEUED':
-        return <Loader2 className="w-4 h-4 text-[#0a1a4a] animate-spin" />;
+        return <Loader2 className="w-4 h-4 animate-spin" />;
       case 'EXECUTED':
       case 'SUCCESS':
-        return <CheckCircle className="w-4 h-4 text-green-400" />;
+        return <CheckCircle className="w-4 h-4" />;
       case 'ERRORED':
       case 'TIMEDOUT':
       case 'CANCELLED':
-        return <XCircle className="w-4 h-4 text-red-500" />;
+        return <XCircle className="w-4 h-4" />;
       default:
-        return <Clock className="w-4 h-4 text-gray-500" />;
+        return <Clock className="w-4 h-4" />;
     }
   };
 
   return (
-    <div className="px-4 py-2 shadow-lg rounded-lg bg-white border-2 border-[#031035]/20 min-w-[150px] relative">
+    <div className="px-4 py-3 shadow-sm rounded-xl  border border-border min-w-[160px] relative">
       {/* Source Handle (Right side) */}
       <Handle
         type="source"
         position={Position.Right}
-        style={{ background: '#10b981', width: '12px', height: '12px' }}
+        style={{ background: 'hsl(var(--primary))', width: '12px', height: '12px' }}
       />
       
       {/* Target Handle (Left side) */}
       <Handle
         type="target"
         position={Position.Left}
-        style={{ background: '#10b981', width: '12px', height: '12px' }}
+        style={{ background: 'hsl(var(--primary))', width: '12px', height: '12px' }}
       />
       
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
           {getStatusIcon(data.status)}
-          <span className={`text-xs px-2 py-1 rounded-full text-white ${getStatusColor(data.status)}`}>
+          <Badge variant={getStatusVariant(data.status)}>
             {data.status}
-          </span>
+          </Badge>
         </div>
       </div>
-      <div className="text-sm font-medium text-gray-800 mb-1">{data.label}</div>
-      <div className="text-xs text-gray-500">{data.identifier}</div>
+      <div className="text-sm font-medium text-card-foreground mb-1">{data.label}</div>
+      <div className="text-xs text-foreground">{data.identifier}</div>
     </div>
   );
 };
@@ -117,32 +121,55 @@ const nodeTypes: NodeTypes = {
 
 export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
   namespace,
-  runId
+  runId,
+  onGraphTemplateRequest
 }) => {
   const [graphData, setGraphData] = useState<GraphStructureResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<GraphNodeType | null>(null);
+  const [selectedNodeDetails, setSelectedNodeDetails] = useState<NodeRunDetailsResponse | null>(null);
+  const [isLoadingNodeDetails, setIsLoadingNodeDetails] = useState(false);
+  const [nodeDetailsError, setNodeDetailsError] = useState<string | null>(null);
 
-  const loadGraphStructure = async () => {
+  const loadGraphStructure = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
     try {
       const data = await clientApiService.getGraphStructure(namespace, runId);
       setGraphData(data);
+      
+      // Request graph template details if callback is provided and graph name exists
+      if (onGraphTemplateRequest && data.graph_name) {
+        onGraphTemplateRequest(data.graph_name);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load graph structure');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [namespace, runId, onGraphTemplateRequest]);
+
+  const loadNodeDetails = useCallback(async (nodeId: string, graphName: string) => {
+    setIsLoadingNodeDetails(true);
+    setNodeDetailsError(null);
+    
+    try {
+      const details = await clientApiService.getNodeRunDetails(namespace, graphName, runId, nodeId);
+      setSelectedNodeDetails(details);
+    } catch (err) {
+      setNodeDetailsError(err instanceof Error ? err.message : 'Failed to load node details');
+    } finally {
+      setIsLoadingNodeDetails(false);
+    }
+  }, [namespace, runId]);
 
   useEffect(() => {
     if (namespace && runId) {
       loadGraphStructure();
     }
-  }, [namespace, runId]);
+  }, [namespace, runId, loadGraphStructure]);
 
   // Convert graph data to React Flow format with horizontal layout
   const { nodes, edges } = useMemo(() => {
@@ -220,11 +247,11 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
 
     // Convert to React Flow nodes with horizontal positioning
     const reactFlowNodes: Node[] = [];
-    const layerWidth = 400; // Increased horizontal spacing between layers
-    const nodeHeight = 150; // Increased vertical spacing between nodes
+    const layerWidth = 450; // Increased horizontal spacing between layers
+    const nodeHeight = 250; // Increased vertical spacing between nodes
 
     layers.forEach((layer, layerIndex) => {
-      const layerX = layerIndex * layerWidth + 150;
+      const layerX = layerIndex * layerWidth + 200;
       const totalHeight = layer.length * nodeHeight;
       const startY = (800 - totalHeight) / 2; // Center vertically
 
@@ -250,7 +277,7 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
     });
 
     // Convert edges
-    const reactFlowEdges: Edge[] = graphData.edges.map((edge, index) => ({
+    const reactFlowEdges: Edge[] = graphData.edges.map((edge) => ({
       id: `edge-${edge.source}-${edge.target}`,
       source: edge.source,
       target: edge.target,
@@ -258,13 +285,13 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
       animated: false,
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        width: 20,
-        height: 20,
-        color: '#10b981',
+        width: 10,
+        height: 10,
+        color: '#87ceeb',
       },
       style: {
-        stroke: '#10b981',
-        strokeWidth: 3,
+        stroke: '#87ceeb',
+        strokeWidth: 2,
         strokeDasharray: 'none',
       },
     }));
@@ -282,208 +309,247 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({
   }, [nodes, edges, setReactFlowNodes, setReactFlowEdges]);
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-    setSelectedNode(node.data.node);
-  }, []);
+    const graphNode = node.data.node;
+    setSelectedNode(graphNode);
+    setSelectedNodeDetails(null); // Clear previous details
+    
+    // Load detailed node information
+    if (graphData?.graph_name) {
+      loadNodeDetails(graphNode.id, graphData.graph_name);
+    }
+  }, [graphData?.graph_name, loadNodeDetails]);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-[#031035]" />
-        <span className="ml-2 text-gray-600">Loading graph structure...</span>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Loading graph structure...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <div className="flex items-center">
-          <AlertCircle className="w-5 h-5 text-red-400" />
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-800">Error</h3>
-            <div className="mt-2 text-sm text-red-700">{error}</div>
-            <button
-              onClick={loadGraphStructure}
-              className="mt-3 inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200"
-            >
-              <RefreshCw className="w-4 h-4 mr-1" />
-              Retry
-            </button>
+      <Card className="border-destructive/20 bg-destructive/5">
+        <CardContent className="pt-6">
+          <div className="flex items-center">
+            <AlertCircle className="w-5 h-5 text-destructive" />
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-destructive">Error</h3>
+              <div className="mt-2 text-sm text-destructive/80">{error}</div>
+              <Button
+                onClick={loadGraphStructure}
+                variant="outline"
+                size="sm"
+                className="mt-3"
+              >
+                <RefreshCw className="w-4 h-4 mr-1" />
+                Retry
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (!graphData) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        <Network className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-        <p>No graph data available</p>
-      </div>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center py-8">
+            <Network className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+            <p className="text-muted-foreground">No graph data available</p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-6">
-             <div className="flex items-center justify-between mb-6">
-         <div className="flex items-center space-x-3">
-           <Network className="w-6 h-6 text-green-400" />
-           <div>
-             <h2 className="text-2xl font-bold text-gray-800">Graph Visualization</h2>
-             <p className="text-sm text-gray-600">
-               Run ID: {runId} | Graph: {graphData.graph_name}
-             </p>
-           </div>
-         </div>
-         <button
-           onClick={loadGraphStructure}
-           className="flex items-center space-x-2 px-4 py-2 bg-green-400 text-white rounded-lg hover:bg-green-500 transition-colors"
-         >
-           <RefreshCw className="w-4 h-4" />
-           <span>Refresh</span>
-         </button>
-       </div>
-
-             {/* Execution Summary */}
-       <div className="bg-white rounded-lg shadow-md border border-[#031035]/20 p-6 mb-6">
-         <div className="flex items-center space-x-2 mb-4">
-           <BarChart3 className="w-5 h-5 text-green-400" />
-           <h3 className="text-lg font-semibold text-gray-800">Execution Summary</h3>
-         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {Object.entries(graphData.execution_summary).map(([status, count]) => (
-            <div key={status} className="text-center">
-              <div className="text-2xl font-bold text-gray-800">{count}</div>
-              <div className="text-sm text-gray-600 capitalize">{status.toLowerCase()}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-             {/* Graph Visualization */}
-       <div className="bg-white rounded-lg shadow-md border border-[#031035]/20 p-6">
-         <div className="flex items-center justify-between mb-4">
-           <h3 className="text-lg font-semibold text-gray-800">Graph Structure</h3>
-           <div className="text-sm text-gray-500">
-             {graphData.node_count} nodes, {graphData.edge_count} edges | 
-             React Flow: {reactFlowNodes.length} nodes, {reactFlowEdges.length} edges
-           </div>
-         </div>
-
-         <div className="border border-[#031035]/20 rounded-lg overflow-hidden" style={{ height: '800px' }}>
-          <ReactFlow
-            nodes={reactFlowNodes}
-            edges={reactFlowEdges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onNodeClick={onNodeClick}
-            nodeTypes={nodeTypes}
-            fitView
-            fitViewOptions={{ padding: 0.3 }}
-            minZoom={0.1}
-            maxZoom={2}
-            defaultViewport={{ x: 0, y: 0, zoom: 0.7 }}
-            proOptions={{ hideAttribution: true }}
-            connectionLineType={ConnectionLineType.Straight}
-            elementsSelectable={true}
-            nodesConnectable={false}
-            nodesDraggable={false}
-          >
-            <Background color="#eff6ff" gap={20} />
-            <Controls />
-          </ReactFlow>
-        </div>
-      </div>
-
-      {/* Node Details Modal */}
-      {selectedNode && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">Node Details</h3>
-              <button
-                onClick={() => setSelectedNode(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XCircle className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                                 {(() => {
-                   switch (selectedNode.status) {
-                     case 'CREATED':
-                       return <Clock className="w-4 h-4 text-[#031035]" />;
-                     case 'QUEUED':
-                       return <Loader2 className="w-4 h-4 text-[#0a1a4a] animate-spin" />;
-                     case 'EXECUTED':
-                     case 'SUCCESS':
-                       return <CheckCircle className="w-4 h-4 text-green-400" />;
-                     case 'ERRORED':
-                     case 'TIMEDOUT':
-                     case 'CANCELLED':
-                       return <XCircle className="w-4 h-4 text-red-500" />;
-                     default:
-                       return <Clock className="w-4 h-4 text-gray-500" />;
-                   }
-                 })()}
-                <div>
-                  <h4 className="font-medium text-gray-800">{selectedNode.node_name}</h4>
-                  <p className="text-sm text-gray-500">{selectedNode.identifier}</p>
-                </div>
-                                 <span className={`text-xs px-2 py-1 rounded ${
-                   (() => {
-                     switch (selectedNode.status) {
-                       case 'CREATED': return 'bg-[#031035]';
-                       case 'QUEUED': return 'bg-[#0a1a4a]';
-                       case 'EXECUTED':
-                       case 'SUCCESS': return 'bg-green-400';
-                       case 'ERRORED':
-                       case 'TIMEDOUT':
-                       case 'CANCELLED': return 'bg-red-500';
-                       default: return 'bg-gray-500';
-                     }
-                   })()
-                 } text-white`}>
-                  {selectedNode.status}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h5 className="font-medium text-gray-700 mb-2">Node Information</h5>
-                  <div className="text-sm text-gray-600">
-                    <p><strong>ID:</strong> {selectedNode.id}</p>
-                    <p><strong>Name:</strong> {selectedNode.node_name}</p>
-                    <p><strong>Identifier:</strong> {selectedNode.identifier}</p>
-                  </div>
-                </div>
-                <div>
-                  <h5 className="font-medium text-gray-700 mb-2">Status</h5>
-                  <div className="text-sm text-gray-600">
-                    <p><strong>Current Status:</strong> {selectedNode.status}</p>
-                  </div>
-                </div>
-              </div>
-
-              {selectedNode.error && (
-                <div>
-                  <h5 className="font-medium text-red-700 mb-2">Error</h5>
-                  <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
-                    {selectedNode.error}
-                  </div>
-                </div>
-              )}
-
-              <div className="text-xs text-gray-500">
-                Node ID: {selectedNode.id}
-              </div>
-            </div>
+    <div className="w-full max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <Network className="w-8 h-8 text-primary" />
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Graph Visualization</h2>
+            <p className="text-sm text-muted-foreground">
+              Run ID: {runId} | Graph: {graphData.graph_name}
+            </p>
           </div>
         </div>
-      )}
+        <Button onClick={loadGraphStructure} size="sm">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+
+      {/* Execution Summary */}
+      <Card className="bg-card border-border">
+        <CardHeader className="pb-4">
+          <div className="flex items-center space-x-2">
+            <BarChart3 className="w-5 h-5 text-primary" />
+            <CardTitle>Execution Summary</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+            {Object.entries(graphData.execution_summary).map(([status, count]) => {
+              const getStatusConfig = (status: string) => {
+                switch (status.toLowerCase()) {
+                  case 'success':
+                    return {
+                      bg: 'bg-secondary',
+                      border: 'border-border',
+                      text: 'text-chart-2', // Green from chart-2
+                      icon: <CheckCircle className="w-4 h-4" />,
+                      count: 'text-chart-2'
+                    };
+                  case 'created':
+                    return {
+                      bg: 'bg-secondary',
+                      border: 'border-border',
+                      text: 'text-chart-1', // Sky blue from chart-1
+                      icon: <Clock className="w-4 h-4" />,
+                      count: 'text-chart-1'
+                    };
+                  case 'queued':
+                    return {
+                      bg: 'bg-secondary',
+                      border: 'border-border',
+                      text: 'text-chart-3', // Yellow from chart-3
+                      icon: <Loader2 className="w-4 h-4" />,
+                      count: 'text-chart-3'
+                    };
+                  case 'executed':
+                    return {
+                      bg: 'bg-secondary',
+                      border: 'border-border',
+                      text: 'text-chart-5', // Purple from chart-5
+                      icon: <CheckCircle className="w-4 h-4" />,
+                      count: 'text-chart-5'
+                    };
+                  case 'errored':
+                    return {
+                      bg: 'bg-secondary',
+                      border: 'border-border',
+                      text: 'text-destructive', // Red from destructive
+                      icon: <XCircle className="w-4 h-4" />,
+                      count: 'text-destructive'
+                    };
+                  case 'next_created_error':
+                    return {
+                      bg: 'bg-secondary',
+                      border: 'border-border',
+                        text: 'text-chart-4', // Pink from chart-4
+                      icon: <AlertCircle className="w-4 h-4" />,
+                      count: 'text-chart-4'
+                    };
+                  case 'pruned':
+                    return {
+                      bg: 'bg-secondary',
+                      border: 'border-border',
+                      text: 'text-muted-foreground',
+                      icon: <XCircle className="w-4 h-4" />,
+                      count: 'text-muted-foreground'
+                    };
+                  case 'retry_created':
+                    return {
+                      bg: 'bg-secondary',
+                      border: 'border-border',
+                      text: 'text-primary', // Sky blue from primary
+                      icon: <RefreshCw className="w-4 h-4" />,
+                      count: 'text-primary'
+                    };
+                  default:
+                    return {
+                      bg: 'bg-muted',
+                      border: 'border-border',
+                      text: 'text-muted-foreground',
+                      icon: <Clock className="w-4 h-4" />,
+                      count: 'text-foreground'
+                    };
+                }
+              };
+              
+              const config = getStatusConfig(status);
+              const displayName = status.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+              
+              return (
+                <div 
+                  key={status} 
+                  className={`relative p-4 rounded-lg border transition-all duration-200 hover:shadow-md hover:scale-105 ${config.bg} ${config.border}`}
+                >
+                  <div className="flex flex-col items-center space-y-2">
+                    <div className={`${config.text}`}>
+                      {config.icon}
+                    </div>
+                    <div className={`text-2xl font-bold ${config.count}`}>
+                      {count}
+                    </div>
+                    <div className={`text-xs font-medium text-center leading-tight ${config.text}`}>
+                      {displayName}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Graph Visualization */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Graph Structure</CardTitle>
+            <CardDescription>
+              {graphData.node_count} nodes, {graphData.edge_count} edges 
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="border border-border rounded-xl overflow-hidden" style={{ height: '800px' }}>
+            <ReactFlow
+              nodes={reactFlowNodes}
+              edges={reactFlowEdges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onNodeClick={onNodeClick}
+              nodeTypes={nodeTypes}
+              fitView
+              fitViewOptions={{ padding: 0.3 }}
+              minZoom={0.1}
+              maxZoom={2}
+              defaultViewport={{ x: 0, y: 0, zoom: 0.7 }}
+              proOptions={{ hideAttribution: true }}
+              connectionLineType={ConnectionLineType.Straight}
+              elementsSelectable={true}
+              nodesConnectable={false}
+              nodesDraggable={false}
+            >
+              <Background color="#031035" />
+              <Controls />
+            </ReactFlow>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Node Details Modal */}
+      <NodeDetailsModal
+        selectedNode={selectedNode}
+        selectedNodeDetails={selectedNodeDetails}
+        isLoadingNodeDetails={isLoadingNodeDetails}
+        nodeDetailsError={nodeDetailsError}
+        namespace={namespace}
+        onClose={() => {
+          setSelectedNode(null);
+          setSelectedNodeDetails(null);
+          setNodeDetailsError(null);
+        }}
+        onRefreshGraph={loadGraphStructure}
+      />
     </div>
   );
 };

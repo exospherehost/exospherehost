@@ -30,6 +30,7 @@ class GraphTemplate(BaseDatabaseModel):
     _path_by_identifier: Dict[str, set[str]] | None = PrivateAttr(default=None) # type: ignore
 
     class Settings:
+        validate_on_save = True
         indexes = [
             IndexModel(
                 keys=[("name", 1), ("namespace", 1)],
