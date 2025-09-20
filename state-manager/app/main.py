@@ -23,6 +23,9 @@ from .models.db.registered_node import RegisteredNode
 from .models.db.store import Store
 from .models.db.run import Run
 
+# Define models list
+DOCUMENT_MODELS = [State, GraphTemplate, RegisteredNode, Store, Run]
+
 # injecting routes
 from .routes import router
 
@@ -46,7 +49,7 @@ async def lifespan(app: FastAPI):
     # initializing beanie
     client = AsyncMongoClient(settings.mongo_uri)
     db = client[settings.mongo_database_name]
-    await init_beanie(db, document_models=[State, GraphTemplate, RegisteredNode, Store, Run])
+    await init_beanie(db, document_models=DOCUMENT_MODELS)
     logger.info("beanie dbs initialized")
 
     # initialize secret
@@ -55,7 +58,7 @@ async def lifespan(app: FastAPI):
     logger.info("secret initialized")
 
     # perform database health check
-    await check_database_health(logger)
+    await check_database_health(DOCUMENT_MODELS)
 
     # main logic of the server
     yield
