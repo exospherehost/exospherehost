@@ -59,7 +59,10 @@ describe('TestPruneSignal', () => {
     
     expect(global.fetch).toHaveBeenCalledWith('http://test-endpoint/prune', {
       method: 'POST',
-      headers: { 'x-api-key': 'test-api-key' },
+      headers: { 
+        'x-api-key': 'test-api-key',
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ data })
     });
   });
@@ -103,7 +106,10 @@ describe('TestReQueueAfterSignal', () => {
     
     expect(global.fetch).toHaveBeenCalledWith('http://test-endpoint/requeue', {
       method: 'POST',
-      headers: { 'x-api-key': 'test-api-key' },
+      headers: { 
+        'x-api-key': 'test-api-key',
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ enqueue_after: delayMs })
     });
   });
@@ -120,7 +126,10 @@ describe('TestReQueueAfterSignal', () => {
     
     expect(global.fetch).toHaveBeenCalledWith('http://test-endpoint/requeue', {
       method: 'POST',
-      headers: { 'x-api-key': 'test-api-key' },
+      headers: { 
+        'x-api-key': 'test-api-key',
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ enqueue_after: delayMs })
     });
   });
@@ -183,7 +192,10 @@ describe('TestRuntimeSignalHandling', () => {
       (runtime as any).getPruneEndpoint('test-state'),
       {
         method: 'POST',
-        headers: { 'x-api-key': (runtime as any).key },
+        headers: { 
+          'x-api-key': (runtime as any).key,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ data: { reason: 'direct_test' } })
       }
     );
@@ -207,7 +219,10 @@ describe('TestRuntimeSignalHandling', () => {
       (runtime as any).getRequeueAfterEndpoint('test-state'),
       {
         method: 'POST',
-        headers: { 'x-api-key': (runtime as any).key },
+        headers: { 
+          'x-api-key': (runtime as any).key,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ enqueue_after: 600000 })
       }
     );
@@ -446,7 +461,10 @@ describe('TestSignalEdgeCases', () => {
       
       expect(global.fetch).toHaveBeenCalledWith('http://test-endpoint', {
         method: 'POST',
-        headers: { 'x-api-key': 'test-key' },
+        headers: { 
+          'x-api-key': 'test-key',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ enqueue_after: expected })
       });
     }
@@ -492,7 +510,10 @@ describe('TestRuntimeHelperFunctions', () => {
       (runtime as any).getExecutedEndpoint('test-state-id'),
       {
         method: 'POST',
-        headers: { 'x-api-key': 'test-key' },
+        headers: { 
+          'x-api-key': 'test-key',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ outputs })
       }
     );
@@ -515,7 +536,10 @@ describe('TestRuntimeHelperFunctions', () => {
       (runtime as any).getErroredEndpoint('test-state-id'),
       {
         method: 'POST',
-        headers: { 'x-api-key': 'test-key' },
+        headers: { 
+          'x-api-key': 'test-key',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ error: 'Test error message' })
       }
     );

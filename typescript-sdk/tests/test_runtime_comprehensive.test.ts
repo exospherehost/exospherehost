@@ -154,12 +154,12 @@ describe('TestRuntimeEndpointConstruction', () => {
 
   it('should construct executed endpoint', () => {
     const endpoint = (runtime as any).getExecutedEndpoint('state123');
-    expect(endpoint).toBe('http://localhost:8080/v0/namespace/test_namespace/states/state123/executed');
+    expect(endpoint).toBe('http://localhost:8080/v0/namespace/test_namespace/state/state123/executed');
   });
 
   it('should construct errored endpoint', () => {
     const endpoint = (runtime as any).getErroredEndpoint('state123');
-    expect(endpoint).toBe('http://localhost:8080/v0/namespace/test_namespace/states/state123/errored');
+    expect(endpoint).toBe('http://localhost:8080/v0/namespace/test_namespace/state/state123/errored');
   });
 
   it('should construct register endpoint', () => {
@@ -366,10 +366,13 @@ describe('TestRuntimeNotification', () => {
     await (runtime as any).notifyExecuted('test_state_1', outputs);
     
     expect(global.fetch).toHaveBeenCalledWith(
-      'http://localhost:8080/v0/namespace/test_namespace/states/test_state_1/executed',
+      'http://localhost:8080/v0/namespace/test_namespace/state/test_state_1/executed',
       expect.objectContaining({
         method: 'POST',
-        headers: { 'x-api-key': 'test_key' },
+        headers: { 
+          'x-api-key': 'test_key',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ outputs })
       })
     );
@@ -399,10 +402,13 @@ describe('TestRuntimeNotification', () => {
     await (runtime as any).notifyErrored('test_state_1', 'Test error message');
     
     expect(global.fetch).toHaveBeenCalledWith(
-      'http://localhost:8080/v0/namespace/test_namespace/states/test_state_1/errored',
+      'http://localhost:8080/v0/namespace/test_namespace/state/test_state_1/errored',
       expect.objectContaining({
         method: 'POST',
-        headers: { 'x-api-key': 'test_key' },
+        headers: { 
+          'x-api-key': 'test_key',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ error: 'Test error message' })
       })
     );

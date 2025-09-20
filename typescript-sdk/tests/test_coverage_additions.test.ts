@@ -41,7 +41,10 @@ describe('test_statemanager_trigger_defaults', () => {
       expect.stringContaining('/graph/g/trigger'),
       expect.objectContaining({
         method: 'POST',
-        headers: { 'x-api-key': 'k' },
+        headers: { 
+          'x-api-key': 'k',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ start_delay: 0, inputs: {}, store: {} })
       })
     );

@@ -1,8 +1,9 @@
 import { BaseNode } from './node/index.js';
 import { PruneSignal, ReQueueAfterSignal } from './signals.js';
-import { ZodObject, ZodString } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { ZodObject } from 'zod';
 import { logger } from './logger.js';
+import { isZodObjectSchema, isZodStringSchema, generateFlatSchema } from './utils.js';
+
 
 interface RuntimeOptions {
   stateManagerUri?: string;
@@ -106,10 +107,10 @@ export class Runtime {
     return `${this.stateManagerUri}/${this.stateManagerVersion}/namespace/${this.namespace}/states/enqueue`;
   }
   private getExecutedEndpoint(stateId: string) {
-    return `${this.stateManagerUri}/${this.stateManagerVersion}/namespace/${this.namespace}/states/${stateId}/executed`;
+    return `${this.stateManagerUri}/${this.stateManagerVersion}/namespace/${this.namespace}/state/${stateId}/executed`;
   }
   private getErroredEndpoint(stateId: string) {
-    return `${this.stateManagerUri}/${this.stateManagerVersion}/namespace/${this.namespace}/states/${stateId}/errored`;
+    return `${this.stateManagerUri}/${this.stateManagerVersion}/namespace/${this.namespace}/state/${stateId}/errored`;
   }
   private getRegisterEndpoint() {
     return `${this.stateManagerUri}/${this.stateManagerVersion}/namespace/${this.namespace}/nodes/`;
@@ -124,24 +125,26 @@ export class Runtime {
     return `${this.stateManagerUri}/${this.stateManagerVersion}/namespace/${this.namespace}/state/${stateId}/re-enqueue-after`;
   }
 
+
   private async register() {
     const nodeNames = this.nodes.map(node => `${this.namespace}/${node.name}`);
     logger.info('Runtime', `Registering nodes: ${nodeNames.join(', ')}`);
     
     const body = {
       runtime_name: this.name,
-      runtime_namespace: this.namespace,
       nodes: this.nodes.map(node => ({
         name: node.name,
-        namespace: this.namespace,
-        inputs_schema: zodToJsonSchema(node.Inputs, node.name + 'Inputs'),
-        outputs_schema: zodToJsonSchema(node.Outputs, node.name + 'Outputs'),
+        inputs_schema: generateFlatSchema(node.Inputs, 'Inputs'),
+        outputs_schema: generateFlatSchema(node.Outputs, 'Outputs'),
         secrets: Object.keys((node.Secrets as ZodObject<any>).shape)
       }))
     };
     const res = await fetch(this.getRegisterEndpoint(), {
       method: 'PUT',
-      headers: { 'x-api-key': this.key },
+      headers: { 
+        'x-api-key': this.key,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(body)
     });
 
@@ -157,7 +160,10 @@ export class Runtime {
   private async enqueueCall() {
     const res = await fetch(this.getEnqueueEndpoint(), {
       method: 'POST',
-      headers: { 'x-api-key': this.key },
+      headers: { 
+        'x-api-key': this.key,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ nodes: this.nodeNames, batch_size: this.batchSize })
     });
     if (!res.ok) {
@@ -189,7 +195,10 @@ export class Runtime {
   private async notifyExecuted(stateId: string, outputs: any[]) {
     const res = await fetch(this.getExecutedEndpoint(stateId), {
       method: 'POST',
-      headers: { 'x-api-key': this.key },
+      headers: { 
+        'x-api-key': this.key,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ outputs })
     });
     if (!res.ok) {
@@ -201,7 +210,10 @@ export class Runtime {
   private async notifyErrored(stateId: string, error: string) {
     const res = await fetch(this.getErroredEndpoint(stateId), {
       method: 'POST',
-      headers: { 'x-api-key': this.key },
+      headers: { 
+        'x-api-key': this.key,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ error })
     });
     if (!res.ok) {
@@ -237,15 +249,15 @@ export class Runtime {
       if (!('Inputs' in node)) errors.push(`${nodeName} missing Inputs schema`);
       if (!('Outputs' in node)) errors.push(`${nodeName} missing Outputs schema`);
       if (!('Secrets' in node)) errors.push(`${nodeName} missing Secrets schema`);
-      
+
       // Validate that schemas are actually ZodObject instances
-      if (!(node.Inputs instanceof ZodObject)) {
+      if (!isZodObjectSchema(node.Inputs)) {
         errors.push(`${nodeName}.Inputs must be a ZodObject schema`);
       }
-      if (!(node.Outputs instanceof ZodObject)) {
+      if (!isZodObjectSchema(node.Outputs)) {
         errors.push(`${nodeName}.Outputs must be a ZodObject schema`);
       }
-      if (!(node.Secrets instanceof ZodObject)) {
+      if (!isZodObjectSchema(node.Secrets)) {
         errors.push(`${nodeName}.Secrets must be a ZodObject schema`);
       }
       
@@ -254,7 +266,7 @@ export class Runtime {
       const secrets = node.Secrets as ZodObject<any>;
       const checkStrings = (schema: ZodObject<any>, label: string) => {
         for (const key in schema.shape) {
-          if (!(schema.shape[key] instanceof ZodString)) {
+          if (!isZodStringSchema(schema.shape[key])) {
             errors.push(`${nodeName}.${label} field '${key}' must be string`);
           }
         }
@@ -328,9 +340,11 @@ export class Runtime {
 
   private async startInternal() {
     await this.register();
+    logger.info('Runtime', `Registered nodes: ${this.nodeNames.join(', ')}`);
     const poller = this.enqueue();
     const workers = Array.from({ length: this.workers }, (_, idx) => this.worker(idx));
     await Promise.all([poller, ...workers]);
+    logger.info('Runtime', `Started workers: ${this.workers}`);
   }
 
   start() {

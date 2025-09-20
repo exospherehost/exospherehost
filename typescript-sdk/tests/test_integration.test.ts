@@ -143,10 +143,18 @@ describe('TestStateManagerGraphIntegration', () => {
     (global.fetch as any)
       .mockResolvedValueOnce(createFetchMock({
         name: 'test_graph',
-        validation_status: 'PENDING'
+        validation_status: 'PENDING',
+        validation_errors: null
       }, 201))
-      .mockResolvedValueOnce(createFetchMock({ validation_status: 'PENDING' }))
-      .mockResolvedValueOnce(createFetchMock({ validation_status: 'VALID', name: 'test_graph' }))
+      .mockResolvedValueOnce(createFetchMock({ 
+        validation_status: 'PENDING',
+        validation_errors: null
+      }))
+      .mockResolvedValueOnce(createFetchMock({ 
+        validation_status: 'VALID', 
+        name: 'test_graph',
+        validation_errors: null
+      }))
       .mockResolvedValueOnce(createFetchMock({ status: 'triggered' }));
 
     const sm = new StateManager('test_namespace');

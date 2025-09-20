@@ -7,7 +7,10 @@ export class PruneSignal extends Error {
     const body = { data: this.data };
     const res = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'x-api-key': key },
+      headers: { 
+        'x-api-key': key,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(body)
     });
     if (!res.ok) {
@@ -28,7 +31,10 @@ export class ReQueueAfterSignal extends Error {
     const body = { enqueue_after: this.delayMs };
     const res = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'x-api-key': key },
+      headers: { 
+        'x-api-key': key,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(body)
     });
     if (!res.ok) {

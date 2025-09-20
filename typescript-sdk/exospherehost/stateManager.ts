@@ -56,7 +56,10 @@ export class StateManager {
     const endpoint = this.getTriggerStateEndpoint(graphName);
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers,
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(body)
     });
     if (!response.ok) {
@@ -88,19 +91,22 @@ export class StateManager {
     const headers = { 'x-api-key': this.key } as HeadersInit;
     const body: any = { 
       secrets, 
-      nodes: graphNodes.map(node => typeof node === 'object' && 'model_dump' in node ? node.model_dump() : node)
+      nodes: graphNodes.map(node => typeof node === 'object' && 'model_dump' in node ? (node as any).model_dump() : node)
     };
 
     if (retryPolicy !== undefined) {
-      body.retry_policy = typeof retryPolicy === 'object' && 'model_dump' in retryPolicy ? retryPolicy.model_dump() : retryPolicy;
+      body.retry_policy = typeof retryPolicy === 'object' && 'model_dump' in retryPolicy ? (retryPolicy as any).model_dump() : retryPolicy;
     }
     if (storeConfig !== undefined) {
-      body.store_config = typeof storeConfig === 'object' && 'model_dump' in storeConfig ? storeConfig.model_dump() : storeConfig;
+      body.store_config = typeof storeConfig === 'object' && 'model_dump' in storeConfig ? (storeConfig as any).model_dump() : storeConfig;
     }
 
     const putResponse = await fetch(endpoint, {
       method: 'PUT',
-      headers,
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(body)
     });
     if (!(putResponse.status === 200 || putResponse.status === 201)) {

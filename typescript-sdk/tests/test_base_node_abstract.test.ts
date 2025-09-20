@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { BaseNode } from '../exospherehost/node/BaseNode.js';
+import { isZodObjectSchema } from '../exospherehost/utils.js';
 import { z } from 'zod';
 
 describe('TestBaseNodeAbstract', () => {
@@ -81,21 +82,21 @@ describe('TestBaseNodeAbstract', () => {
   describe('test_base_node_inputs_class', () => {
     it('should have Inputs class', () => {
       expect(BaseNode.Inputs).toBeDefined();
-      expect(BaseNode.Inputs).toBeInstanceOf(z.ZodObject);
+      expect(isZodObjectSchema(BaseNode.Inputs)).toBe(true);
     });
   });
 
   describe('test_base_node_outputs_class', () => {
     it('should have Outputs class', () => {
       expect(BaseNode.Outputs).toBeDefined();
-      expect(BaseNode.Outputs).toBeInstanceOf(z.ZodObject);
+      expect(isZodObjectSchema(BaseNode.Outputs)).toBe(true);
     });
   });
 
   describe('test_base_node_secrets_class', () => {
     it('should have Secrets class', () => {
       expect(BaseNode.Secrets).toBeDefined();
-      expect(BaseNode.Secrets).toBeInstanceOf(z.ZodObject);
+      expect(isZodObjectSchema(BaseNode.Secrets)).toBe(true);
     });
   });
 });

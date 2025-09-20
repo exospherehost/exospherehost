@@ -1,9 +1,9 @@
 import { z, ZodTypeAny, ZodObject } from 'zod';
 
-export abstract class BaseNode<I extends ZodTypeAny = ZodObject<any>, O extends ZodTypeAny = ZodObject<any>, S extends ZodTypeAny = ZodObject<any>> {
-  static Inputs: ZodTypeAny = z.object({});
-  static Outputs: ZodTypeAny = z.object({});
-  static Secrets: ZodTypeAny = z.object({});
+export abstract class BaseNode<I extends ZodObject<any> = ZodObject<any>, O extends ZodObject<any> = ZodObject<any>, S extends ZodObject<any> = ZodObject<any>> {
+  static Inputs: ZodObject<any> = z.object({});
+  static Outputs: ZodObject<any> = z.object({});
+  static Secrets: ZodObject<any> = z.object({});
 
   protected inputs!: z.infer<I>;
   protected secrets!: z.infer<S>;

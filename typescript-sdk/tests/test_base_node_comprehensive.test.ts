@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { BaseNode } from '../exospherehost/node/BaseNode.js';
+import { isZodObjectSchema, isZodStringSchema } from '../exospherehost/utils.js';
 import { z } from 'zod';
 
 class ValidNode extends BaseNode {
@@ -122,9 +123,9 @@ describe('TestBaseNodeInitialization', () => {
   });
 
   it('should validate node schema', () => {
-    expect(ValidNode.Inputs).toBeInstanceOf(z.ZodObject);
-    expect(ValidNode.Outputs).toBeInstanceOf(z.ZodObject);
-    expect(ValidNode.Secrets).toBeInstanceOf(z.ZodObject);
+    expect(isZodObjectSchema(ValidNode.Inputs)).toBe(true);
+    expect(isZodObjectSchema(ValidNode.Outputs)).toBe(true);
+    expect(isZodObjectSchema(ValidNode.Secrets)).toBe(true);
   });
 
   it('should validate node schema fields are strings', () => {
@@ -133,15 +134,15 @@ describe('TestBaseNodeInitialization', () => {
     const secretsShape = (ValidNode.Secrets as z.ZodObject<any>).shape;
 
     Object.values(inputsShape).forEach(field => {
-      expect(field).toBeInstanceOf(z.ZodString);
+      expect(isZodStringSchema(field)).toBe(true);
     });
 
     Object.values(outputsShape).forEach(field => {
-      expect(field).toBeInstanceOf(z.ZodString);
+      expect(isZodStringSchema(field)).toBe(true);
     });
 
     Object.values(secretsShape).forEach(field => {
-      expect(field).toBeInstanceOf(z.ZodString);
+      expect(isZodStringSchema(field)).toBe(true);
     });
   });
 });
