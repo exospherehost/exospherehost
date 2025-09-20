@@ -224,7 +224,10 @@ export class Runtime {
 
   private async getSecrets(stateId: string): Promise<Record<string, string>> {
     const res = await fetch(this.getSecretsEndpoint(stateId), {
-      headers: { 'x-api-key': this.key }
+      headers: { 
+        'x-api-key': this.key,
+        'Content-Type': 'application/json'
+       }
     });
     if (!res.ok) {
       const errorText = await res.text();
