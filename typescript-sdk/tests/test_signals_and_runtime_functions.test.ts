@@ -26,6 +26,9 @@ class MockTestNode extends BaseNode {
 }
 
 describe('TestPruneSignal', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('should initialize with data', () => {
     const data = { reason: 'test', custom_field: 'value' };
     const signal = new PruneSignal(data);
@@ -34,7 +37,6 @@ describe('TestPruneSignal', () => {
     expect(signal.message).toContain('Prune signal received with data');
     expect(signal.message).toContain('Do not catch this Exception');
   });
-
   it('should initialize without data', () => {
     const signal = new PruneSignal();
     
