@@ -264,7 +264,7 @@ describe('TestRuntimeSignalHandling', () => {
     expect(secrets).toEqual({ api_key: 'test-secret' });
     expect(global.fetch).toHaveBeenCalledWith(
       (runtime as any).getSecretsEndpoint('test-state-id'),
-      { headers: { 'x-api-key': 'test-key' } }
+      { headers: { 'x-api-key': 'test-key', 'Content-Type': 'application/json' } }
     );
   });
 

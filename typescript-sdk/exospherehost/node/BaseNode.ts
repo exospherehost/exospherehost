@@ -26,7 +26,7 @@ export abstract class BaseNode<I extends ZodObject<any> = ZodObject<any>, O exte
       return result.map(r => outputsSchema.parse(r));
     }
     if (result === null) {
-      return null as any;
+      return {} as z.infer<O>;
     }
     return outputsSchema.parse(result);
   }

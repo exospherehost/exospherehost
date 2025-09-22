@@ -78,7 +78,7 @@ class MockTestNodeWithNoneOutput extends BaseNode {
   });
 
   async execute() {
-    return null as any;
+    return null;
   }
 }
 

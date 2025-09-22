@@ -186,7 +186,7 @@ describe('TestBaseNodeExecute', () => {
     
     const result = await node._execute(inputs, secrets);
 
-    expect(result).toBeNull();
+    expect(result).toEqual({});
     expect((node as any).inputs).toEqual(inputs);
     expect((node as any).secrets).toEqual(secrets);
   });
@@ -432,6 +432,6 @@ describe('TestBaseNodeIntegration', () => {
       result: 'Count: 1'
     });
     expect(Array.isArray(result2)).toBe(true);
-    expect(result3).toBeNull();
+    expect(result3).toEqual({});
   });
 });
