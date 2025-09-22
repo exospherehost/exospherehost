@@ -12,16 +12,17 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.3"
   },
   "devDependencies": {
     "@types/node": "^20.14.11",
     "@vitest/coverage-v8": "^1.6.0",
     "typescript": "^5.6.3",
-    "vitest": "^1.6.0"
+    "vitest": "^1.6.0",
+    "zod": "^3.23.8"
   },
   "peerDependencies": {
-    "@types/node": ">=20.0.0"
+    "@types/node": ">=20.0.0",
+    "zod": "^3.23.8"
   }
 }

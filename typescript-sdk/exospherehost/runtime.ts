@@ -149,8 +149,9 @@ export class Runtime {
     });
 
     if (!res.ok) {
-      logger.error('Runtime', `Failed to register nodes: ${res}`);
-      throw new Error(`Failed to register nodes: ${res}`);
+      const errorText = await res.text();
+      logger.error('Runtime', `Failed to register nodes: ${errorText}`);
+      throw new Error(`Failed to register nodes: ${errorText}`);
     }
     
     logger.info('Runtime', `Registered nodes: ${nodeNames.join(', ')}`);
