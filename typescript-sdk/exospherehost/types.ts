@@ -7,7 +7,7 @@ export interface GraphNode {
   node_name: string;
   identifier: string;
   inputs: Record<string, unknown>;
-  next_nodes: string[];
+  next_nodes?: string[];
   namespace?: string;
 }
 
