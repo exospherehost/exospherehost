@@ -11,8 +11,10 @@ export interface GraphNode {
   namespace?: string;
 }
 
-export enum GraphValidationStatus {
-  VALID = 'VALID',
-  INVALID = 'INVALID',
-  PENDING = 'PENDING'
-}
+export const GraphValidationStatus = {
+  VALID: 'VALID',
+  INVALID: 'INVALID',
+  PENDING: 'PENDING',
+} as const;
+export type GraphValidationStatus =
+  (typeof GraphValidationStatus)[keyof typeof GraphValidationStatus];
