@@ -42,8 +42,8 @@ describe('GraphNodeModel & related validation', () => {
         namespace: 'ns',
         identifier: 'store',
         inputs: {},
-        next_nodes: null,
-        unites: null
+        next_nodes: [],
+        unites: undefined
       });
     }).toThrow('reserved word');
   });
