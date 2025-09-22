@@ -22,6 +22,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
 
       - name: Install dev dependencies with uv
         working-directory: python-sdk
@@ -69,6 +71,8 @@ jobs:
 
       - uses: astral-sh/setup-uv@v6
         name: Install uv
+        with:
+          enable-cache: true
 
       - run: uv python install
      

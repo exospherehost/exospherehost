@@ -42,7 +42,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
-          cache: true
+          enable-cache: true
 
       - name: Install dev dependencies with uv
         working-directory: state-manager

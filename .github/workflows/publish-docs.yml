@@ -23,6 +23,8 @@ jobs:
                 python-version: '3.12'
             - name: Setup UV
               uses: astral-sh/setup-uv@v6 
+              with:
+                enable-cache: true
             - name: Install dependencies
               working-directory: ./docs
               run: uv sync
