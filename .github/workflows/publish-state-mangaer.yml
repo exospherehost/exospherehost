@@ -69,7 +69,7 @@ jobs:
           name: state-manager-coverage-report
           fail_ci_if_error: true
 
-  publish-image:
+  publish-image-on-ghcr:
     runs-on: ubuntu-latest
     needs: test
     if: github.repository == 'exospherehost/exospherehost'
