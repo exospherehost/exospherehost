@@ -141,6 +141,7 @@ class TestLifespan:
             mock_init_beanie.assert_called()
             mock_logger.info.assert_any_call("beanie dbs initialized")
             mock_logger.info.assert_any_call("secret initialized")
+            mock_health_check.assert_awaited_once_with(app_main.DOCUMENT_MODELS)
         
         # After context manager exits (shutdown)
         mock_logger.info.assert_any_call("server stopped")

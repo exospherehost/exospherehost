@@ -37,7 +37,7 @@ class LogsManager:
         
         if is_development:
             # In development mode, set level to WARNING to disable INFO logs
-            logger.setLevel(logging.INFO)
+            logger.setLevel(logging.WARNING)
         else:
             # In production mode, keep INFO level
             logger.setLevel(logging.INFO)
