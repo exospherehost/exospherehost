@@ -29,7 +29,12 @@ from .routes import router, global_router
 # importing CORS config
 from .config.cors import get_cors_config
 from .config.settings import get_settings
+
+# importing database health check function
+from .utils.check_database_health import check_database_health
  
+# Define models list
+DOCUMENT_MODELS = [State, GraphTemplate, RegisteredNode, Store, Run]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -43,13 +48,16 @@ async def lifespan(app: FastAPI):
     # initializing beanie
     client = AsyncMongoClient(settings.mongo_uri)
     db = client[settings.mongo_database_name]
-    await init_beanie(db, document_models=[State, GraphTemplate, RegisteredNode, Store, Run])
+    await init_beanie(db, document_models=DOCUMENT_MODELS)
     logger.info("beanie dbs initialized")
 
     # initialize secret
     if not settings.state_manager_secret:
         raise ValueError("STATE_MANAGER_SECRET is not set")
     logger.info("secret initialized")
+
+    # perform database health check
+    await check_database_health(DOCUMENT_MODELS)
 
     # main logic of the server
     yield

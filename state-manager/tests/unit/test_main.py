@@ -112,10 +112,11 @@ class TestLifespan:
         'MONGO_DATABASE_NAME': 'test_db',
         'STATE_MANAGER_SECRET': 'test_secret'
     })
+    @patch('app.main.LogsManager')    
     @patch('app.main.init_beanie', new_callable=AsyncMock)
     @patch('app.main.AsyncMongoClient')
-    @patch('app.main.LogsManager')
-    async def test_lifespan_startup_success(self, mock_logs_manager, mock_mongo_client, mock_init_beanie):
+    @patch('app.main.check_database_health', new_callable=AsyncMock)
+    async def test_lifespan_startup_success(self, mock_health_check, mock_mongo_client, mock_init_beanie, mock_logs_manager):
         """Test successful lifespan startup"""
         # Setup mocks
         mock_logger = MagicMock()
@@ -140,6 +141,7 @@ class TestLifespan:
             mock_init_beanie.assert_called()
             mock_logger.info.assert_any_call("beanie dbs initialized")
             mock_logger.info.assert_any_call("secret initialized")
+            mock_health_check.assert_awaited_once_with(app_main.DOCUMENT_MODELS)
         
         # After context manager exits (shutdown)
         mock_logger.info.assert_any_call("server stopped")
@@ -176,8 +178,9 @@ class TestLifespan:
     })
     @patch('app.main.init_beanie', new_callable=AsyncMock)
     @patch('app.main.AsyncMongoClient')
+    @patch('app.main.check_database_health', new_callable=AsyncMock) 
     @patch('app.main.LogsManager')
-    async def test_lifespan_init_beanie_with_correct_models(self, mock_logs_manager, mock_mongo_client, mock_init_beanie):
+    async def test_lifespan_init_beanie_with_correct_models(self, mock_health_check, mock_logs_manager, mock_mongo_client, mock_init_beanie):
         """Test that init_beanie is called with correct document models"""
         mock_logger = MagicMock()
         mock_logs_manager.return_value.get_logger.return_value = mock_logger
