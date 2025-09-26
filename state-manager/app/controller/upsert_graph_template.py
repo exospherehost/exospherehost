@@ -28,6 +28,7 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
                 graph_template.retry_policy = body.retry_policy
                 graph_template.store_config = body.store_config
                 graph_template.nodes = body.nodes
+                graph_template.triggers = body.triggers
                 await graph_template.save()
                 
             else:
@@ -45,13 +46,14 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
                         validation_status=GraphTemplateValidationStatus.PENDING,
                         validation_errors=[],
                         retry_policy=body.retry_policy,
-                        store_config=body.store_config
+                        store_config=body.store_config,
+                        triggers=body.triggers
                     ).set_secrets(body.secrets)
                 )
         except ValueError as e:
             logger.error("Error validating graph template", error=e, x_exosphere_request_id=x_exosphere_request_id)
             raise HTTPException(status_code=400, detail=f"Error validating graph template: {str(e)}")
-
+        
         background_tasks.add_task(verify_graph, graph_template)
 
         return UpsertGraphTemplateResponse(
@@ -61,6 +63,7 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
             secrets={secret_name: True for secret_name in graph_template.get_secrets().keys()},
             retry_policy=graph_template.retry_policy,
             store_config=graph_template.store_config,
+            triggers=graph_template.triggers,
             created_at=graph_template.created_at,
             updated_at=graph_template.updated_at
         )
