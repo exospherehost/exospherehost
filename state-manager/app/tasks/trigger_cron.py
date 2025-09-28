@@ -33,6 +33,12 @@ async def call_trigger_graph(trigger: DatabaseTriggers):
         x_exosphere_request_id=str(uuid4())
     )
 
+async def mark_as_failed(trigger: DatabaseTriggers):
+    await DatabaseTriggers.get_pymongo_collection().update_one(
+        {"_id": trigger.id},
+        {"$set": {"trigger_status": TriggerStatusEnum.FAILED}}
+    )
+
 async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime):
     assert trigger.expression is not None
     iter = croniter.croniter(trigger.expression, cron_time)
@@ -55,9 +61,13 @@ async def mark_as_triggered(trigger: DatabaseTriggers):
 
 async def handle_trigger(cron_time: datetime):
     while(trigger:= await get_due_triggers(cron_time)):
-        await call_trigger_graph(trigger)
-        await create_next_triggers(trigger, cron_time)
-        await mark_as_triggered(trigger)
+        try:
+            await call_trigger_graph(trigger)
+            await create_next_triggers(trigger, cron_time)
+            await mark_as_triggered(trigger)
+        except Exception as e:
+            await mark_as_failed(trigger)
+            logger.error(f"Error calling trigger graph: {e}")
 
 async def trigger_cron():
     cron_time = datetime.now()
