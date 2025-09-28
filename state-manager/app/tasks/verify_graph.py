@@ -9,7 +9,7 @@ from app.models.db.graph_template_model import GraphTemplate
 from app.models.graph_template_validation_status import GraphTemplateValidationStatus
 from app.models.db.registered_node import RegisteredNode
 from app.singletons.logs_manager import LogsManager
-from app.models.trigger_models import Trigger, CronTrigger, TriggerStatusEnum, TriggerTypeEnum
+from app.models.trigger_models import Trigger, TriggerStatusEnum, TriggerTypeEnum
 from app.models.db.trigger import DatabaseTriggers
 
 logger = LogsManager().get_logger()
@@ -102,16 +102,16 @@ async def verify_inputs(graph_template: GraphTemplate, registered_nodes: list[Re
     return errors
 
 async def cancel_crons(graph_template: GraphTemplate, old_triggers: list[Trigger]):
-    old_crons = set([CronTrigger(**trigger.value) for trigger in old_triggers if trigger.type == TriggerTypeEnum.CRON])
-    new_crons = set([CronTrigger(**trigger.value) for trigger in graph_template.triggers if trigger.type == TriggerTypeEnum.CRON])
+    old_cron_expressions = set([trigger.value["expression"] for trigger in old_triggers if trigger.type == TriggerTypeEnum.CRON])
+    new_cron_expressions = set([trigger.value["expression"] for trigger in graph_template.triggers if trigger.type == TriggerTypeEnum.CRON])
 
-    removed = old_crons - new_crons
+    removed_expressions = old_cron_expressions - new_cron_expressions
 
     await DatabaseTriggers.find(
         DatabaseTriggers.graph_name == graph_template.name,
         DatabaseTriggers.trigger_status == TriggerStatusEnum.PENDING,
         DatabaseTriggers.type == TriggerTypeEnum.CRON,
-        In(DatabaseTriggers.expression, [cron.expression for cron in removed])
+        In(DatabaseTriggers.expression, list(removed_expressions))
     ).update(
         {
             "$set": {
@@ -121,23 +121,24 @@ async def cancel_crons(graph_template: GraphTemplate, old_triggers: list[Trigger
     ) # type: ignore
 
 async def create_crons(graph_template: GraphTemplate, old_triggers: list[Trigger]):
-    old_crons = set([CronTrigger(**trigger.value) for trigger in old_triggers if trigger.type == TriggerTypeEnum.CRON])
-    new_crons = set([CronTrigger(**trigger.value) for trigger in graph_template.triggers if trigger.type == TriggerTypeEnum.CRON])
+    old_cron_expressions = set([trigger.value["expression"] for trigger in old_triggers if trigger.type == TriggerTypeEnum.CRON])
+    new_cron_expressions = set([trigger.value["expression"] for trigger in graph_template.triggers if trigger.type == TriggerTypeEnum.CRON])
 
-    crons_to_create = new_crons - old_crons
+    expressions_to_create = new_cron_expressions - old_cron_expressions
 
     current_time = datetime.now()
     
     new_db_triggers = []
-    for cron in crons_to_create:
-        iter = croniter.croniter(cron.expression, current_time)
+    for expression in expressions_to_create:
+        iter = croniter.croniter(expression, current_time)
 
         next_trigger_time = iter.get_next(datetime)
+        print(next_trigger_time)
             
         new_db_triggers.append(
             DatabaseTriggers(
                 type=TriggerTypeEnum.CRON,
-                expression=cron.expression,
+                expression=expression,
                 graph_name=graph_template.name,
                 namespace=graph_template.namespace,
                 trigger_status=TriggerStatusEnum.PENDING,
