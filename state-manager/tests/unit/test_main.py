@@ -180,7 +180,8 @@ class TestLifespan:
     @patch('app.main.AsyncMongoClient')
     @patch('app.main.check_database_health', new_callable=AsyncMock) 
     @patch('app.main.LogsManager')
-    async def test_lifespan_init_beanie_with_correct_models(self, mock_health_check, mock_logs_manager, mock_mongo_client, mock_init_beanie):
+    @patch('app.main.scheduler')
+    async def test_lifespan_init_beanie_with_correct_models(self, mock_scheduler, mock_logs_manager, mock_health_check, mock_mongo_client, mock_init_beanie):
         """Test that init_beanie is called with correct document models"""
         mock_logger = MagicMock()
         mock_logs_manager.return_value.get_logger.return_value = mock_logger
@@ -206,14 +207,15 @@ class TestLifespan:
         # Second argument should be document_models with the expected models
         document_models = call_args[1]['document_models']
         
-        # Import the expected models
+                # Import the expected models
         from app.models.db.state import State
         from app.models.db.graph_template_model import GraphTemplate
         from app.models.db.registered_node import RegisteredNode
         from app.models.db.store import Store
         from app.models.db.run import Run
-
-        expected_models = [State, GraphTemplate, RegisteredNode, Store, Run]
+        from app.models.db.trigger import DatabaseTriggers
+        
+        expected_models = [State, GraphTemplate, RegisteredNode, Store, Run, DatabaseTriggers]
         assert document_models == expected_models
 
 

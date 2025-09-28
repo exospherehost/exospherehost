@@ -5,6 +5,7 @@ import pytest
 import asyncio
 import pathlib
 import sys
+from unittest.mock import patch, MagicMock
 from asgi_lifespan import LifespanManager
 
 # Add the project root directory to the Python path
@@ -20,9 +21,15 @@ def event_loop():
 
 @pytest.fixture(scope="session")
 async def app_started(app_fixture):
-    """Create a lifespan fixture for the FastAPI app."""
-    async with LifespanManager(app_fixture):
-        yield app_fixture
+    """Create a lifespan fixture for the FastAPI app with mocked scheduler."""
+    # Mock the scheduler to prevent event loop issues
+    with patch('app.main.scheduler') as mock_scheduler:
+        mock_scheduler.add_job = MagicMock()
+        mock_scheduler.start = MagicMock()
+        mock_scheduler.shutdown = MagicMock()
+        
+        async with LifespanManager(app_fixture):
+            yield app_fixture
 
 @pytest.fixture(scope="session")
 def app_fixture():

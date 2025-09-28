@@ -379,17 +379,19 @@ class TestVerifyGraph:
         mock_node1.outputs_schema = {}
         mock_node1.secrets = []
         
-        with patch('app.tasks.verify_graph.RegisteredNode.list_nodes_by_templates') as mock_list_nodes:
+        with patch('app.tasks.verify_graph.RegisteredNode.list_nodes_by_templates', new_callable=AsyncMock) as mock_list_nodes:
             mock_list_nodes.return_value = [mock_node1]
-            
-            with patch('app.tasks.verify_graph.verify_node_exists') as mock_verify_nodes:
-                with patch('app.tasks.verify_graph.verify_secrets') as mock_verify_secrets:
-                    with patch('app.tasks.verify_graph.verify_inputs') as mock_verify_inputs:
-                        mock_verify_nodes.return_value = []
-                        mock_verify_secrets.return_value = []
-                        mock_verify_inputs.return_value = []
-                        
-                        await verify_graph(graph_template)
+
+            with patch('app.tasks.verify_graph.verify_node_exists', new_callable=AsyncMock) as mock_verify_nodes:
+                with patch('app.tasks.verify_graph.verify_secrets', new_callable=AsyncMock) as mock_verify_secrets:
+                    with patch('app.tasks.verify_graph.verify_inputs', new_callable=AsyncMock) as mock_verify_inputs:
+                        with patch('app.tasks.verify_graph.cancel_crons', new_callable=AsyncMock) as mock_cancel_crons:
+                            with patch('app.tasks.verify_graph.create_crons', new_callable=AsyncMock) as mock_create_crons:
+                                mock_verify_nodes.return_value = []
+                                mock_verify_secrets.return_value = []
+                                mock_verify_inputs.return_value = []
+                                
+                                await verify_graph(graph_template, [])
                         
                         assert graph_template.validation_status == GraphTemplateValidationStatus.VALID
                         assert graph_template.validation_errors == []
@@ -425,7 +427,7 @@ class TestVerifyGraph:
                         mock_verify_secrets.return_value = ["Secret error"]
                         mock_verify_inputs.return_value = ["Input error"]
                         
-                        await verify_graph(graph_template)
+                        await verify_graph(graph_template, [])
                         
                         assert graph_template.validation_status == GraphTemplateValidationStatus.INVALID
                         assert graph_template.validation_errors == ["Node error", "Secret error", "Input error"]
@@ -446,7 +448,9 @@ class TestVerifyGraph:
             # Mock the save method to be async
             graph_template.save = AsyncMock()
             
-            await verify_graph(graph_template)
+            # The verify_graph function should catch the exception, log it, set status, and re-raise it
+            with pytest.raises(Exception, match="Database error"):
+                await verify_graph(graph_template, [])
             
             assert graph_template.validation_status == GraphTemplateValidationStatus.INVALID
             assert graph_template.validation_errors == ["Validation failed due to unexpected error: Database error"]
@@ -469,8 +473,9 @@ async def test_verify_graph_with_exception():
         # Mock RegisteredNode.list_nodes_by_templates to raise an exception
         mock_registered_node_cls.list_nodes_by_templates.side_effect = Exception("Database connection error")
 
-        # This should handle the exception and mark the graph as invalid
-        await verify_graph(graph_template)
+        # This should handle the exception and mark the graph as invalid, then re-raise
+        with pytest.raises(Exception, match="Database connection error"):
+            await verify_graph(graph_template, [])
 
         # Verify that the graph was marked as invalid with error
         assert graph_template.validation_status == GraphTemplateValidationStatus.INVALID
@@ -489,18 +494,33 @@ async def test_verify_graph_with_validation_errors():
     graph_template.validation_errors = MagicMock()
 
     # This test verifies that verify_graph can handle validation errors
-    # The complex mocking of internal functions is tested separately
-    with patch('app.tasks.verify_graph.RegisteredNode') as mock_registered_node_cls:
-        # Mock registered nodes to return empty list (will cause validation errors)
-        mock_registered_node_cls.list_nodes_by_templates.return_value = []
+    # Mock all the dependencies to avoid database and scheduler issues
+    with patch('app.tasks.verify_graph.RegisteredNode') as mock_registered_node_cls, \
+         patch('app.tasks.verify_graph.verify_node_exists') as mock_verify_nodes, \
+         patch('app.tasks.verify_graph.verify_secrets') as mock_verify_secrets, \
+         patch('app.tasks.verify_graph.verify_inputs') as mock_verify_inputs, \
+         patch('app.tasks.verify_graph.cancel_crons', new_callable=AsyncMock) as mock_cancel_crons, \
+         patch('app.tasks.verify_graph.create_crons', new_callable=AsyncMock) as mock_create_crons:
+        
+        # Mock registered nodes to return empty list
+        mock_registered_node_cls.list_nodes_by_templates = AsyncMock(return_value=[])
+        
+        # Mock validation functions to return errors (simulating validation failure)
+        mock_verify_nodes.return_value = ["Node validation error"]
+        mock_verify_secrets.return_value = []
+        mock_verify_inputs.return_value = []
+        
+        # Mock graph template properties
+        graph_template.triggers = []
+        graph_template.name = "test_graph"
 
         # This should mark the graph as invalid due to validation errors
-        await verify_graph(graph_template)
+        await verify_graph(graph_template, [])
 
-        # Verify that the graph was marked as invalid
-        assert graph_template.validation_status == GraphTemplateValidationStatus.INVALID
-        # The specific error message depends on the actual validation logic
-        assert len(graph_template.validation_errors) > 0
+    # Verify that the graph was marked as invalid
+    assert graph_template.validation_status == GraphTemplateValidationStatus.INVALID
+    # The specific error message depends on the actual validation logic
+    assert len(graph_template.validation_errors) > 0
 
 
 @pytest.mark.asyncio
@@ -514,8 +534,14 @@ async def test_verify_graph_with_valid_graph():
     graph_template.validation_errors = MagicMock()
 
     # This test verifies that verify_graph can handle valid graphs
-    # The complex mocking of internal functions is tested separately
-    with patch('app.tasks.verify_graph.RegisteredNode') as mock_registered_node_cls:
+    # Mock all the dependencies to avoid database and scheduler issues
+    with patch('app.tasks.verify_graph.RegisteredNode') as mock_registered_node_cls, \
+         patch('app.tasks.verify_graph.verify_node_exists') as mock_verify_nodes, \
+         patch('app.tasks.verify_graph.verify_secrets') as mock_verify_secrets, \
+         patch('app.tasks.verify_graph.verify_inputs') as mock_verify_inputs, \
+         patch('app.tasks.verify_graph.cancel_crons', new_callable=AsyncMock) as mock_cancel_crons, \
+         patch('app.tasks.verify_graph.create_crons', new_callable=AsyncMock) as mock_create_crons:
+        
         # Mock registered nodes to return a valid node
         mock_registered_node = MagicMock()
         mock_registered_node.name = "test_node"
@@ -525,14 +551,23 @@ async def test_verify_graph_with_valid_graph():
         mock_registered_node.inputs_schema = {}
         mock_registered_node.outputs_schema = {}
         mock_registered_node.secrets = []
-        mock_registered_node_cls.list_nodes_by_templates.return_value = [mock_registered_node]
+        mock_registered_node_cls.list_nodes_by_templates = AsyncMock(return_value=[mock_registered_node])
+        
+        # Mock validation functions to return no errors (simulating successful validation)
+        mock_verify_nodes.return_value = []
+        mock_verify_secrets.return_value = []
+        mock_verify_inputs.return_value = []
+        
+        # Mock graph template properties
+        graph_template.triggers = []
+        graph_template.name = "test_graph"
 
         # This should mark the graph as valid
-        await verify_graph(graph_template)
+        await verify_graph(graph_template, [])
 
-        # Verify that the graph was processed (status may vary based on actual validation)
-        # The specific status depends on the actual validation logic
-        assert graph_template.save.called
+    # Verify that the graph was processed (status may vary based on actual validation)
+    # The specific status depends on the actual validation logic
+    assert graph_template.save.called
 
 
 
