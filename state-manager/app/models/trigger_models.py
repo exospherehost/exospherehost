@@ -6,6 +6,12 @@ from typing import Self
 class TriggerTypeEnum(str, Enum):
     CRON = "CRON"
 
+class TriggerStatusEnum(str, Enum):
+    PENDING = "PENDING"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+    TRIGGERED = "TRIGGERED"
+
 class CronTrigger(BaseModel):
     expression: str = Field(..., description="Cron expression for the trigger")
 

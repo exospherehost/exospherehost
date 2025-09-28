@@ -10,6 +10,9 @@ logger = LogsManager().get_logger()
 
 async def upsert_graph_template(namespace_name: str, graph_name: str, body: UpsertGraphTemplateRequest, x_exosphere_request_id: str, background_tasks: BackgroundTasks) -> UpsertGraphTemplateResponse:
     try:
+
+        old_triggers = []
+
         graph_template = await GraphTemplate.find_one(
             GraphTemplate.name == graph_name,
             GraphTemplate.namespace == namespace_name
@@ -21,6 +24,7 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
                     "Graph template already exists in namespace", graph_template=graph_template,
                     namespace_name=namespace_name,
                     x_exosphere_request_id=x_exosphere_request_id)
+                old_triggers = graph_template.triggers
                 
                 graph_template.set_secrets(body.secrets)
                 graph_template.validation_status = GraphTemplateValidationStatus.PENDING
@@ -54,7 +58,7 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
             logger.error("Error validating graph template", error=e, x_exosphere_request_id=x_exosphere_request_id)
             raise HTTPException(status_code=400, detail=f"Error validating graph template: {str(e)}")
         
-        background_tasks.add_task(verify_graph, graph_template)
+        background_tasks.add_task(verify_graph, graph_template, old_triggers)
 
         return UpsertGraphTemplateResponse(
             nodes=graph_template.nodes,
