@@ -33,9 +33,16 @@ from .config.settings import get_settings
 
 # importing database health check function
 from .utils.check_database_health import check_database_health
+
+#scheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+from .tasks.trigger_cron import trigger_cron
  
 # Define models list
 DOCUMENT_MODELS = [State, GraphTemplate, RegisteredNode, Store, Run, DatabaseTriggers]
+
+scheduler = AsyncIOScheduler()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -60,11 +67,20 @@ async def lifespan(app: FastAPI):
     # perform database health check
     await check_database_health(DOCUMENT_MODELS)
 
+    scheduler.add_job(
+        trigger_cron,
+        CronTrigger.from_crontab("* * * * *"),
+        replace_existing=True,
+        id="every_minute_task"
+    )
+    scheduler.start()
+
     # main logic of the server
     yield
 
     # end of the server
     await client.close()
+    scheduler.shutdown()
     logger.info("server stopped")
 
 
