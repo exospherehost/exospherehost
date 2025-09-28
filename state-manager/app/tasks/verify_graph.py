@@ -11,7 +11,7 @@ from app.models.db.registered_node import RegisteredNode
 from app.singletons.logs_manager import LogsManager
 from app.models.trigger_models import Trigger, CronTrigger, TriggerStatusEnum, TriggerTypeEnum
 from app.models.db.trigger import Triggers as DatabaseTriggers
-from config.settings import get_settings
+from app.config.settings import get_settings
 
 logger = LogsManager().get_logger()
 
@@ -134,9 +134,11 @@ async def create_crons(graph_template: GraphTemplate, old_triggers: list[Trigger
     new_db_triggers = []
     for cron in crons_to_create:
         iter = croniter.croniter(cron.expression, current_time)
-        next_trigger_time = iter.get_next(datetime)
 
-        while (next_trigger_time < limit_time):
+        while(True):
+            next_trigger_time = iter.get_next(datetime)
+            
+            # at least one event should be inserted for the cron
             new_db_triggers.append(
                 DatabaseTriggers(
                     type=TriggerTypeEnum.CRON,
@@ -146,8 +148,11 @@ async def create_crons(graph_template: GraphTemplate, old_triggers: list[Trigger
                     trigger_time=next_trigger_time
                 )
             )
-            next_trigger_time = iter.get_next(datetime)
-    await DatabaseTriggers.insert_many(new_db_triggers)
+            if next_trigger_time > limit_time:
+                break
+
+    if len(new_db_triggers) > 0:
+        await DatabaseTriggers.insert_many(new_db_triggers)
 
 async def verify_graph(graph_template: GraphTemplate, old_triggers: list[Trigger]):
     try:
