@@ -11,6 +11,7 @@ class TriggerStatusEnum(str, Enum):
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
     TRIGGERED = "TRIGGERED"
+    TRIGGERING = "TRIGGERING"
 
 class CronTrigger(BaseModel):
     expression: str = Field(..., description="Cron expression for the trigger")

@@ -127,30 +127,24 @@ async def create_crons(graph_template: GraphTemplate, old_triggers: list[Trigger
 
     crons_to_create = new_crons - old_crons
 
-    trigger_ahead_time = get_settings().trigger_ahead_time
     current_time = datetime.now()
-    limit_time = datetime.now() + timedelta(minutes=trigger_ahead_time)
     
     new_db_triggers = []
     for cron in crons_to_create:
         iter = croniter.croniter(cron.expression, current_time)
 
-        while(True):
-            next_trigger_time = iter.get_next(datetime)
+        next_trigger_time = iter.get_next(datetime)
             
-            # at least one event should be inserted for the cron
-            new_db_triggers.append(
-                DatabaseTriggers(
-                    type=TriggerTypeEnum.CRON,
-                    expression=cron.expression,
-                    graph_name=graph_template.name,
-                    namespace=graph_template.namespace,
-                    trigger_status=TriggerStatusEnum.PENDING,
-                    trigger_time=next_trigger_time
-                )
+        new_db_triggers.append(
+            DatabaseTriggers(
+                type=TriggerTypeEnum.CRON,
+                expression=cron.expression,
+                graph_name=graph_template.name,
+                namespace=graph_template.namespace,
+                trigger_status=TriggerStatusEnum.PENDING,
+                trigger_time=next_trigger_time
             )
-            if next_trigger_time > limit_time:
-                break
+        )
 
     if len(new_db_triggers) > 0:
         await DatabaseTriggers.insert_many(new_db_triggers)
