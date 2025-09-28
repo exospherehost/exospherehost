@@ -1,10 +1,16 @@
 import asyncio
+import croniter
+
+from datetime import datetime
+from beanie.operators import In
+from json_schema_to_pydantic import create_model
 
 from app.models.db.graph_template_model import GraphTemplate
 from app.models.graph_template_validation_status import GraphTemplateValidationStatus
 from app.models.db.registered_node import RegisteredNode
 from app.singletons.logs_manager import LogsManager
-from json_schema_to_pydantic import create_model
+from app.models.trigger_models import Trigger, TriggerStatusEnum, TriggerTypeEnum
+from app.models.db.trigger import DatabaseTriggers
 
 logger = LogsManager().get_logger()
 
@@ -95,7 +101,55 @@ async def verify_inputs(graph_template: GraphTemplate, registered_nodes: list[Re
                 
     return errors
 
-async def verify_graph(graph_template: GraphTemplate):
+async def cancel_crons(graph_template: GraphTemplate, old_triggers: list[Trigger]):
+    old_cron_expressions = set([trigger.value["expression"] for trigger in old_triggers if trigger.type == TriggerTypeEnum.CRON])
+    new_cron_expressions = set([trigger.value["expression"] for trigger in graph_template.triggers if trigger.type == TriggerTypeEnum.CRON])
+
+    removed_expressions = old_cron_expressions - new_cron_expressions
+
+    await DatabaseTriggers.find(
+        DatabaseTriggers.graph_name == graph_template.name,
+        DatabaseTriggers.trigger_status == TriggerStatusEnum.PENDING,
+        DatabaseTriggers.type == TriggerTypeEnum.CRON,
+        In(DatabaseTriggers.expression, list(removed_expressions))
+    ).update(
+        {
+            "$set": {
+                "trigger_status": TriggerStatusEnum.CANCELLED
+            }
+        }
+    ) # type: ignore
+
+async def create_crons(graph_template: GraphTemplate, old_triggers: list[Trigger]):
+    old_cron_expressions = set([trigger.value["expression"] for trigger in old_triggers if trigger.type == TriggerTypeEnum.CRON])
+    new_cron_expressions = set([trigger.value["expression"] for trigger in graph_template.triggers if trigger.type == TriggerTypeEnum.CRON])
+
+    expressions_to_create = new_cron_expressions - old_cron_expressions
+
+    current_time = datetime.now()
+    
+    new_db_triggers = []
+    for expression in expressions_to_create:
+        iter = croniter.croniter(expression, current_time)
+
+        next_trigger_time = iter.get_next(datetime)
+        print(next_trigger_time)
+            
+        new_db_triggers.append(
+            DatabaseTriggers(
+                type=TriggerTypeEnum.CRON,
+                expression=expression,
+                graph_name=graph_template.name,
+                namespace=graph_template.namespace,
+                trigger_status=TriggerStatusEnum.PENDING,
+                trigger_time=next_trigger_time
+            )
+        )
+
+    if len(new_db_triggers) > 0:
+        await DatabaseTriggers.insert_many(new_db_triggers)
+
+async def verify_graph(graph_template: GraphTemplate, old_triggers: list[Trigger]):
     try:
         errors = []
         registered_nodes = await RegisteredNode.list_nodes_by_templates(graph_template.nodes)
@@ -118,6 +172,9 @@ async def verify_graph(graph_template: GraphTemplate):
         
         graph_template.validation_status = GraphTemplateValidationStatus.VALID
         graph_template.validation_errors = []
+
+        await asyncio.gather(*[cancel_crons(graph_template, old_triggers), create_crons(graph_template, old_triggers)])
+
         await graph_template.save()
         
     except Exception as e:
@@ -125,3 +182,4 @@ async def verify_graph(graph_template: GraphTemplate):
         graph_template.validation_status = GraphTemplateValidationStatus.INVALID
         graph_template.validation_errors = [f"Validation failed due to unexpected error: {str(e)}"]
         await graph_template.save()
+        raise
