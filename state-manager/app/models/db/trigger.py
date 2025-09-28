@@ -1,4 +1,3 @@
-from enum import unique
 from pydantic import Field
 from beanie import Document
 from typing import Optional
