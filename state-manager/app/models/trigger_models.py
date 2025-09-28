@@ -30,4 +30,6 @@ class Trigger(BaseModel):
     def validate_trigger(self) -> Self:
         if self.type == TriggerTypeEnum.CRON:
             CronTrigger.model_validate(self.value)
+        else:
+            raise ValueError(f"Unsupported trigger type: {self.type}")
         return self
