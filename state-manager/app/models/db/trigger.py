@@ -6,7 +6,7 @@ from pymongo import IndexModel
 from ..trigger_models import TriggerTypeEnum, TriggerStatusEnum
 from datetime import datetime
 
-class Triggers(Document):
+class DatabaseTriggers(Document):
     type: TriggerTypeEnum = Field(..., description="Type of the trigger")
     expression: Optional[str] = Field(default=None, description="Expression of the trigger")
     graph_name: str = Field(..., description="Name of the graph")

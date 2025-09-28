@@ -22,6 +22,7 @@ from .models.db.graph_template_model import GraphTemplate
 from .models.db.registered_node import RegisteredNode
 from .models.db.store import Store
 from .models.db.run import Run
+from .models.db.trigger import DatabaseTriggers
 
 # injecting routes
 from .routes import router, global_router
@@ -34,7 +35,7 @@ from .config.settings import get_settings
 from .utils.check_database_health import check_database_health
  
 # Define models list
-DOCUMENT_MODELS = [State, GraphTemplate, RegisteredNode, Store, Run]
+DOCUMENT_MODELS = [State, GraphTemplate, RegisteredNode, Store, Run, DatabaseTriggers]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

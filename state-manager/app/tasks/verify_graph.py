@@ -10,7 +10,7 @@ from app.models.graph_template_validation_status import GraphTemplateValidationS
 from app.models.db.registered_node import RegisteredNode
 from app.singletons.logs_manager import LogsManager
 from app.models.trigger_models import Trigger, CronTrigger, TriggerStatusEnum, TriggerTypeEnum
-from app.models.db.trigger import Triggers as DatabaseTriggers
+from app.models.db.trigger import DatabaseTriggers
 from app.config.settings import get_settings
 
 logger = LogsManager().get_logger()
@@ -187,3 +187,4 @@ async def verify_graph(graph_template: GraphTemplate, old_triggers: list[Trigger
         graph_template.validation_status = GraphTemplateValidationStatus.INVALID
         graph_template.validation_errors = [f"Validation failed due to unexpected error: {str(e)}"]
         await graph_template.save()
+        raise
