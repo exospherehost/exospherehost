@@ -24,7 +24,7 @@ class CronTrigger(BaseModel):
 
 class Trigger(BaseModel):
     type: TriggerTypeEnum = Field(..., description="Type of the trigger")
-    value: dict[str, str] = Field(default={}, description="Value of the trigger")
+    value: dict = Field(default_factory=dict, description="Value of the trigger")
 
     @model_validator(mode="after")
     def validate_trigger(self) -> Self:
