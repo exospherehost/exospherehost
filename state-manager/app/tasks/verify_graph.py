@@ -144,6 +144,7 @@ async def create_crons(graph_template: GraphTemplate, old_triggers: list[Trigger
                     type=TriggerTypeEnum.CRON,
                     expression=cron.expression,
                     graph_name=graph_template.name,
+                    namespace=graph_template.namespace,
                     trigger_status=TriggerStatusEnum.PENDING,
                     trigger_time=next_trigger_time
                 )
