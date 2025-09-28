@@ -1,7 +1,7 @@
 import asyncio
 import croniter
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from beanie.operators import In
 from json_schema_to_pydantic import create_model
 
@@ -11,7 +11,6 @@ from app.models.db.registered_node import RegisteredNode
 from app.singletons.logs_manager import LogsManager
 from app.models.trigger_models import Trigger, CronTrigger, TriggerStatusEnum, TriggerTypeEnum
 from app.models.db.trigger import DatabaseTriggers
-from app.config.settings import get_settings
 
 logger = LogsManager().get_logger()
 

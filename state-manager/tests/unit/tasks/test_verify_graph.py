@@ -385,8 +385,8 @@ class TestVerifyGraph:
             with patch('app.tasks.verify_graph.verify_node_exists', new_callable=AsyncMock) as mock_verify_nodes:
                 with patch('app.tasks.verify_graph.verify_secrets', new_callable=AsyncMock) as mock_verify_secrets:
                     with patch('app.tasks.verify_graph.verify_inputs', new_callable=AsyncMock) as mock_verify_inputs:
-                        with patch('app.tasks.verify_graph.cancel_crons', new_callable=AsyncMock) as mock_cancel_crons:
-                            with patch('app.tasks.verify_graph.create_crons', new_callable=AsyncMock) as mock_create_crons:
+                        with patch('app.tasks.verify_graph.cancel_crons', new_callable=AsyncMock) as _:
+                            with patch('app.tasks.verify_graph.create_crons', new_callable=AsyncMock) as _:
                                 mock_verify_nodes.return_value = []
                                 mock_verify_secrets.return_value = []
                                 mock_verify_inputs.return_value = []
@@ -499,8 +499,8 @@ async def test_verify_graph_with_validation_errors():
          patch('app.tasks.verify_graph.verify_node_exists') as mock_verify_nodes, \
          patch('app.tasks.verify_graph.verify_secrets') as mock_verify_secrets, \
          patch('app.tasks.verify_graph.verify_inputs') as mock_verify_inputs, \
-         patch('app.tasks.verify_graph.cancel_crons', new_callable=AsyncMock) as mock_cancel_crons, \
-         patch('app.tasks.verify_graph.create_crons', new_callable=AsyncMock) as mock_create_crons:
+         patch('app.tasks.verify_graph.cancel_crons', new_callable=AsyncMock) as _, \
+         patch('app.tasks.verify_graph.create_crons', new_callable=AsyncMock) as _:
         
         # Mock registered nodes to return empty list
         mock_registered_node_cls.list_nodes_by_templates = AsyncMock(return_value=[])
@@ -539,8 +539,8 @@ async def test_verify_graph_with_valid_graph():
          patch('app.tasks.verify_graph.verify_node_exists') as mock_verify_nodes, \
          patch('app.tasks.verify_graph.verify_secrets') as mock_verify_secrets, \
          patch('app.tasks.verify_graph.verify_inputs') as mock_verify_inputs, \
-         patch('app.tasks.verify_graph.cancel_crons', new_callable=AsyncMock) as mock_cancel_crons, \
-         patch('app.tasks.verify_graph.create_crons', new_callable=AsyncMock) as mock_create_crons:
+         patch('app.tasks.verify_graph.cancel_crons', new_callable=AsyncMock) as _, \
+         patch('app.tasks.verify_graph.create_crons', new_callable=AsyncMock) as _:
         
         # Mock registered nodes to return a valid node
         mock_registered_node = MagicMock()
