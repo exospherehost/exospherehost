@@ -3,6 +3,9 @@ from app.models.graph_models import UpsertGraphTemplateRequest, UpsertGraphTempl
 from app.models.db.graph_template_model import GraphTemplate
 from app.models.graph_template_validation_status import GraphTemplateValidationStatus
 from app.tasks.verify_graph import verify_graph
+from app.models.db.trigger import DatabaseTriggers
+from app.models.trigger_models import TriggerStatusEnum, TriggerTypeEnum
+from beanie.operators import In
 
 from fastapi import BackgroundTasks, HTTPException
 
@@ -58,7 +61,15 @@ async def upsert_graph_template(namespace_name: str, graph_name: str, body: Upse
             logger.error("Error validating graph template", error=e, x_exosphere_request_id=x_exosphere_request_id)
             raise HTTPException(status_code=400, detail=f"Error validating graph template: {str(e)}")
         
-        background_tasks.add_task(verify_graph, graph_template, old_triggers)
+        if len(old_triggers) > 0:
+            await DatabaseTriggers.find(
+                DatabaseTriggers.graph_name == graph_name,
+                DatabaseTriggers.trigger_status == TriggerStatusEnum.PENDING,
+                DatabaseTriggers.type == TriggerTypeEnum.CRON,
+                In(DatabaseTriggers.expression, [trigger.value["expression"] for trigger in old_triggers if trigger.type == TriggerTypeEnum.CRON])
+            ).delete_many()
+
+        background_tasks.add_task(verify_graph, graph_template)
 
         return UpsertGraphTemplateResponse(
             nodes=graph_template.nodes,

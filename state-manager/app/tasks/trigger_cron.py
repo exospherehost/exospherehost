@@ -6,6 +6,7 @@ from app.singletons.logs_manager import LogsManager
 from app.controller.trigger_graph import trigger_graph
 from app.models.trigger_graph_model import TriggerGraphRequestModel
 from pymongo import ReturnDocument
+from pymongo.errors import DuplicateKeyError
 from app.config.settings import get_settings
 import croniter
 import asyncio
@@ -41,17 +42,29 @@ async def mark_as_failed(trigger: DatabaseTriggers):
 
 async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime):
     assert trigger.expression is not None
-    iter = croniter.croniter(trigger.expression, cron_time)
-    next_trigger_time = iter.get_next(datetime)
+    iter = croniter.croniter(trigger.expression)
 
-    await DatabaseTriggers(
-        type=TriggerTypeEnum.CRON,
-        expression=trigger.expression,
-        graph_name=trigger.graph_name,
-        namespace=trigger.namespace,
-        trigger_time=next_trigger_time,
-        trigger_status=TriggerStatusEnum.PENDING
-    ).insert()
+    while True:
+        next_trigger_time = iter.get_next(datetime)
+
+        try:
+            await DatabaseTriggers(
+                type=TriggerTypeEnum.CRON,
+                expression=trigger.expression,
+                graph_name=trigger.graph_name,
+                namespace=trigger.namespace,
+                trigger_time=next_trigger_time,
+                trigger_status=TriggerStatusEnum.PENDING
+            ).insert()
+        except DuplicateKeyError:
+            logger.error(f"Duplicate trigger found for expression {trigger.expression}")
+            continue
+        except Exception as e:
+            logger.error(f"Error creating next trigger: {e}")
+            continue
+
+        if next_trigger_time > cron_time:
+            break
 
 async def mark_as_triggered(trigger: DatabaseTriggers):
     await DatabaseTriggers.get_pymongo_collection().update_one(
@@ -63,11 +76,12 @@ async def handle_trigger(cron_time: datetime):
     while(trigger:= await get_due_triggers(cron_time)):
         try:
             await call_trigger_graph(trigger)
-            await create_next_triggers(trigger, cron_time)
             await mark_as_triggered(trigger)
         except Exception as e:
             await mark_as_failed(trigger)
             logger.error(f"Error calling trigger graph: {e}")
+        finally:
+            await create_next_triggers(trigger, cron_time)
 
 async def trigger_cron():
     cron_time = datetime.now()
