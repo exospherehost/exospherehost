@@ -3,7 +3,7 @@ import aiohttp
 import asyncio
 import time
 
-from .models import GraphNodeModel, RetryPolicyModel, StoreConfigModel
+from .models import GraphNodeModel, RetryPolicyModel, StoreConfigModel, CronTrigger
 
 
 class StateManager:
@@ -125,7 +125,7 @@ class StateManager:
                     raise Exception(f"Failed to get graph: {response.status} {await response.text()}")
                 return await response.json()
 
-    async def upsert_graph(self, graph_name: str, graph_nodes: list[GraphNodeModel], secrets: dict[str, str], retry_policy: RetryPolicyModel | None = None, store_config: StoreConfigModel | None = None, validation_timeout: int = 60, polling_interval: int = 1):
+    async def upsert_graph(self, graph_name: str, graph_nodes: list[GraphNodeModel], secrets: dict[str, str], retry_policy: RetryPolicyModel | None = None, store_config: StoreConfigModel | None = None, triggers: list[CronTrigger] | None = None, validation_timeout: int = 60, polling_interval: int = 1):
         """
         Create or update a graph definition.
 
@@ -165,6 +165,16 @@ class StateManager:
             body["retry_policy"] = retry_policy.model_dump()
         if store_config is not None:
             body["store_config"] = store_config.model_dump()
+        if triggers is not None:
+            body["triggers"] = [
+                {
+                    "type": "CRON",
+                    "value": {
+                        "expression": trigger.expression
+                    }
+                }
+                for trigger in triggers
+            ]
 
         async with aiohttp.ClientSession() as session:
             async with session.put(endpoint, json=body, headers=headers) as response: # type: ignore
