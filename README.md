@@ -85,6 +85,9 @@ Exosphere is built on a flexible, node-based architecture that makes it easy to 
 
 Schedule your workflows to run automatically using cron expressions:
 
+!!! info "Beta Feature"
+    Available in `beta-latest` Docker tag and SDK version `0.0.3b1`
+
 ```python
 from exospherehost import StateManager, GraphNodeModel, CronTrigger
 
@@ -99,7 +102,7 @@ result = await state_manager.upsert_graph(
     graph_name="data-pipeline",
     graph_nodes=graph_nodes,
     secrets={"api_key": "your-key"},
-    triggers=triggers  # Enable automatic execution
+    triggers=triggers  # Enable automatic execution (Beta)
 )
 ```
 

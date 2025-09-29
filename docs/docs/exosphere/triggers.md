@@ -1,5 +1,8 @@
 # Triggers
 
+!!! warning "Beta Feature"
+    Triggers functionality is currently in beta and available under the `beta-latest` Docker tag and SDK version `0.0.3b1`. The API may change in future versions.
+
 Triggers allow you to schedule automatic execution of your graphs using cron expressions. When a trigger is defined, Exosphere will automatically execute your graph at the specified times without requiring manual intervention.
 
 ## Overview
@@ -204,4 +207,4 @@ result = await state_manager.upsert_graph(
 ## Related Concepts
 
 - **[Graph Components](./graph-components.md)** - Complete overview of graph features
-- **[Python SDK](./python-sdk-graph.md)** - Type-safe graph creation with triggers 
+- **[Python SDK](./python-sdk-graph.md)** - Type-safe graph creation with triggers

@@ -57,6 +57,7 @@ graph TB
 - **Cron Scheduling**: Schedule automatic graph execution using standard cron expressions
 - **Unattended Operation**: Workflows run automatically without manual intervention
 - **Multiple Schedules**: Each graph can have multiple triggers with different schedules
+- **Beta**: Available in `beta-latest` Docker tag and SDK version `0.0.3b1`
 
 ## How They Work Together
 
