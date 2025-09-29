@@ -114,7 +114,7 @@ Schedule automatic graph execution using cron expressions:
       }
     },
     {
-      "type": "CRON", 
+      "type": "CRON",
       "value": {
         "expression": "0 */6 * * *"
       }
