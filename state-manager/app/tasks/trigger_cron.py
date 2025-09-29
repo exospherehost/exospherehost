@@ -42,7 +42,7 @@ async def mark_as_failed(trigger: DatabaseTriggers):
 
 async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime):
     assert trigger.expression is not None
-    iter = croniter.croniter(trigger.expression)
+    iter = croniter.croniter(trigger.expression, trigger.trigger_time)
 
     while True:
         next_trigger_time = iter.get_next(datetime)
@@ -58,10 +58,8 @@ async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime):
             ).insert()
         except DuplicateKeyError:
             logger.error(f"Duplicate trigger found for expression {trigger.expression}")
-            continue
         except Exception as e:
             logger.error(f"Error creating next trigger: {e}")
-            continue
 
         if next_trigger_time > cron_time:
             break
