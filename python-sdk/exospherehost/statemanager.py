@@ -166,19 +166,15 @@ class StateManager:
         if store_config is not None:
             body["store_config"] = store_config.model_dump()
         if triggers is not None:
-            graph_triggers = []
-            for trigger in triggers:
-                
-                if not isinstance(trigger, CronTrigger):
-                    raise ValueError("Invalid trigger type, expects Pydantic model CronTrigger")
-                
-                graph_triggers.append({
+            body["triggers"] = [
+                {
                     "type": "CRON",
                     "value": {
                         "expression": trigger.expression
                     }
-                })
-            body["triggers"] = graph_triggers
+                }
+                for trigger in triggers
+            ]
 
         async with aiohttp.ClientSession() as session:
             async with session.put(endpoint, json=body, headers=headers) as response: # type: ignore
