@@ -143,6 +143,9 @@ class StateManager:
             retry_policy (RetryPolicyModel | None): Optional per-node retry policy configuration.
             store_config (StoreConfigModel | None): Beta configuration for the
                 graph-level store (schema is subject to change).
+            triggers (list[CronTrigger] | None): Optional list of cron triggers for automatic
+                graph execution. Each trigger contains a cron expression that schedules when
+                the graph should be executed automatically.
             validation_timeout (int): Seconds to wait for validation (default 60).
             polling_interval (int): Polling interval in seconds (default 1).
         

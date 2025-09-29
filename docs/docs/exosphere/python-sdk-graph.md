@@ -5,7 +5,7 @@ Use the Exosphere Python SDK with Pydantic models for type-safe graph creation.
 ## Basic Usage
 
 ```python hl_lines="42-48"
-from exospherehost import StateManager, GraphNodeModel, RetryPolicyModel, StoreConfigModel, RetryStrategyEnum
+from exospherehost import StateManager, GraphNodeModel, RetryPolicyModel, StoreConfigModel, CronTrigger, RetryStrategyEnum
 
 async def create_graph():
     state_manager = StateManager(
@@ -46,12 +46,18 @@ async def create_graph():
         }
     )
     
+    triggers = [
+        CronTrigger(expression="0 9 * * 1-5"),  # Every weekday at 9 AM
+        CronTrigger(expression="0 */6 * * *")   # Every 6 hours
+    ]
+    
     result = await state_manager.upsert_graph(
         graph_name="my-workflow",
         graph_nodes=graph_nodes,
         secrets={"api_key": "your-key"},
         retry_policy=retry_policy,
-        store_config=store_config
+        store_config=store_config,
+        triggers=triggers  # Beta: SDK version 0.0.3b1
     )
     return result
 ```
