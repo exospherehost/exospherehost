@@ -352,7 +352,7 @@ async def create_graph():
 - `secrets` (dict[str, str]): Key/value secrets available to all nodes
 - `retry_policy` (RetryPolicyModel | None): Optional retry policy configuration (beta)
 - `store_config` (StoreConfigModel | None): Graph-level store configuration (beta)
-- `triggers` (list[CronTrigger] | None): Optional list of cron triggers for automatic graph execution
+- `triggers` (list[CronTrigger] | None): Optional list of cron triggers for automatic graph execution (beta: SDK version 0.0.3b1)
 - `validation_timeout` (int): Seconds to wait for validation (default: 60)
 - `polling_interval` (int): Polling interval in seconds (default: 1)
 
