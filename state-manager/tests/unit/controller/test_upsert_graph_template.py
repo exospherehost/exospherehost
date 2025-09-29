@@ -194,7 +194,7 @@ class TestUpsertGraphTemplate:
         mock_graph_template_class.insert.assert_called_once()
         
         # Verify background task was added
-        mock_background_tasks.add_task.assert_called_once_with(mock_verify_graph, mock_new_template, [])
+        mock_background_tasks.add_task.assert_called_once_with(mock_verify_graph, mock_new_template)
 
     @patch('app.controller.upsert_graph_template.GraphTemplate')
     async def test_upsert_graph_template_database_error(

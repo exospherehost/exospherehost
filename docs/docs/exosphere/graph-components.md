@@ -97,10 +97,47 @@ Graph-level key-value storage for shared state:
 - `required_keys`: Keys that must be present in the store
 - `default_values`: Default values for store keys
 
+## 6. Triggers
+
+Schedule automatic graph execution using cron expressions:
+
+!!! info "Beta Feature"
+    Available in `beta-latest` Docker tag and SDK version `0.0.3b1`
+
+```json
+{
+  "triggers": [
+    {
+      "type": "CRON",
+      "value": {
+        "expression": "0 9 * * 1-5"
+      }
+    },
+    {
+      "type": "CRON",
+      "value": {
+        "expression": "0 */6 * * *"
+      }
+    }
+  ]
+}
+```
+
+**Fields:**
+- `type`: Currently only "CRON" is supported
+- `value.expression`: Standard cron expression (5-field format)
+
+**Common Cron Expressions:**
+- `"0 9 * * 1-5"` - Every weekday at 9:00 AM
+- `"0 */6 * * *"` - Every 6 hours
+- `"0 0 * * 0"` - Every Sunday at midnight
+- `"*/15 * * * *"` - Every 15 minutes
+
 ## Next Steps
 
 - **[Create Graph](./create-graph.md)** - Return to main guide
-- **[Graph Models](./python-sdk-graph.md)** - Use Python SDK for type-safe graph creation.
+- **[Graph Models](./python-sdk-graph.md)** - Use Python SDK for type-safe graph creation
+- **[Triggers](./triggers.md)** - Schedule automatic graph execution
 
 ## Related Concepts
 

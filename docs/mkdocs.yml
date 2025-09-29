@@ -150,7 +150,8 @@ nav:
     - Unite: exosphere/unite.md
     - Signals: exosphere/signals.md
     - Retry Policy: exosphere/retry-policy.md
-    - Store: exosphere/store.md  
+    - Store: exosphere/store.md
+    - Triggers: exosphere/triggers.md  
   - Local Setup:
       - Overview: exosphere/local-setup.md
       - Docker Compose: docker-compose-setup.md

@@ -28,7 +28,7 @@ Exosphere provides a powerful foundation for building and orchestrating AI appli
 - **Infinite Parallel Agents**: Run multiple AI agents simultaneously across distributed infrastructure
 - **Dynamic State Management**: Create and manage state at runtime with persistent storage
 - **Fault Tolerance**: Built-in failure handling and recovery mechanisms for production reliability
-- **Core Concepts**: Fanout, Unite, Signals, Retry Policy, Store
+- **Core Concepts**: Fanout, Unite, Signals, Retry Policy, Store, Triggers
 
 ### **Smooth Developer Experience**
 - **Plug-and-Play Nodes**: Create reusable, atomic workflow components that can be mixed and matched
@@ -79,6 +79,32 @@ Exosphere is built on a flexible, node-based architecture that makes it easy to 
 - **Signals**: Inter-node communication and event handling
 - **Retry Policy**: Configurable failure handling and recovery
 - **Store**: Persistent storage for workflow state and data
+- **Triggers**: Automatic scheduling with cron expressions
+
+## ⏰ Automatic Scheduling Example
+
+Schedule your workflows to run automatically using cron expressions:
+
+!!! info "Beta Feature"
+    Available in `beta-latest` Docker tag and SDK version `0.0.3b1`
+
+```python
+from exospherehost import StateManager, GraphNodeModel, CronTrigger
+
+# Define triggers for automatic execution
+triggers = [
+    CronTrigger(expression="0 9 * * 1-5"),  # Every weekday at 9 AM
+    CronTrigger(expression="0 */6 * * *")   # Every 6 hours
+]
+
+# Create graph with automatic scheduling
+result = await state_manager.upsert_graph(
+    graph_name="data-pipeline",
+    graph_nodes=graph_nodes,
+    secrets={"api_key": "your-key"},
+    triggers=triggers  # Enable automatic execution (Beta)
+)
+```
 
 ### **Deployment Options**
 
