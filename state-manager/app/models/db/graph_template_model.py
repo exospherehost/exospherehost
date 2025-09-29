@@ -13,6 +13,7 @@ from app.utils.encrypter import get_encrypter
 from app.models.dependent_string import DependentString
 from app.models.retry_policy_model import RetryPolicyModel
 from app.models.store_config_model import StoreConfig
+from app.models.trigger_models import Trigger
 
 class GraphTemplate(BaseDatabaseModel):
     name: str = Field(..., description="Name of the graph")
@@ -21,6 +22,7 @@ class GraphTemplate(BaseDatabaseModel):
     validation_status: GraphTemplateValidationStatus = Field(..., description="Validation status of the graph")
     validation_errors: List[str] = Field(default_factory=list, description="Validation errors of the graph")
     secrets: Dict[str, str] = Field(default_factory=dict, description="Secrets of the graph")
+    triggers: List[Trigger] = Field(default_factory=list, description="Triggers of the graph")
     retry_policy: RetryPolicyModel = Field(default_factory=RetryPolicyModel, description="Retry policy of the graph")
     store_config: StoreConfig = Field(default_factory=StoreConfig, description="Store config of the graph")
 

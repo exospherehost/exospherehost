@@ -9,7 +9,7 @@ from .models.enqueue_response import EnqueueResponseModel
 from .models.enqueue_request import EnqueueRequestModel
 from .controller.enqueue_states import enqueue_states
 
-from .models.trigger_model import TriggerGraphRequestModel, TriggerGraphResponseModel
+from .models.trigger_graph_model import TriggerGraphRequestModel, TriggerGraphResponseModel
 from .controller.trigger_graph import trigger_graph
 
 from .models.executed_models import ExecutedRequestModel, ExecutedResponseModel

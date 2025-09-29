@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock, AsyncMock
 from fastapi import HTTPException
 
 from app.controller.trigger_graph import trigger_graph
-from app.models.trigger_model import TriggerGraphRequestModel
+from app.models.trigger_graph_model import TriggerGraphRequestModel
 from app.models.state_status_enum import StateStatusEnum
 
 

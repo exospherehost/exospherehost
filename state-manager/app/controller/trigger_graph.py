@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 
 from app.singletons.logs_manager import LogsManager
-from app.models.trigger_model import TriggerGraphRequestModel, TriggerGraphResponseModel
+from app.models.trigger_graph_model import TriggerGraphRequestModel, TriggerGraphResponseModel
 from app.models.state_status_enum import StateStatusEnum
 from app.models.db.state import State
 from app.models.db.store import Store

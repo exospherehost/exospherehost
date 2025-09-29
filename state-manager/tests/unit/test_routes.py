@@ -1,6 +1,6 @@
 from app.routes import router
 from app.models.enqueue_request import EnqueueRequestModel
-from app.models.trigger_model import TriggerGraphRequestModel
+from app.models.trigger_graph_model import TriggerGraphRequestModel
 from app.models.executed_models import ExecutedRequestModel
 from app.models.errored_models import ErroredRequestModel
 from app.models.graph_models import UpsertGraphTemplateRequest, UpsertGraphTemplateResponse
