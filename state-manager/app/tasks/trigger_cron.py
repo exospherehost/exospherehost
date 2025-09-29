@@ -60,6 +60,7 @@ async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime):
             logger.error(f"Duplicate trigger found for expression {trigger.expression}")
         except Exception as e:
             logger.error(f"Error creating next trigger: {e}")
+            raise
 
         if next_trigger_time > cron_time:
             break
