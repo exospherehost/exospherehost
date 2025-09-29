@@ -39,8 +39,8 @@ from .runtime import Runtime
 from .node.BaseNode import BaseNode
 from .statemanager import StateManager
 from .signals import PruneSignal, ReQueueAfterSignal
-from .models import UnitesStrategyEnum, UnitesModel, GraphNodeModel, RetryStrategyEnum, RetryPolicyModel, StoreConfigModel
+from .models import UnitesStrategyEnum, UnitesModel, GraphNodeModel, RetryStrategyEnum, RetryPolicyModel, StoreConfigModel, CronTrigger
 
 VERSION = __version__
 
-__all__ = ["Runtime", "BaseNode", "StateManager", "VERSION", "PruneSignal", "ReQueueAfterSignal", "UnitesStrategyEnum", "UnitesModel", "GraphNodeModel", "RetryStrategyEnum", "RetryPolicyModel", "StoreConfigModel"]
+__all__ = ["Runtime", "BaseNode", "StateManager", "VERSION", "PruneSignal", "ReQueueAfterSignal", "UnitesStrategyEnum", "UnitesModel", "GraphNodeModel", "RetryStrategyEnum", "RetryPolicyModel", "StoreConfigModel", "CronTrigger"]

@@ -158,3 +158,6 @@ class StoreConfigModel(BaseModel):
         if len(errors) > 0:
             raise ValueError("\n".join(errors))
         return normalized_dict
+    
+class CronTrigger(BaseModel):
+    expression: str = Field(..., description="Cron expression")
