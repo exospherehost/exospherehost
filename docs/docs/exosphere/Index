@@ -1,80 +1,55 @@
-@@
--     class DataProcessorNode(BaseNode):
--         class Inputs(BaseModel):
--             data: str
--             operation: str
-- 
--         class Outputs(BaseModel):
--             result: str
--             status: str
-- 
--         async def execute(self) -> Outputs:
--             # Parse the input data
--             try:
--                 data = json.loads(self.inputs.data)
--             except json.JSONDecodeError as e:
--                 # Invalid JSON input; return a helpful, specific error
--                 return self.Outputs(
--                     result="",
--                     status=f"error: invalid json (line {e.lineno}, column {e.colno})"
--                 )
--             # Process based on operation
--             if self.inputs.operation == "transform":
--                 result = {"transformed": data, "processed": True}
--             else:
--                 result = {"original": data, "processed": False}
--             return self.Outputs(result=json.dumps(result), status="success")
-+     import json
-+     import logging
-+     from enum import Enum
-+     from pydantic import BaseModel
-+ 
-+     logger = logging.getLogger(__name__)
-+ 
-+     class Operation(str, Enum):
-+         """Supported operations the node can perform."""
-+         TRANSFORM = "transform"
-+         PASSTHROUGH = "passthrough"
-+ 
-+     class DataProcessorNode(BaseNode):
-+         """Parse JSON input and apply a simple operation, returning a JSON string result."""
-+ 
-+         class Inputs(BaseModel):
-+             """Inputs for DataProcessorNode.
-+ 
-+             data: JSON-encoded string payload to process.
-+             operation: one of Operation (validated).
-+             """
-+             data: str
-+             operation: Operation
-+ 
-+         class Outputs(BaseModel):
-+             """Outputs emitted by DataProcessorNode.
-+ 
-+             result: JSON-encoded string payload after processing.
-+             status: 'success' or an error message.
-+             """
-+             result: str
-+             status: str
-+ 
-+         async def execute(self) -> Outputs:
-+             """Execute the node: parse input JSON and perform the requested operation."""
-+             # Parse the input data
-+             try:
-+                 data = json.loads(self.inputs.data)
-+             except json.JSONDecodeError as e:
-+                 # Log for observability and return specific, helpful feedback
-+                 logger.warning("Invalid JSON in DataProcessorNode.inputs.data", exc_info=True)
-+                 return self.Outputs(
-+                     result="",
-+                     status=f"error: invalid json (line {getattr(e, 'lineno', '?')}, column {getattr(e, 'colno', '?')})"
-+                 )
-+ 
-+             # Process based on validated operation
-+             if self.inputs.operation is Operation.TRANSFORM:
-+                 result_obj = {"transformed": data, "processed": True}
-+             else:  # Operation.PASSTHROUGH
-+                 result_obj = {"original": data, "processed": False}
-+ 
-+             # Outputs.result is defined as a string; return JSON-encoded result for consistency
-+             return self.Outputs(result=json.dumps(result_obj), status="success")
+```python
+import json
+import logging
+from enum import Enum
+from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
+
+class Operation(str, Enum):
+    """Supported operations the node can perform."""
+    TRANSFORM = "transform"
+    PASSTHROUGH = "passthrough"
+
+class DataProcessorNode(BaseNode):
+    """Parse JSON input and apply a simple operation, returning a JSON string result."""
+
+    class Inputs(BaseModel):
+        """Inputs for DataProcessorNode.
+
+        data: JSON-encoded string payload to process.
+        operation: one of Operation (validated).
+        """
+        data: str
+        operation: Operation
+
+    class Outputs(BaseModel):
+        """Outputs emitted by DataProcessorNode.
+
+        result: JSON-encoded string payload after processing.
+        status: 'success' or an error message.
+        """
+        result: str
+        status: str
+
+    async def execute(self) -> Outputs:
+        """Execute the node: parse input JSON and perform the requested operation."""
+        # Parse the input data
+        try:
+            data = json.loads(self.inputs.data)
+        except json.JSONDecodeError as e:
+            # Log for observability and return specific, helpful feedback
+            logger.warning("Invalid JSON in DataProcessorNode.inputs.data", exc_info=True)
+            return self.Outputs(
+                result="",
+                status=f"error: invalid json (line {getattr(e, 'lineno', '?')}, column {getattr(e, 'colno', '?')})"
+            )
+
+        # Process based on validated operation
+        if self.inputs.operation is Operation.TRANSFORM:
+            result_obj = {"transformed": data, "processed": True}
+        else:  # Operation.PASSTHROUGH
+            result_obj = {"original": data, "processed": False}
+
+        # Outputs.result is defined as a string; return JSON-encoded result for consistency
+        return self.Outputs(result=json.dumps(result_obj), status="success")
