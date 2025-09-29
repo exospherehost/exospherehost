@@ -11,6 +11,7 @@ A graph template consists of:
 - **Input Mapping**: How data flows between nodes using `${{ ... }}` syntax
 - **Retry Policy**: `Optional` failure handling configuration 
 - **Store Configuration**: `Optional` graph-level key-value store
+- **Triggers**: `Optional` cron-based automatic execution scheduling
 
 ## Basic Example of a Graph Template
 

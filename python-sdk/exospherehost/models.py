@@ -160,4 +160,4 @@ class StoreConfigModel(BaseModel):
         return normalized_dict
     
 class CronTrigger(BaseModel):
-    expression: str = Field(..., description="Cron expression")
+    expression: str = Field(..., description="Cron expression for scheduling automatic graph execution. Uses standard 5-field format: minute hour day-of-month month day-of-week. Example: '0 9 * * 1-5' for weekdays at 9 AM.")

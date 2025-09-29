@@ -274,7 +274,7 @@ state_manager = StateManager(namespace="MyProject")
 #### Creating/Updating Graph Definitions (Beta)
 
 ```python
-from exospherehost import StateManager, GraphNodeModel, RetryPolicyModel, StoreConfigModel, RetryStrategyEnum
+from exospherehost import StateManager, GraphNodeModel, RetryPolicyModel, StoreConfigModel, RetryStrategyEnum, CronTrigger
 
 async def create_graph():
     state_manager = StateManager(namespace="MyProject")
@@ -320,6 +320,12 @@ async def create_graph():
         }
     )
     
+    # Define triggers for automatic execution
+    triggers = [
+        CronTrigger(expression="0 9 * * 1-5"),  # Every weekday at 9 AM
+        CronTrigger(expression="0 */6 * * *")   # Every 6 hours
+    ]
+    
     # Create or update the graph (beta)
     result = await state_manager.upsert_graph(
         graph_name="my-workflow",
@@ -330,6 +336,7 @@ async def create_graph():
         },
         retry_policy=retry_policy,  # beta
         store_config=store_config,  # beta
+        triggers=triggers,  # automatic scheduling
         validation_timeout=60,
         polling_interval=1
     )
@@ -345,6 +352,7 @@ async def create_graph():
 - `secrets` (dict[str, str]): Key/value secrets available to all nodes
 - `retry_policy` (RetryPolicyModel | None): Optional retry policy configuration (beta)
 - `store_config` (StoreConfigModel | None): Graph-level store configuration (beta)
+- `triggers` (list[CronTrigger] | None): Optional list of cron triggers for automatic graph execution
 - `validation_timeout` (int): Seconds to wait for validation (default: 60)
 - `polling_interval` (int): Polling interval in seconds (default: 1)
 

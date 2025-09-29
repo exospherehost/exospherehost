@@ -53,6 +53,11 @@ graph TB
 - **Runtime Access**: All nodes can read and write to the shared store
 - **Automatic Cleanup**: Store data is automatically cleaned up when workflows complete
 
+### 7. **Automatic Triggers**
+- **Cron Scheduling**: Schedule automatic graph execution using standard cron expressions
+- **Unattended Operation**: Workflows run automatically without manual intervention
+- **Multiple Schedules**: Each graph can have multiple triggers with different schedules
+
 ## How They Work Together
 
 These concepts combine to create a powerful workflow system:
@@ -63,6 +68,7 @@ These concepts combine to create a powerful workflow system:
 4. **Signals** give nodes control over execution flow and error handling
 5. **Retry policies** ensure resilience against transient failures
 6. **Store** provides persistent state across workflow executions
+7. **Triggers** enable automatic, scheduled execution for unattended operations
 
 ## Benefits
 
@@ -80,4 +86,5 @@ Explore each concept in detail:
 - **[Unite](./unite.md)** - Understand synchronization of parallel paths
 - **[Signals](./signals.md)** - Control workflow execution flow
 - **[Retry Policy](./retry-policy.md)** - Build resilient workflows
-- **[Store](./store.md)** - Persist data across workflow execution 
+- **[Store](./store.md)** - Persist data across workflow execution
+- **[Triggers](./triggers.md)** - Schedule automatic graph execution 
