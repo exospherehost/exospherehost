@@ -71,6 +71,9 @@ async def lifespan(app: FastAPI):
         trigger_cron,
         CronTrigger.from_crontab("* * * * *"),
         replace_existing=True,
+        misfire_grace_time=60,
+        coalesce=True,
+        max_instances=1,
         id="every_minute_task"
     )
     scheduler.start()
