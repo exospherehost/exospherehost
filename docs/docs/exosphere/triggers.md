@@ -183,6 +183,7 @@ retry_policy = RetryPolicyModel(
 # Create graph with both triggers and retry policy
 result = await state_manager.upsert_graph(
     graph_name="robust-pipeline",
+    # Assuming `graph_nodes`, `secrets`, and `triggers` are defined as in previous examples
     graph_nodes=graph_nodes,
     secrets=secrets,
     triggers=triggers,
