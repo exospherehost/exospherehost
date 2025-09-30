@@ -3,6 +3,7 @@ import json
 import logging
 from enum import Enum
 from pydantic import BaseModel
+from exosphere import BaseNode
 
 logger = logging.getLogger(__name__)
 
