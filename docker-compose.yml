@@ -6,9 +6,9 @@ services:
     restart: unless-stopped
     environment:
       - MONGO_URI=${MONGO_URI}
-      - STATE_MANAGER_SECRET=${STATE_MANAGER_SECRET:-exosphere@123}
+      - STATE_MANAGER_SECRET=${STATE_MANAGER_SECRET:?missing STATE_MANAGER_SECRET}
       - MONGO_DATABASE_NAME=${MONGO_DATABASE_NAME:-exosphere}
-      - SECRETS_ENCRYPTION_KEY=${SECRETS_ENCRYPTION_KEY:-YTzpUlBGLSwm-3yKJRJTZnb0_aQuQQHyz64s8qAERVU=}
+      - SECRETS_ENCRYPTION_KEY=${SECRETS_ENCRYPTION_KEY:?missing SECRETS_ENCRYPTION_KEY}
     ports:
       - "8000:8000"
     networks:
@@ -28,7 +28,7 @@ services:
     environment:
       # Server-side secure configuration (NOT exposed to browser)
       - EXOSPHERE_STATE_MANAGER_URI=${EXOSPHERE_STATE_MANAGER_URI:-http://exosphere-state-manager:8000}
-      - EXOSPHERE_API_KEY=${EXOSPHERE_API_KEY:-exosphere@123}
+      - EXOSPHERE_API_KEY=${EXOSPHERE_API_KEY:?missing EXOSPHERE_API_KEY}
       # Client-side configuration (exposed to browser)
       - NEXT_PUBLIC_DEFAULT_NAMESPACE=${NEXT_PUBLIC_DEFAULT_NAMESPACE:-default}
     depends_on:
