@@ -37,7 +37,7 @@ jobs:
       - name: Run test suite
         working-directory: state-manager
         env:
-          MONGO_URI: mongodb://admin:password@localhost:27017
+          MONGO_URI: mongodb://admin:password@localhost:27017/?authSource=admin
           MONGO_DATABASE_NAME: test_exosphere_state_manager
           STATE_MANAGER_SECRET: test-secret-key
           SECRETS_ENCRYPTION_KEY: YTzpUlBGLSwm-3yKJRJTZnb0_aQuQQHyz64s8qAERVU=
