@@ -1,4 +1,4 @@
-name: Publish Dashboard image to GHCR
+name: Publish Dashboard Image
 
 on:
   push:
@@ -9,13 +9,8 @@ on:
     types: [published]
   workflow_dispatch:
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/exosphere-dashboard
-  SHA_TAG: ${{ github.sha }}
-
 jobs:
-  publish-image-on-ghcr:
+  build-and-publish:
     runs-on: ubuntu-latest
     if: github.repository == 'exospherehost/exospherehost'
 
@@ -23,68 +18,24 @@ jobs:
       contents: read
       packages: write
 
-    outputs:
-      tags: ${{ steps.meta.outputs.tags }}
-      json: ${{ steps.meta.outputs.json }}
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
 
-      - uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GHCR
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Generate tags & labels
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=beta-latest
-            type=sha,format=short
-
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: ./dashboard
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          provenance: true
-          sbom: true
-
-  publish-image-on-docker:
-    runs-on: ubuntu-latest
-    if: github.repository == 'exospherehost/exospherehost'
-
-    permissions:
-      contents: read
-      packages: write
-
-    outputs:
-      tags: ${{ steps.meta.outputs.tags }}
-      json: ${{ steps.meta.outputs.json }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
-      - uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -92,16 +43,18 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Generate tags & labels
+      - name: Generate tags & labels for both registries
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_NAME }}
+          images: |
+            ghcr.io/exospherehost/exosphere-dashboard
+            exospherehost/exosphere-dashboard
           tags: |
-            type=raw,value=beta-latest
+            type=raw,value=latest
             type=sha,format=short
 
-      - name: Build and push
+      - name: Build and push to both registries
         uses: docker/build-push-action@v5
         with:
           context: ./dashboard

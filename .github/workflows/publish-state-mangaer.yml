@@ -1,4 +1,4 @@
-name: Publish State Manager image to GHCR 
+name: Publish State Manager Image
 
 on:
   push:
@@ -6,11 +6,6 @@ on:
     paths:
       - 'state-manager/**'
   workflow_dispatch:
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/exosphere-state-manager
-  SHA_TAG: ${{ github.sha }}
 
 jobs:
   test:
@@ -34,22 +29,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
-          python-version: '3.12'
+          go-version-file: state-manager/go.mod
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-
-      - name: Install dev dependencies with uv
-        working-directory: state-manager
-        run: |
-          uv sync --group dev
-
-      - name: Run full test suite with coverage
+      - name: Run test suite
         working-directory: state-manager
         env:
           MONGO_URI: mongodb://admin:password@localhost:27017
@@ -57,19 +42,9 @@ jobs:
           STATE_MANAGER_SECRET: test-secret-key
           SECRETS_ENCRYPTION_KEY: YTzpUlBGLSwm-3yKJRJTZnb0_aQuQQHyz64s8qAERVU=
         run: |
-          uv run pytest tests/ --cov=app --cov-report=xml --cov-report=term-missing --cov-report=html -v --junitxml=full-pytest-report.xml
+          go test -v ./...
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: exospherehost/exospherehost
-          files: state-manager/coverage.xml
-          flags: unit-tests
-          name: state-manager-coverage-report
-          fail_ci_if_error: true
-
-  publish-image-on-ghcr:
+  publish:
     runs-on: ubuntu-latest
     needs: test
     if: github.repository == 'exospherehost/exospherehost'
@@ -77,70 +52,25 @@ jobs:
     permissions:
       contents: read
       packages: write
-    
-    outputs:
-      tags: ${{ steps.meta.outputs.tags }}
-      json: ${{ steps.meta.outputs.json }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
 
-      - uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GHCR
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Generate tags & labels
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw, value=beta-latest
-            type=sha, value=${{ env.SHA_TAG }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: ./state-manager
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          provenance: true
-          sbom: true
-
-  publish-image-on-docker-hub:
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.repository == 'exospherehost/exospherehost'
-
-    permissions:
-      contents: read
-      packages: write
-
-    outputs:
-      tags: ${{ steps.meta.outputs.tags }}
-      json: ${{ steps.meta.outputs.json }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
-      - uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -148,16 +78,18 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Generate tags & labels
+      - name: Generate tags & labels for both registries
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_NAME }}
+          images: |
+            ghcr.io/exospherehost/exosphere-state-manager
+            exospherehost/exosphere-state-manager
           tags: |
-            type=raw, value=beta-latest
-            type=sha, value=${{ env.SHA_TAG }}
+            type=raw,value=latest
+            type=sha,format=short
 
-      - name: Build and push
+      - name: Build and push to both registries
         uses: docker/build-push-action@v5
         with:
           context: ./state-manager
