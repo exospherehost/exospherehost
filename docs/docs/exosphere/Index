@@ -1,9 +1,11 @@
+# Exosphere Example: DataProcessorNode
+
 ```python
 import json
 import logging
 from enum import Enum
 from pydantic import BaseModel
-from exospherehost import BaseNode
+from exosphere import BaseNode  # required base class
 
 logger = logging.getLogger(__name__)
 
@@ -53,4 +55,13 @@ class DataProcessorNode(BaseNode):
             result_obj = {"original": data, "processed": False}
 
         # Outputs.result is defined as a string; return JSON-encoded result for consistency
-        return self.Outputs(result=json.dumps(result_obj), status="success")
+        try:
+            result_json = json.dumps(result_obj)
+        except (TypeError, ValueError) as e:
+            logger.warning("Failed to serialize result", exc_info=True)
+            return self.Outputs(
+                result="",
+                status=f"error: serialization failed - {e}"
+            )
+
+        return self.Outputs(result=result_json, status="success")
