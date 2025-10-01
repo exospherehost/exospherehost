@@ -1,0 +1,51 @@
+services:
+  exosphere-state-manager:
+    image: ghcr.io/exospherehost/exosphere-state-manager:${EXOSPHERE_TAG:-latest}
+    pull_policy: always
+    container_name: exosphere-state-manager
+    restart: unless-stopped
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - STATE_MANAGER_SECRET=${STATE_MANAGER_SECRET:-exosphere@123}
+      - MONGO_DATABASE_NAME=${MONGO_DATABASE_NAME:-exosphere}
+      - SECRETS_ENCRYPTION_KEY=${SECRETS_ENCRYPTION_KEY:-YTzpUlBGLSwm-3yKJRJTZnb0_aQuQQHyz64s8qAERVU=}
+    ports:
+      - "8000:8000"
+    networks:
+      - exosphere-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  exosphere-dashboard:
+    image: ghcr.io/exospherehost/exosphere-dashboard:${EXOSPHERE_TAG:-latest}
+    pull_policy: always
+    container_name: exosphere-dashboard
+    restart: unless-stopped
+    environment:
+      # Server-side secure configuration (NOT exposed to browser)
+      - EXOSPHERE_STATE_MANAGER_URI=${EXOSPHERE_STATE_MANAGER_URI:-http://exosphere-state-manager:8000}
+      - EXOSPHERE_API_KEY=${EXOSPHERE_API_KEY:-exosphere@123}
+      # Client-side configuration (exposed to browser)
+      - NEXT_PUBLIC_DEFAULT_NAMESPACE=${NEXT_PUBLIC_DEFAULT_NAMESPACE:-default}
+    depends_on:
+      exosphere-state-manager:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks:
+      - exosphere-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  exosphere-network:
+    driver: bridge
+    attachable: true
