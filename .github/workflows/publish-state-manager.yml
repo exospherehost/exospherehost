@@ -40,7 +40,7 @@ jobs:
           MONGO_URI: mongodb://admin:password@localhost:27017/?authSource=admin
           MONGO_DATABASE_NAME: test_exosphere_state_manager
           STATE_MANAGER_SECRET: test-secret-key
-          SECRETS_ENCRYPTION_KEY: YTzpUlBGLSwm-3yKJRJTZnb0_aQuQQHyz64s8qAERVU=
+          SECRETS_ENCRYPTION_KEY: ${{ secrets.STATE_MANAGER_ENCRYPTION_KEY }}
         run: |
           go test -v ./...
 
