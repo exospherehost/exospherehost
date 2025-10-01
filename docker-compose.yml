@@ -5,7 +5,7 @@ services:
     container_name: exosphere-state-manager
     restart: unless-stopped
     environment:
-      - MONGO_URI=${MONGO_URI}
+      - MONGO_URI=${MONGO_URI:?missing MONGO_URI}
       - STATE_MANAGER_SECRET=${STATE_MANAGER_SECRET:?missing STATE_MANAGER_SECRET}
       - MONGO_DATABASE_NAME=${MONGO_DATABASE_NAME:-exosphere}
       - SECRETS_ENCRYPTION_KEY=${SECRETS_ENCRYPTION_KEY:?missing SECRETS_ENCRYPTION_KEY}
