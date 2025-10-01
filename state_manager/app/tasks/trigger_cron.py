@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from uuid import uuid4
 from app.models.db.trigger import DatabaseTriggers
 from app.models.trigger_models import TriggerStatusEnum, TriggerTypeEnum
@@ -14,9 +14,6 @@ import asyncio
 logger = LogsManager().get_logger()
 
 async def get_due_triggers(cron_time: datetime) -> DatabaseTriggers | None:
-    """
-    Fetch a trigger that is due and mark it as TRIGGERING.
-    """
     data = await DatabaseTriggers.get_pymongo_collection().find_one_and_update(
         {
             "trigger_time": {"$lte": cron_time},
@@ -29,11 +26,7 @@ async def get_due_triggers(cron_time: datetime) -> DatabaseTriggers | None:
     )
     return DatabaseTriggers(**data) if data else None
 
-
 async def call_trigger_graph(trigger: DatabaseTriggers):
-    """
-    Call the associated graph for a trigger.
-    """
     await trigger_graph(
         namespace_name=trigger.namespace,
         graph_name=trigger.graph_name,
@@ -41,26 +34,15 @@ async def call_trigger_graph(trigger: DatabaseTriggers):
         x_exosphere_request_id=str(uuid4())
     )
 
-
 async def mark_as_failed(trigger: DatabaseTriggers):
-    """
-    Mark a trigger as FAILED.
-    """
     await DatabaseTriggers.get_pymongo_collection().update_one(
         {"_id": trigger.id},
         {"$set": {"trigger_status": TriggerStatusEnum.FAILED}}
     )
 
-
 async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime):
-    """
-    Create the next scheduled triggers based on the cron expression.
-    """
-    if not trigger.expression:
-        return
-
+    assert trigger.expression is not None
     iter = croniter.croniter(trigger.expression, trigger.trigger_time)
-    ttl_days = getattr(get_settings(), "trigger_ttl_days", 30)  # default 30 days
 
     while True:
         next_trigger_time = iter.get_next(datetime)
@@ -72,10 +54,8 @@ async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime):
                 graph_name=trigger.graph_name,
                 namespace=trigger.namespace,
                 trigger_time=next_trigger_time,
-                trigger_status=TriggerStatusEnum.PENDING,
-                expires_at=datetime.utcnow() + timedelta(days=ttl_days)
+                trigger_status=TriggerStatusEnum.PENDING
             ).insert()
-
         except DuplicateKeyError:
             logger.error(f"Duplicate trigger found for expression {trigger.expression}")
         except Exception as e:
@@ -85,22 +65,14 @@ async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime):
         if next_trigger_time > cron_time:
             break
 
-
 async def mark_as_triggered(trigger: DatabaseTriggers):
-    """
-    Mark a trigger as TRIGGERED.
-    """
     await DatabaseTriggers.get_pymongo_collection().update_one(
         {"_id": trigger.id},
         {"$set": {"trigger_status": TriggerStatusEnum.TRIGGERED}}
     )
 
-
 async def handle_trigger(cron_time: datetime):
-    """
-    Handle due triggers one by one.
-    """
-    while (trigger := await get_due_triggers(cron_time)):
+    while(trigger:= await get_due_triggers(cron_time)):
         try:
             await call_trigger_graph(trigger)
             await mark_as_triggered(trigger)
@@ -110,12 +82,7 @@ async def handle_trigger(cron_time: datetime):
         finally:
             await create_next_triggers(trigger, cron_time)
 
-
 async def trigger_cron():
-    """
-    Main loop for cron trigger handling.
-    """
-    cron_time = datetime.utcnow()
-    logger.info(f"Starting trigger_cron: {cron_time}")
-    workers = getattr(get_settings(), "trigger_workers", 1)
-    await asyncio.gather(*[handle_trigger(cron_time) for _ in range(workers)])
+    cron_time = datetime.now()
+    logger.info(f"starting trigger_cron: {cron_time}")
+    await asyncio.gather(*[handle_trigger(cron_time) for _ in range(get_settings().trigger_workers)])
