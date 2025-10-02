@@ -1,6 +1,6 @@
 # app/controller/trigger_cleanup.py
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.models.db.trigger import DatabaseTriggers
 from app.models.trigger_models import TriggerStatusEnum
 from app.singletons.logs_manager import LogsManager
@@ -14,7 +14,7 @@ async def cleanup_old_triggers():
     Remove CANCELLED or TRIGGERED triggers older than `trigger_retention_days`.
     """
     retention_days = getattr(get_settings(), "trigger_retention_days", 30)
-    cutoff_time = datetime.utcnow() - timedelta(days=retention_days)
+    cutoff_time = datetime.now(timezone.utc) - timedelta(days=retention_days)  # UTC-aware
 
     result = await DatabaseTriggers.get_pymongo_collection().delete_many({
         "trigger_status": {"$in": [TriggerStatusEnum.CANCELLED, TriggerStatusEnum.TRIGGERED]},
