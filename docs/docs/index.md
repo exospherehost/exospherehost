@@ -139,25 +139,22 @@ class DataProcessorNode(BaseNode):
         api_key: str
 
     async def execute(self) -> Outputs:
-        # Parse the input data
-        try:
-            data = json.loads(self.inputs.data)
-        except:
-            return self.Outputs(
-                result="",
-                status="error: invalid json"
-            )
-        
-        # Process based on operation
-        if self.inputs.operation == "transform":
-            result = {"transformed": data, "processed": True}
-        else:
-            result = {"original": data, "processed": False}
-        
+    # Parse the input data
+    try:
+        data = json.loads(self.inputs.data)
+    except json.JSONDecodeError as e:
         return self.Outputs(
-            result=json.dumps(result),
-            status="success"
+            result="",
+            status=f"error: invalid json (line {e.lineno}, column {e.colno})"
         )
+
+    # Process based on operation
+    if self.inputs.operation == "transform":
+        result = {"transformed": data, "processed": True}
+    else:
+        result = {"original": data, "processed": False}
+
+    return self.Outputs(result=json.dumps(result), status="success")
 
 # Initialize the runtime
 Runtime(
