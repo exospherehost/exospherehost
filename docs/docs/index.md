@@ -13,7 +13,7 @@
 
 # Exosphere: Distributed AI Workflow Infrastructure
 
-**Exosphere** is an open-source, Kubernetes-native infrastructure platform designed to run distributed AI workflows and autonomous agents at scale. Built with Python and based on a flexible node-based architecture, Exosphere enables developers to create, deploy, and manage robust AI workflows that can handle large-scale data processing and long-running operations.
+**Exosphere** is an open-source, Kubernetes-native infrastructure platform designed to run distributed AI workflows and autonomous agents at scale. Built with Python and based on a flexible node-based architecture.
 
 ## What Exosphere Can Do
 
@@ -138,7 +138,7 @@ class DataProcessorNode(BaseNode):
     class Secrets(BaseModel):
         api_key: str
 
-        async def execute(self) -> Outputs:
+    async def execute(self) -> Outputs:
         # Parse the input data
         try:
             data = json.loads(self.inputs.data)
@@ -170,9 +170,9 @@ The runtime will automatically reload and register the updated node.
 
 ## Open Source Commitment
 
-We believe that humanity would not have been able to achieve the level of innovation and progress we have today without the support of open source and community, we want to be a part of this movement and support the open source community. In following ways: 
+We believe that humanity would not have been able to achieve the level of innovation and progress we have today without the support of open source and community, we want to be a part of this movement!
 
-1. We will be open sourcing majority of our codebase for exosphere.host and making it available to the community. We welcome all sort of contributions and feedback from the community and will be happy to collaborate with you.
+1. We will be open sourcing majority of our codebase for exosphere.host and making it available to the community. We welcome all sort of contributions and feedback from the community and will be actively listening.
 2. For whatever the profits which we generate from exosphere.host, we will be donating a portion of it to open source projects and communities. If you have any questions, suggestions or ideas.
 3. We would be further collaborating with various open source student programs to provide with the support and encourage and mentor the next generation of open source contributors.
 
@@ -183,5 +183,3 @@ Please feel free to reach out to us at [nivedit@exosphere.host](mailto:nivedit@e
 We welcome community contributions. For guidelines, refer to our [CONTRIBUTING.md](https://github.com/exospherehost/exospherehost/blob/main/CONTRIBUTING.md).
 
 ![exosphere.host Contributors](https://contrib.rocks/image?repo=exospherehost/exospherehost)
-
-
