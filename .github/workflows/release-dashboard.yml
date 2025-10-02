@@ -10,7 +10,7 @@ env:
   SHA_TAG: ${{ github.sha }}
 
 jobs:
-  publish-image-on-ghcr:
+  publish-image:
     runs-on: ubuntu-latest
     if: github.repository == 'exospherehost/exospherehost'
 
@@ -38,51 +38,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Generate tags & labels
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=sha,format=short
-
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: ./dashboard
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          provenance: true
-          sbom: true
-
-  publish-image-on-docker-hub:
-    runs-on: ubuntu-latest
-    if: github.repository == 'exospherehost/exospherehost'
-
-    permissions:
-      contents: read
-      packages: write
-
-    outputs:
-      tags: ${{ steps.meta.outputs.tags }}
-      json: ${{ steps.meta.outputs.json }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
-      - uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
