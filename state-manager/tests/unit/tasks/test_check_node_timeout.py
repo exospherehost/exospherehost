@@ -97,7 +97,7 @@ class TestCheckNodeTimeout:
             
             from app.tasks.check_node_timeout import check_node_timeout
             
-            mock_time.time.return_value = 1000
+            mock_time.time.return_value = 1700000000
             
             mock_settings = MagicMock()
             mock_settings.node_timeout_minutes = 45
@@ -110,5 +110,5 @@ class TestCheckNodeTimeout:
             call_args = mock_collection.update_many.call_args
             query = call_args[0][0]
             
-            expected_threshold = (1000 * 1000) - (45 * 60 * 1000)
+            expected_threshold = (1700000000 * 1000) - (45 * 60 * 1000)
             assert query["queued_at"]["$lte"] == expected_threshold

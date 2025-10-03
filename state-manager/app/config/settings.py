@@ -13,7 +13,7 @@ class Settings(BaseModel):
     state_manager_secret: str = Field(..., description="Secret key for API authentication")
     secrets_encryption_key: str = Field(..., description="Key for encrypting secrets")
     trigger_workers: int = Field(default=1, description="Number of workers to run the trigger cron")
-    node_timeout_minutes: int = Field(default=30, description="Timeout in minutes for nodes stuck in QUEUED status")
+    node_timeout_minutes: int = Field(default=30, gt=0, description="Timeout in minutes for nodes stuck in QUEUED status")
     
     @classmethod
     def from_env(cls) -> "Settings":
@@ -23,7 +23,7 @@ class Settings(BaseModel):
             state_manager_secret=os.getenv("STATE_MANAGER_SECRET"), # type: ignore
             secrets_encryption_key=os.getenv("SECRETS_ENCRYPTION_KEY"), # type: ignore
             trigger_workers=int(os.getenv("TRIGGER_WORKERS", 1)), # type: ignore
-            node_timeout_minutes=int(os.getenv("NODE_TIMEOUT_MINUTES", 30)) # type: ignore
+            node_timeout_minutes=os.getenv("NODE_TIMEOUT_MINUTES", "30") # type: ignore
         )
 
 

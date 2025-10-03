@@ -13,6 +13,7 @@ logger = LogsManager().get_logger()
 
 
 async def find_state(namespace_name: str, nodes: list[str]) -> State | None:
+    current_time_ms = int(time.time() * 1000)
     data = await State.get_pymongo_collection().find_one_and_update(
         {
             "namespace_name": namespace_name,
@@ -20,12 +21,12 @@ async def find_state(namespace_name: str, nodes: list[str]) -> State | None:
             "node_name": {
                 "$in": nodes
             },
-            "enqueue_after": {"$lte": int(time.time() * 1000)}
+            "enqueue_after": {"$lte": current_time_ms}
         },
         {
             "$set": {
                 "status": StateStatusEnum.QUEUED,
-                "queued_at": int(time.time() * 1000)
+                "queued_at": current_time_ms
             }
         },
         return_document=ReturnDocument.AFTER

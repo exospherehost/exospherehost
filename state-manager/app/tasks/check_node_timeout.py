@@ -32,5 +32,5 @@ async def check_node_timeout():
         if result.modified_count > 0:
             logger.info(f"Marked {result.modified_count} states as TIMEDOUT")
         
-    except Exception as e:
-        logger.error(f"Error checking node timeout: {e}")
+    except Exception:
+        logger.error("Error checking node timeout", exc_info=True)
