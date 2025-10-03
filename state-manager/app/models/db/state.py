@@ -28,6 +28,7 @@ class State(BaseDatabaseModel):
     retry_count: int = Field(default=0, description="Number of times the state has been retried")
     fanout_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Fanout ID of the state")
     manual_retry_fanout_id: str = Field(default="", description="Fanout ID from a manual retry request, ensuring unique retries for unite nodes.")
+    queued_at: Optional[int] = Field(None, description="Unix time in milliseconds when the state was queued")
 
     @before_event([Insert, Replace, Save])
     def _generate_fingerprint(self):
@@ -102,5 +103,12 @@ class State(BaseDatabaseModel):
                     ("status", 1),
                 ],
                 name="run_id_status_index"
+            ),
+            IndexModel(
+                [
+                    ("status", 1),
+                    ("queued_at", 1),
+                ],
+                name="timeout_query_index"
             )
         ]

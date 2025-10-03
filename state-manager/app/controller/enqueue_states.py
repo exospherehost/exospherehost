@@ -23,7 +23,10 @@ async def find_state(namespace_name: str, nodes: list[str]) -> State | None:
             "enqueue_after": {"$lte": int(time.time() * 1000)}
         },
         {
-            "$set": {"status": StateStatusEnum.QUEUED}
+            "$set": {
+                "status": StateStatusEnum.QUEUED,
+                "queued_at": int(time.time() * 1000)
+            }
         },
         return_document=ReturnDocument.AFTER
     )
