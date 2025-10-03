@@ -1,4 +1,5 @@
 import time
+from beanie.operators import Ne
 from app.models.db.state import State
 from app.models.state_status_enum import StateStatusEnum
 from app.singletons.logs_manager import LogsManager
@@ -17,7 +18,7 @@ async def check_node_timeout():
         # Find all QUEUED states with queued_at set
         queued_states = await State.find(
             State.status == StateStatusEnum.QUEUED,
-            State.queued_at != None
+            Ne(State.queued_at, None)
         ).to_list()
 
         states_to_timeout = []

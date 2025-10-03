@@ -30,7 +30,6 @@ class State(BaseDatabaseModel):
     manual_retry_fanout_id: str = Field(default="", description="Fanout ID from a manual retry request, ensuring unique retries for unite nodes.")
     queued_at: Optional[int] = Field(None, description="Unix time in milliseconds when state was queued")
     timeout_minutes: Optional[int] = Field(None, gt=0, description="Timeout in minutes for this specific state, taken from node registration")
-    queued_at: Optional[int] = Field(None, description="Unix time in milliseconds when the state was queued")
 
     @before_event([Insert, Replace, Save])
     def _generate_fingerprint(self):
