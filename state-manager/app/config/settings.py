@@ -22,7 +22,7 @@ class Settings(BaseModel):
             mongo_database_name=os.getenv("MONGO_DATABASE_NAME", "exosphere-state-manager"), # type: ignore
             state_manager_secret=os.getenv("STATE_MANAGER_SECRET"), # type: ignore
             secrets_encryption_key=os.getenv("SECRETS_ENCRYPTION_KEY"), # type: ignore
-            trigger_workers=int(os.getenv("TRIGGER_WORKERS", 1)), # type: ignore
+            trigger_workers=os.getenv("TRIGGER_WORKERS", "1"), # type: ignore
             node_timeout_minutes=os.getenv("NODE_TIMEOUT_MINUTES", "30") # type: ignore
         )
 

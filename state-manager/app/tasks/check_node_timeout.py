@@ -10,27 +10,33 @@ logger = LogsManager().get_logger()
 async def check_node_timeout():
     try:
         settings = get_settings()
-        timeout_ms = settings.node_timeout_minutes * 60 * 1000
         current_time_ms = int(time.time() * 1000)
-        timeout_threshold = current_time_ms - timeout_ms
 
-        logger.info(f"Checking for timed out nodes with threshold: {timeout_threshold}")
+        logger.info(f"Checking for timed out nodes at {current_time_ms}")
 
-        result = await State.get_pymongo_collection().update_many(
-            {
-                "status": StateStatusEnum.QUEUED,
-                "queued_at": {"$ne": None, "$lte": timeout_threshold}
-            },
-            {
-                "$set": {
-                    "status": StateStatusEnum.TIMEDOUT,
-                    "error": f"Node execution timed out after {settings.node_timeout_minutes} minutes"
-                }
-            }
-        )
+        # Find all QUEUED states with queued_at set
+        queued_states = await State.find(
+            State.status == StateStatusEnum.QUEUED,
+            State.queued_at != None
+        ).to_list()
 
-        if result.modified_count > 0:
-            logger.info(f"Marked {result.modified_count} states as TIMEDOUT")
+        states_to_timeout = []
+        
+        for state in queued_states:
+            # Use state-specific timeout if available, otherwise fall back to global
+            timeout_minutes = state.timeout_minutes if state.timeout_minutes else settings.node_timeout_minutes
+            timeout_ms = timeout_minutes * 60 * 1000
+            timeout_threshold = current_time_ms - timeout_ms
+            
+            if state.queued_at <= timeout_threshold:
+                state.status = StateStatusEnum.TIMEDOUT
+                state.error = f"Node execution timed out after {timeout_minutes} minutes"
+                states_to_timeout.append(state)
+
+        if states_to_timeout:
+            # Update all timed out states in bulk
+            await State.save_all(states_to_timeout)
+            logger.info(f"Marked {len(states_to_timeout)} states as TIMEDOUT")
         
     except Exception:
         logger.error("Error checking node timeout", exc_info=True)
