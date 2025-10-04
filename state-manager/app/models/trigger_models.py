@@ -4,6 +4,9 @@ from croniter import croniter
 from typing import Self, Optional
 from zoneinfo import available_timezones
 
+# Cache available timezones at module level to avoid repeated filesystem queries
+_AVAILABLE_TIMEZONES = available_timezones()
+
 class TriggerTypeEnum(str, Enum):
     CRON = "CRON"
 
@@ -30,7 +33,7 @@ class CronTrigger(BaseModel):
     def validate_timezone(cls, v: Optional[str]) -> str:
         if v is None:
             return "UTC"
-        if v not in available_timezones():
+        if v not in _AVAILABLE_TIMEZONES:
             raise ValueError(f"Invalid timezone: {v}. Must be a valid IANA timezone (e.g., 'America/New_York', 'Europe/London', 'UTC')")
         return v
 

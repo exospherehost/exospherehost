@@ -12,6 +12,9 @@ from zoneinfo import ZoneInfo
 import croniter
 import asyncio
 
+# Cache UTC timezone at module level to avoid repeated instantiation
+UTC = ZoneInfo("UTC")
+
 logger = LogsManager().get_logger()
 
 async def get_due_triggers(cron_time: datetime) -> DatabaseTriggers | None:
@@ -48,7 +51,7 @@ async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime):
     tz = ZoneInfo(trigger.timezone or "UTC")
 
     # Convert trigger_time to the specified timezone for croniter
-    trigger_time_tz = trigger.trigger_time.replace(tzinfo=ZoneInfo("UTC")).astimezone(tz)
+    trigger_time_tz = trigger.trigger_time.replace(tzinfo=UTC).astimezone(tz)
     iter = croniter.croniter(trigger.expression, trigger_time_tz)
 
     while True:
@@ -56,7 +59,7 @@ async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime):
         next_trigger_time_tz = iter.get_next(datetime)
 
         # Convert back to UTC for storage
-        next_trigger_time = next_trigger_time_tz.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
+        next_trigger_time = next_trigger_time_tz.astimezone(UTC).replace(tzinfo=None)
 
         try:
             await DatabaseTriggers(

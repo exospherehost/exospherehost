@@ -12,6 +12,9 @@ from app.singletons.logs_manager import LogsManager
 from app.models.trigger_models import TriggerStatusEnum, TriggerTypeEnum
 from app.models.db.trigger import DatabaseTriggers
 
+# Cache UTC timezone at module level to avoid repeated instantiation
+UTC = ZoneInfo("UTC")
+
 logger = LogsManager().get_logger()
 
 async def verify_node_exists(graph_template: GraphTemplate, registered_nodes: list[RegisteredNode]) -> list[str]:
@@ -111,7 +114,7 @@ async def create_crons(graph_template: GraphTemplate):
             cron_trigger = CronTrigger.model_validate(trigger.value)
             triggers_to_create[(cron_trigger.expression, cron_trigger.timezone)] = cron_trigger
 
-    current_time = datetime.now(ZoneInfo("UTC")).replace(tzinfo=None)
+    current_time = datetime.now(UTC).replace(tzinfo=None)
 
     new_db_triggers = []
     for (expression, timezone), cron_trigger in triggers_to_create.items():
@@ -119,14 +122,14 @@ async def create_crons(graph_template: GraphTemplate):
         tz = ZoneInfo(timezone)
 
         # Get current time in the specified timezone
-        current_time_tz = current_time.replace(tzinfo=ZoneInfo("UTC")).astimezone(tz)
+        current_time_tz = current_time.replace(tzinfo=UTC).astimezone(tz)
         iter = croniter.croniter(expression, current_time_tz)
 
         # Get next trigger time in the specified timezone
         next_trigger_time_tz = iter.get_next(datetime)
 
         # Convert back to UTC for storage (remove timezone info for storage)
-        next_trigger_time = next_trigger_time_tz.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
+        next_trigger_time = next_trigger_time_tz.astimezone(UTC).replace(tzinfo=None)
 
         new_db_triggers.append(
             DatabaseTriggers(
