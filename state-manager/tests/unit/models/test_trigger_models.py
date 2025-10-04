@@ -43,7 +43,9 @@ class TestCronTrigger:
 
         errors = exc_info.value.errors()
         assert len(errors) == 1
-        assert "Invalid cron expression" in str(errors[0]["ctx"]["error"])
+        # Check the error message (Pydantic v2 doesn't always populate ctx)
+        error_msg = errors[0].get("msg") or str(errors[0])
+        assert "Invalid cron expression" in error_msg
 
     def test_invalid_timezone(self):
         """Test creating a cron trigger with invalid timezone"""
@@ -52,8 +54,10 @@ class TestCronTrigger:
 
         errors = exc_info.value.errors()
         assert len(errors) == 1
-        assert "Invalid timezone" in str(errors[0]["ctx"]["error"])
-        assert "Invalid/Timezone" in str(errors[0]["ctx"]["error"])
+        # Check the error message (Pydantic v2 doesn't always populate ctx)
+        error_msg = errors[0].get("msg") or str(errors[0])
+        assert "Invalid timezone" in error_msg
+        assert "Invalid/Timezone" in error_msg
 
     def test_none_timezone_defaults_to_utc(self):
         """Test that None timezone defaults to UTC"""

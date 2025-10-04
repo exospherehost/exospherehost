@@ -102,19 +102,20 @@ async def verify_inputs(graph_template: GraphTemplate, registered_nodes: list[Re
     return errors
 
 async def create_crons(graph_template: GraphTemplate):
-    # Build a map of (expression, timezone) -> trigger for deduplication
+    # Build a map of (expression, timezone) -> validated CronTrigger for deduplication
     triggers_to_create = {}
     for trigger in graph_template.triggers:
         if trigger.type == TriggerTypeEnum.CRON:
-            expression = trigger.value["expression"]
-            timezone = trigger.value.get("timezone", "UTC")
-            triggers_to_create[(expression, timezone)] = trigger
+            # Validate through CronTrigger model to normalize timezone (None -> "UTC")
+            from app.models.trigger_models import CronTrigger
+            cron_trigger = CronTrigger.model_validate(trigger.value)
+            triggers_to_create[(cron_trigger.expression, cron_trigger.timezone)] = cron_trigger
 
     current_time = datetime.now(ZoneInfo("UTC")).replace(tzinfo=None)
 
     new_db_triggers = []
-    for (expression, timezone), trigger in triggers_to_create.items():
-        # Use the trigger's timezone, defaulting to UTC
+    for (expression, timezone), cron_trigger in triggers_to_create.items():
+        # Use the validated timezone (guaranteed to be valid IANA timezone, never None)
         tz = ZoneInfo(timezone)
 
         # Get current time in the specified timezone
@@ -130,8 +131,8 @@ async def create_crons(graph_template: GraphTemplate):
         new_db_triggers.append(
             DatabaseTriggers(
                 type=TriggerTypeEnum.CRON,
-                expression=expression,
-                timezone=timezone,
+                expression=cron_trigger.expression,
+                timezone=cron_trigger.timezone,
                 graph_name=graph_template.name,
                 namespace=graph_template.namespace,
                 trigger_status=TriggerStatusEnum.PENDING,

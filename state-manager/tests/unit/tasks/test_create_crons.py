@@ -234,3 +234,27 @@ async def test_create_crons_trigger_time_is_datetime():
         # Verify trigger_time is a datetime object
         call_kwargs = mock_db_class.call_args[1]
         assert isinstance(call_kwargs['trigger_time'], datetime)
+
+@pytest.mark.asyncio
+async def test_create_crons_with_null_timezone_normalizes_to_utc():
+    """Test create_crons with null/None timezone normalizes to UTC via model validation"""
+    graph_template = MagicMock()
+    graph_template.name = "test_graph"
+    graph_template.namespace = "test_ns"
+    graph_template.triggers = [
+        Trigger(
+            type=TriggerTypeEnum.CRON,
+            value={"expression": "0 9 * * *", "timezone": None}  # Explicit None
+        )
+    ]
+
+    with patch('app.tasks.verify_graph.DatabaseTriggers') as mock_db_class:
+        mock_db_class.return_value = MagicMock()
+        mock_db_class.insert_many = AsyncMock()
+
+        await create_crons(graph_template)
+
+        # Verify timezone was normalized to "UTC" (not None)
+        call_kwargs = mock_db_class.call_args[1]
+        assert call_kwargs['timezone'] == "UTC"
+        assert call_kwargs['timezone'] is not None
