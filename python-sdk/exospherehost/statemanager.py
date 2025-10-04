@@ -173,7 +173,8 @@ class StateManager:
                 {
                     "type": "CRON",
                     "value": {
-                        "expression": trigger.expression
+                        "expression": trigger.expression,
+                        "timezone": trigger.timezone
                     }
                 }
                 for trigger in triggers

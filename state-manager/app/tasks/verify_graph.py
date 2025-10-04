@@ -3,6 +3,7 @@ import croniter
 
 from datetime import datetime
 from json_schema_to_pydantic import create_model
+from zoneinfo import ZoneInfo
 
 from app.models.db.graph_template_model import GraphTemplate
 from app.models.graph_template_validation_status import GraphTemplateValidationStatus
@@ -101,20 +102,36 @@ async def verify_inputs(graph_template: GraphTemplate, registered_nodes: list[Re
     return errors
 
 async def create_crons(graph_template: GraphTemplate):
-    expressions_to_create = set([trigger.value["expression"] for trigger in graph_template.triggers if trigger.type == TriggerTypeEnum.CRON])
+    # Build a map of (expression, timezone) -> trigger for deduplication
+    triggers_to_create = {}
+    for trigger in graph_template.triggers:
+        if trigger.type == TriggerTypeEnum.CRON:
+            expression = trigger.value["expression"]
+            timezone = trigger.value.get("timezone", "UTC")
+            triggers_to_create[(expression, timezone)] = trigger
 
-    current_time = datetime.now()
-    
+    current_time = datetime.now(ZoneInfo("UTC")).replace(tzinfo=None)
+
     new_db_triggers = []
-    for expression in expressions_to_create:
-        iter = croniter.croniter(expression, current_time)
+    for (expression, timezone), trigger in triggers_to_create.items():
+        # Use the trigger's timezone, defaulting to UTC
+        tz = ZoneInfo(timezone)
 
-        next_trigger_time = iter.get_next(datetime)
-            
+        # Get current time in the specified timezone
+        current_time_tz = current_time.replace(tzinfo=ZoneInfo("UTC")).astimezone(tz)
+        iter = croniter.croniter(expression, current_time_tz)
+
+        # Get next trigger time in the specified timezone
+        next_trigger_time_tz = iter.get_next(datetime)
+
+        # Convert back to UTC for storage (remove timezone info for storage)
+        next_trigger_time = next_trigger_time_tz.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
+
         new_db_triggers.append(
             DatabaseTriggers(
                 type=TriggerTypeEnum.CRON,
                 expression=expression,
+                timezone=timezone,
                 graph_name=graph_template.name,
                 namespace=graph_template.namespace,
                 trigger_status=TriggerStatusEnum.PENDING,
