@@ -39,6 +39,15 @@ class DatabaseTriggers(Document):
                     ("expires_at", 1),
                 ],
                 name="ttl_expires_at",
-                expireAfterSeconds=0  # Delete immediately when expires_at is reached
+                expireAfterSeconds=0,  # Delete immediately when expires_at is reached
+                partialFilterExpression={
+                    "trigger_status": {
+                        "$in": [
+                            TriggerStatusEnum.TRIGGERED,
+                            TriggerStatusEnum.FAILED,
+                            TriggerStatusEnum.CANCELLED
+                        ]
+                    }
+                }
             )
         ]
