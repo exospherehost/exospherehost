@@ -6,13 +6,14 @@ load_dotenv()
 
 class Settings(BaseModel):
     """Application settings loaded from environment variables."""
-    
+
     # MongoDB Configuration
     mongo_uri: str = Field(..., description="MongoDB connection URI" )
     mongo_database_name: str = Field(default="exosphere-state-manager", description="MongoDB database name")
     state_manager_secret: str = Field(..., description="Secret key for API authentication")
     secrets_encryption_key: str = Field(..., description="Key for encrypting secrets")
     trigger_workers: int = Field(default=1, description="Number of workers to run the trigger cron")
+    trigger_retention_days: int = Field(default=30, description="Number of days to retain completed/failed triggers before cleanup")
     
     @classmethod
     def from_env(cls) -> "Settings":
@@ -21,7 +22,8 @@ class Settings(BaseModel):
             mongo_database_name=os.getenv("MONGO_DATABASE_NAME", "exosphere-state-manager"), # type: ignore
             state_manager_secret=os.getenv("STATE_MANAGER_SECRET"), # type: ignore
             secrets_encryption_key=os.getenv("SECRETS_ENCRYPTION_KEY"), # type: ignore
-            trigger_workers=int(os.getenv("TRIGGER_WORKERS", 1)) # type: ignore
+            trigger_workers=int(os.getenv("TRIGGER_WORKERS", 1)), # type: ignore
+            trigger_retention_days=int(os.getenv("TRIGGER_RETENTION_DAYS", 30)) # type: ignore
         )
 
 

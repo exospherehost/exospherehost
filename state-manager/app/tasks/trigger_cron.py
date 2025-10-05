@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid4
 from app.models.db.trigger import DatabaseTriggers
 from app.models.trigger_models import TriggerStatusEnum, TriggerTypeEnum
@@ -35,9 +35,15 @@ async def call_trigger_graph(trigger: DatabaseTriggers):
     )
 
 async def mark_as_failed(trigger: DatabaseTriggers):
+    retention_days = get_settings().trigger_retention_days
+    expires_at = datetime.now() + timedelta(days=retention_days)
+
     await DatabaseTriggers.get_pymongo_collection().update_one(
         {"_id": trigger.id},
-        {"$set": {"trigger_status": TriggerStatusEnum.FAILED}}
+        {"$set": {
+            "trigger_status": TriggerStatusEnum.FAILED,
+            "expires_at": expires_at
+        }}
     )
 
 async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime):
@@ -66,9 +72,15 @@ async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime):
             break
 
 async def mark_as_triggered(trigger: DatabaseTriggers):
+    retention_days = get_settings().trigger_retention_days
+    expires_at = datetime.now() + timedelta(days=retention_days)
+
     await DatabaseTriggers.get_pymongo_collection().update_one(
         {"_id": trigger.id},
-        {"$set": {"trigger_status": TriggerStatusEnum.TRIGGERED}}
+        {"$set": {
+            "trigger_status": TriggerStatusEnum.TRIGGERED,
+            "expires_at": expires_at
+        }}
     )
 
 async def handle_trigger(cron_time: datetime):
