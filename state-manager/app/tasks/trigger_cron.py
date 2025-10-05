@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 from app.models.db.trigger import DatabaseTriggers
 from app.models.trigger_models import TriggerStatusEnum, TriggerTypeEnum
@@ -34,14 +34,24 @@ async def call_trigger_graph(trigger: DatabaseTriggers):
         x_exosphere_request_id=str(uuid4())
     )
 
-async def mark_as_failed(trigger: DatabaseTriggers):
-    retention_days = get_settings().trigger_retention_days
-    expires_at = datetime.now() + timedelta(days=retention_days)
+async def mark_as_failed(trigger: DatabaseTriggers, retention_days: int):
+    expires_at = datetime.now(timezone.utc) + timedelta(days=retention_days)
 
     await DatabaseTriggers.get_pymongo_collection().update_one(
         {"_id": trigger.id},
         {"$set": {
             "trigger_status": TriggerStatusEnum.FAILED,
+            "expires_at": expires_at
+        }}
+    )
+
+async def mark_as_cancelled(trigger: DatabaseTriggers, retention_days: int):
+    expires_at = datetime.now(timezone.utc) + timedelta(days=retention_days)
+
+    await DatabaseTriggers.get_pymongo_collection().update_one(
+        {"_id": trigger.id},
+        {"$set": {
+            "trigger_status": TriggerStatusEnum.CANCELLED,
             "expires_at": expires_at
         }}
     )
@@ -71,9 +81,8 @@ async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime):
         if next_trigger_time > cron_time:
             break
 
-async def mark_as_triggered(trigger: DatabaseTriggers):
-    retention_days = get_settings().trigger_retention_days
-    expires_at = datetime.now() + timedelta(days=retention_days)
+async def mark_as_triggered(trigger: DatabaseTriggers, retention_days: int):
+    expires_at = datetime.now(timezone.utc) + timedelta(days=retention_days)
 
     await DatabaseTriggers.get_pymongo_collection().update_one(
         {"_id": trigger.id},
@@ -83,18 +92,19 @@ async def mark_as_triggered(trigger: DatabaseTriggers):
         }}
     )
 
-async def handle_trigger(cron_time: datetime):
+async def handle_trigger(cron_time: datetime, retention_days: int):
     while(trigger:= await get_due_triggers(cron_time)):
         try:
             await call_trigger_graph(trigger)
-            await mark_as_triggered(trigger)
+            await mark_as_triggered(trigger, retention_days)
         except Exception as e:
-            await mark_as_failed(trigger)
+            await mark_as_failed(trigger, retention_days)
             logger.error(f"Error calling trigger graph: {e}")
         finally:
             await create_next_triggers(trigger, cron_time)
 
 async def trigger_cron():
     cron_time = datetime.now()
+    settings = get_settings()
     logger.info(f"starting trigger_cron: {cron_time}")
-    await asyncio.gather(*[handle_trigger(cron_time) for _ in range(get_settings().trigger_workers)])
+    await asyncio.gather(*[handle_trigger(cron_time, settings.trigger_retention_days) for _ in range(settings.trigger_workers)])
