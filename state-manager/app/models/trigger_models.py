@@ -1,7 +1,7 @@
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 from croniter import croniter
-from typing import Self, Optional
+from typing import Union, Annotated, Optional, Literal
 from zoneinfo import available_timezones
 
 # Cache available timezones at module level to avoid repeated filesystem queries
@@ -18,6 +18,7 @@ class TriggerStatusEnum(str, Enum):
     TRIGGERING = "TRIGGERING"
 
 class CronTrigger(BaseModel):
+    type: Literal[TriggerTypeEnum.CRON] = Field(default=TriggerTypeEnum.CRON, description="Type of the trigger")
     expression: str = Field(..., description="Cron expression for the trigger")
     timezone: Optional[str] = Field(default="UTC", description="Timezone for the cron expression (e.g., 'America/New_York', 'Europe/London', 'UTC')")
 
@@ -37,14 +38,16 @@ class CronTrigger(BaseModel):
             raise ValueError(f"Invalid timezone: {v}. Must be a valid IANA timezone (e.g., 'America/New_York', 'Europe/London', 'UTC')")
         return v
 
-class Trigger(BaseModel):
-    type: TriggerTypeEnum = Field(..., description="Type of the trigger")
-    value: dict = Field(default_factory=dict, description="Value of the trigger")
+# Union type for all trigger types - add new trigger types here
+TriggerValue = Annotated[Union[CronTrigger], Field(discriminator="type")]
 
-    @model_validator(mode="after")
-    def validate_trigger(self) -> Self:
-        if self.type == TriggerTypeEnum.CRON:
-            CronTrigger.model_validate(self.value)
-        else:
-            raise ValueError(f"Unsupported trigger type: {self.type}")
-        return self
+class Trigger(BaseModel):
+    """
+    Extensible trigger model using discriminated unions.
+    To add a new trigger type:
+    1. Add the enum value to TriggerTypeEnum
+    2. Create a new trigger class (e.g., WebhookTrigger) with type field
+    3. Add it to the TriggerValue Union
+    """
+    type: TriggerTypeEnum = Field(..., description="Type of the trigger")
+    value: TriggerValue = Field(..., description="Value of the trigger")

@@ -84,27 +84,28 @@ class TestTrigger:
         """Test creating a valid trigger with CRON type and timezone"""
         trigger = Trigger(
             type=TriggerTypeEnum.CRON,
-            value={"expression": "0 9 * * *", "timezone": "America/New_York"}
+            value={"type": TriggerTypeEnum.CRON, "expression": "0 9 * * *", "timezone": "America/New_York"}
         )
         assert trigger.type == TriggerTypeEnum.CRON
-        assert trigger.value["expression"] == "0 9 * * *"
-        assert trigger.value["timezone"] == "America/New_York"
+        assert trigger.value.expression == "0 9 * * *"
+        assert trigger.value.timezone == "America/New_York"
 
     def test_valid_trigger_with_cron_without_timezone(self):
         """Test creating a valid trigger with CRON type without timezone"""
         trigger = Trigger(
             type=TriggerTypeEnum.CRON,
-            value={"expression": "0 9 * * *"}
+            value={"type": TriggerTypeEnum.CRON, "expression": "0 9 * * *"}
         )
         assert trigger.type == TriggerTypeEnum.CRON
-        assert trigger.value["expression"] == "0 9 * * *"
+        assert trigger.value.expression == "0 9 * * *"
+        assert trigger.value.timezone == "UTC"  # Should default to UTC
 
     def test_invalid_trigger_with_invalid_cron_expression(self):
         """Test creating a trigger with invalid cron expression"""
         with pytest.raises(ValidationError) as exc_info:
             Trigger(
                 type=TriggerTypeEnum.CRON,
-                value={"expression": "invalid cron"}
+                value={"type": TriggerTypeEnum.CRON, "expression": "invalid cron"}
             )
 
         errors = exc_info.value.errors()
@@ -115,7 +116,7 @@ class TestTrigger:
         with pytest.raises(ValidationError) as exc_info:
             Trigger(
                 type=TriggerTypeEnum.CRON,
-                value={"expression": "0 9 * * *", "timezone": "Invalid/Zone"}
+                value={"type": TriggerTypeEnum.CRON, "expression": "0 9 * * *", "timezone": "Invalid/Zone"}
             )
 
         errors = exc_info.value.errors()

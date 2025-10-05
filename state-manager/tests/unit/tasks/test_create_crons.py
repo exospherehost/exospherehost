@@ -14,6 +14,14 @@ from datetime import datetime
 from app.tasks.verify_graph import create_crons
 from app.models.trigger_models import Trigger, TriggerTypeEnum
 
+# Helper function to create trigger value dict
+def make_trigger_value(expression: str, timezone: str = None):
+    """Helper to create trigger value dict with required 'type' field"""
+    result = {"type": TriggerTypeEnum.CRON, "expression": expression}
+    if timezone is not None:
+        result["timezone"] = timezone
+    return result
+
 
 @pytest.mark.asyncio
 async def test_create_crons_with_america_new_york_timezone():
@@ -24,7 +32,7 @@ async def test_create_crons_with_america_new_york_timezone():
     graph_template.triggers = [
         Trigger(
             type=TriggerTypeEnum.CRON,
-            value={"expression": "0 9 * * *", "timezone": "America/New_York"}
+            value=make_trigger_value("0 9 * * *", "America/New_York")
         )
     ]
 
@@ -58,7 +66,7 @@ async def test_create_crons_with_default_utc_timezone():
     graph_template.triggers = [
         Trigger(
             type=TriggerTypeEnum.CRON,
-            value={"expression": "0 9 * * *"}  # No timezone specified
+            value=make_trigger_value("0 9 * * *")  # No timezone specified
         )
     ]
 
@@ -83,7 +91,7 @@ async def test_create_crons_with_europe_london_timezone():
     graph_template.triggers = [
         Trigger(
             type=TriggerTypeEnum.CRON,
-            value={"expression": "0 17 * * *", "timezone": "Europe/London"}
+            value=make_trigger_value("0 17 * * *", "Europe/London")
         )
     ]
 
@@ -108,11 +116,11 @@ async def test_create_crons_with_multiple_different_timezones():
     graph_template.triggers = [
         Trigger(
             type=TriggerTypeEnum.CRON,
-            value={"expression": "0 9 * * *", "timezone": "America/New_York"}
+            value=make_trigger_value("0 9 * * *", "America/New_York")
         ),
         Trigger(
             type=TriggerTypeEnum.CRON,
-            value={"expression": "0 17 * * *", "timezone": "Europe/London"}
+            value=make_trigger_value("0 17 * * *", "Europe/London")
         )
     ]
 
@@ -159,11 +167,11 @@ async def test_create_crons_deduplicates_same_expression_and_timezone():
     graph_template.triggers = [
         Trigger(
             type=TriggerTypeEnum.CRON,
-            value={"expression": "0 9 * * *", "timezone": "America/New_York"}
+            value=make_trigger_value("0 9 * * *", "America/New_York")
         ),
         Trigger(
             type=TriggerTypeEnum.CRON,
-            value={"expression": "0 9 * * *", "timezone": "America/New_York"}
+            value=make_trigger_value("0 9 * * *", "America/New_York")
         )
     ]
 
@@ -190,11 +198,11 @@ async def test_create_crons_keeps_same_expression_different_timezones():
     graph_template.triggers = [
         Trigger(
             type=TriggerTypeEnum.CRON,
-            value={"expression": "0 9 * * *", "timezone": "America/New_York"}
+            value=make_trigger_value("0 9 * * *", "America/New_York")
         ),
         Trigger(
             type=TriggerTypeEnum.CRON,
-            value={"expression": "0 9 * * *", "timezone": "Europe/London"}
+            value=make_trigger_value("0 9 * * *", "Europe/London")
         )
     ]
 
@@ -221,7 +229,7 @@ async def test_create_crons_trigger_time_is_datetime():
     graph_template.triggers = [
         Trigger(
             type=TriggerTypeEnum.CRON,
-            value={"expression": "0 9 * * *", "timezone": "America/New_York"}
+            value=make_trigger_value("0 9 * * *", "America/New_York")
         )
     ]
 
@@ -244,7 +252,7 @@ async def test_create_crons_with_null_timezone_normalizes_to_utc():
     graph_template.triggers = [
         Trigger(
             type=TriggerTypeEnum.CRON,
-            value={"expression": "0 9 * * *", "timezone": None}  # Explicit None
+            value={"type": TriggerTypeEnum.CRON, "expression": "0 9 * * *", "timezone": None}  # Explicit None
         )
     ]
 
