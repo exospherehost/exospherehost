@@ -59,11 +59,6 @@ class TestCronTrigger:
         assert "Invalid timezone" in error_msg
         assert "Invalid/Timezone" in error_msg
 
-    def test_none_timezone_defaults_to_utc(self):
-        """Test that None timezone defaults to UTC"""
-        trigger = CronTrigger(expression="0 9 * * *", timezone=None)
-        assert trigger.timezone == "UTC"
-
     def test_complex_cron_expression_with_timezone(self):
         """Test complex cron expression with timezone"""
         trigger = CronTrigger(expression="0 0 1,15 * *", timezone="America/Los_Angeles")
@@ -118,8 +113,12 @@ class TestTrigger:
         errors = exc_info.value.errors()
         assert len(errors) > 0
 
-    def test_duplicate_triggers_with_identical_values(self):
-        """Test creating two triggers with identical values"""
+    def test_trigger_model_equality_with_identical_values(self):
+        """Test Pydantic model equality for triggers with identical values.
+
+        Note: This test verifies model-level equality only, not deduplication logic.
+        The actual deduplication of triggers is handled in verify_graph.py's create_crons function.
+        """
         # Create first trigger
         trigger1 = Trigger(
             value={"type": TriggerTypeEnum.CRON, "expression": "0 9 * * *", "timezone": "America/New_York"}

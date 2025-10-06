@@ -31,7 +31,6 @@ async def test_create_crons_with_america_new_york_timezone():
     graph_template.namespace = "test_ns"
     graph_template.triggers = [
         Trigger(
-            type=TriggerTypeEnum.CRON,
             value=make_trigger_value("0 9 * * *", "America/New_York")
         )
     ]
@@ -65,7 +64,6 @@ async def test_create_crons_with_default_utc_timezone():
     graph_template.namespace = "test_ns"
     graph_template.triggers = [
         Trigger(
-            type=TriggerTypeEnum.CRON,
             value=make_trigger_value("0 9 * * *")  # No timezone specified
         )
     ]
@@ -90,7 +88,6 @@ async def test_create_crons_with_europe_london_timezone():
     graph_template.namespace = "test_ns"
     graph_template.triggers = [
         Trigger(
-            type=TriggerTypeEnum.CRON,
             value=make_trigger_value("0 17 * * *", "Europe/London")
         )
     ]
@@ -115,11 +112,9 @@ async def test_create_crons_with_multiple_different_timezones():
     graph_template.namespace = "test_ns"
     graph_template.triggers = [
         Trigger(
-            type=TriggerTypeEnum.CRON,
             value=make_trigger_value("0 9 * * *", "America/New_York")
         ),
         Trigger(
-            type=TriggerTypeEnum.CRON,
             value=make_trigger_value("0 17 * * *", "Europe/London")
         )
     ]
@@ -166,11 +161,9 @@ async def test_create_crons_deduplicates_same_expression_and_timezone():
     graph_template.namespace = "test_ns"
     graph_template.triggers = [
         Trigger(
-            type=TriggerTypeEnum.CRON,
             value=make_trigger_value("0 9 * * *", "America/New_York")
         ),
         Trigger(
-            type=TriggerTypeEnum.CRON,
             value=make_trigger_value("0 9 * * *", "America/New_York")
         )
     ]
@@ -197,11 +190,9 @@ async def test_create_crons_keeps_same_expression_different_timezones():
     graph_template.namespace = "test_ns"
     graph_template.triggers = [
         Trigger(
-            type=TriggerTypeEnum.CRON,
             value=make_trigger_value("0 9 * * *", "America/New_York")
         ),
         Trigger(
-            type=TriggerTypeEnum.CRON,
             value=make_trigger_value("0 9 * * *", "Europe/London")
         )
     ]
@@ -228,7 +219,6 @@ async def test_create_crons_trigger_time_is_datetime():
     graph_template.namespace = "test_ns"
     graph_template.triggers = [
         Trigger(
-            type=TriggerTypeEnum.CRON,
             value=make_trigger_value("0 9 * * *", "America/New_York")
         )
     ]
@@ -243,26 +233,3 @@ async def test_create_crons_trigger_time_is_datetime():
         call_kwargs = mock_db_class.call_args[1]
         assert isinstance(call_kwargs['trigger_time'], datetime)
 
-@pytest.mark.asyncio
-async def test_create_crons_with_null_timezone_normalizes_to_utc():
-    """Test create_crons with null/None timezone normalizes to UTC via model validation"""
-    graph_template = MagicMock()
-    graph_template.name = "test_graph"
-    graph_template.namespace = "test_ns"
-    graph_template.triggers = [
-        Trigger(
-            type=TriggerTypeEnum.CRON,
-            value={"type": TriggerTypeEnum.CRON, "expression": "0 9 * * *", "timezone": None}  # Explicit None
-        )
-    ]
-
-    with patch('app.tasks.verify_graph.DatabaseTriggers') as mock_db_class:
-        mock_db_class.return_value = MagicMock()
-        mock_db_class.insert_many = AsyncMock()
-
-        await create_crons(graph_template)
-
-        # Verify timezone was normalized to "UTC" (not None)
-        call_kwargs = mock_db_class.call_args[1]
-        assert call_kwargs['timezone'] == "UTC"
-        assert call_kwargs['timezone'] is not None

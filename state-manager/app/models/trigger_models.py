@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 from croniter import croniter
-from typing import Union, Annotated, Optional, Literal
+from typing import Union, Annotated, Literal
 from zoneinfo import available_timezones
 
 # Cache available timezones at module level to avoid repeated filesystem queries
@@ -20,7 +20,7 @@ class TriggerStatusEnum(str, Enum):
 class CronTrigger(BaseModel):
     type: Literal[TriggerTypeEnum.CRON] = Field(default=TriggerTypeEnum.CRON, description="Type of the trigger")
     expression: str = Field(..., description="Cron expression for the trigger")
-    timezone: Optional[str] = Field(default="UTC", description="Timezone for the cron expression (e.g., 'America/New_York', 'Europe/London', 'UTC')")
+    timezone: str = Field(default="UTC", description="Timezone for the cron expression (e.g., 'America/New_York', 'Europe/London', 'UTC')")
 
     @field_validator("expression")
     @classmethod
@@ -31,9 +31,7 @@ class CronTrigger(BaseModel):
 
     @field_validator("timezone")
     @classmethod
-    def validate_timezone(cls, v: Optional[str]) -> str:
-        if v is None:
-            return "UTC"
+    def validate_timezone(cls, v: str) -> str:
         if v not in _AVAILABLE_TIMEZONES:
             raise ValueError(f"Invalid timezone: {v}. Must be a valid IANA timezone (e.g., 'America/New_York', 'Europe/London', 'UTC')")
         return v
