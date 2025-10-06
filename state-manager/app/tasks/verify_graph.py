@@ -108,7 +108,7 @@ async def create_crons(graph_template: GraphTemplate):
     # Build a map of (expression, timezone) -> CronTrigger for deduplication
     triggers_to_create = {}
     for trigger in graph_template.triggers:
-        if trigger.type == TriggerTypeEnum.CRON:
+        if trigger.value.type == TriggerTypeEnum.CRON:
             # trigger.value is already a validated CronTrigger instance
             cron_trigger = trigger.value
             triggers_to_create[(cron_trigger.expression, cron_trigger.timezone)] = cron_trigger

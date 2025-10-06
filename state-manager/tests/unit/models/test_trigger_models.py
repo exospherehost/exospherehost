@@ -83,20 +83,18 @@ class TestTrigger:
     def test_valid_trigger_with_cron_and_timezone(self):
         """Test creating a valid trigger with CRON type and timezone"""
         trigger = Trigger(
-            type=TriggerTypeEnum.CRON,
             value={"type": TriggerTypeEnum.CRON, "expression": "0 9 * * *", "timezone": "America/New_York"}
         )
-        assert trigger.type == TriggerTypeEnum.CRON
+        assert trigger.value.type == TriggerTypeEnum.CRON
         assert trigger.value.expression == "0 9 * * *"
         assert trigger.value.timezone == "America/New_York"
 
     def test_valid_trigger_with_cron_without_timezone(self):
         """Test creating a valid trigger with CRON type without timezone"""
         trigger = Trigger(
-            type=TriggerTypeEnum.CRON,
             value={"type": TriggerTypeEnum.CRON, "expression": "0 9 * * *"}
         )
-        assert trigger.type == TriggerTypeEnum.CRON
+        assert trigger.value.type == TriggerTypeEnum.CRON
         assert trigger.value.expression == "0 9 * * *"
         assert trigger.value.timezone == "UTC"  # Should default to UTC
 
@@ -104,7 +102,6 @@ class TestTrigger:
         """Test creating a trigger with invalid cron expression"""
         with pytest.raises(ValidationError) as exc_info:
             Trigger(
-                type=TriggerTypeEnum.CRON,
                 value={"type": TriggerTypeEnum.CRON, "expression": "invalid cron"}
             )
 
@@ -115,9 +112,58 @@ class TestTrigger:
         """Test creating a trigger with invalid timezone"""
         with pytest.raises(ValidationError) as exc_info:
             Trigger(
-                type=TriggerTypeEnum.CRON,
                 value={"type": TriggerTypeEnum.CRON, "expression": "0 9 * * *", "timezone": "Invalid/Zone"}
             )
 
         errors = exc_info.value.errors()
         assert len(errors) > 0
+
+    def test_duplicate_triggers_with_identical_values(self):
+        """Test creating two triggers with identical values"""
+        # Create first trigger
+        trigger1 = Trigger(
+            value={"type": TriggerTypeEnum.CRON, "expression": "0 9 * * *", "timezone": "America/New_York"}
+        )
+
+        # Create second trigger with identical values
+        trigger2 = Trigger(
+            value={"type": TriggerTypeEnum.CRON, "expression": "0 9 * * *", "timezone": "America/New_York"}
+        )
+
+        # Both triggers should be created successfully
+        assert trigger1.value.type == TriggerTypeEnum.CRON
+        assert trigger2.value.type == TriggerTypeEnum.CRON
+        assert trigger1.value.expression == "0 9 * * *"
+        assert trigger2.value.expression == "0 9 * * *"
+        assert trigger1.value.timezone == "America/New_York"
+        assert trigger2.value.timezone == "America/New_York"
+
+        # Test equality - Pydantic models with same values should be equal
+        assert trigger1 == trigger2
+
+        # Test that they are different objects in memory
+        assert trigger1 is not trigger2
+
+        # Test model_dump produces identical output
+        assert trigger1.model_dump() == trigger2.model_dump()
+
+    def test_duplicate_triggers_different_timezones(self):
+        """Test creating two triggers with same expression but different timezones"""
+        trigger1 = Trigger(
+            value={"type": TriggerTypeEnum.CRON, "expression": "0 9 * * *", "timezone": "America/New_York"}
+        )
+
+        trigger2 = Trigger(
+            value={"type": TriggerTypeEnum.CRON, "expression": "0 9 * * *", "timezone": "Europe/London"}
+        )
+
+        # Both triggers should be created successfully
+        assert trigger1.value.type == TriggerTypeEnum.CRON
+        assert trigger2.value.type == TriggerTypeEnum.CRON
+
+        # They should NOT be equal due to different timezones
+        assert trigger1 != trigger2
+
+        # Verify the difference is in timezone
+        assert trigger1.value.timezone == "America/New_York"
+        assert trigger2.value.timezone == "Europe/London"

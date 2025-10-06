@@ -48,6 +48,7 @@ class Trigger(BaseModel):
     1. Add the enum value to TriggerTypeEnum
     2. Create a new trigger class (e.g., WebhookTrigger) with type field
     3. Add it to the TriggerValue Union
+
+    Note: Access trigger type via trigger.value.type
     """
-    type: TriggerTypeEnum = Field(..., description="Type of the trigger")
     value: TriggerValue = Field(..., description="Value of the trigger")
