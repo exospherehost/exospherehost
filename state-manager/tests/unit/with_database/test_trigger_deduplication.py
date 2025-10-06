@@ -13,7 +13,7 @@ from app.models.db.trigger import DatabaseTriggers
 from app.tasks.verify_graph import create_crons
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(loop_scope="session")
 async def test_create_crons_deduplicates_identical_triggers(app_started):
     """Test that create_crons deduplicates triggers with identical expression and timezone
 
@@ -72,7 +72,7 @@ async def test_create_crons_deduplicates_identical_triggers(app_started):
     ).delete_many()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(loop_scope="session")
 async def test_create_crons_keeps_triggers_with_different_timezones(app_started):
     """Test that create_crons keeps triggers with same expression but different timezones
 
@@ -129,7 +129,7 @@ async def test_create_crons_keeps_triggers_with_different_timezones(app_started)
     ).delete_many()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(loop_scope="session")
 async def test_create_crons_keeps_triggers_with_different_expressions(app_started):
     """Test that create_crons keeps triggers with different expressions
 
@@ -185,7 +185,7 @@ async def test_create_crons_keeps_triggers_with_different_expressions(app_starte
     ).delete_many()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(loop_scope="session")
 async def test_create_crons_complex_deduplication_scenario(app_started):
     """Test complex deduplication scenario with mix of duplicates and unique triggers
 
