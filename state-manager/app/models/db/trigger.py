@@ -44,8 +44,7 @@ class DatabaseTriggers(Document):
                     "trigger_status": {
                         "$in": [
                             TriggerStatusEnum.TRIGGERED,
-                            TriggerStatusEnum.FAILED,
-                            TriggerStatusEnum.CANCELLED
+                            TriggerStatusEnum.FAILED
                         ]
                     }
                 }
