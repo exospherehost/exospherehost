@@ -29,6 +29,7 @@ class State(BaseDatabaseModel):
     fanout_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Fanout ID of the state")
     manual_retry_fanout_id: str = Field(default="", description="Fanout ID from a manual retry request, ensuring unique retries for unite nodes.")
     queued_at: Optional[int] = Field(None, description="Unix time in milliseconds when state was queued")
+    timeout_at: Optional[int] = Field(None, description="Unix time in milliseconds when state times out")
     timeout_minutes: Optional[int] = Field(None, gt=0, description="Timeout in minutes for this specific state, taken from node registration")
 
     @before_event([Insert, Replace, Save])
@@ -108,7 +109,7 @@ class State(BaseDatabaseModel):
             IndexModel(
                 [
                     ("status", 1),
-                    ("queued_at", 1),
+                    ("timeout_at", 1),
                 ],
                 name="timeout_query_index"
             )
