@@ -13,8 +13,9 @@ class DatabaseTriggers(Document):
     namespace: str = Field(..., description="Namespace of the graph")
     trigger_time: datetime = Field(..., description="Trigger time of the trigger")
     trigger_status: TriggerStatusEnum = Field(..., description="Status of the trigger")
+    expires_at: Optional[datetime] = Field(default=None, description="Expiration time for automatic cleanup of completed triggers")
 
-    class Settings: 
+    class Settings:
         indexes = [
             IndexModel(
                 [
@@ -32,5 +33,20 @@ class DatabaseTriggers(Document):
                 ],
                 name="uniq_graph_type_expr_time",
                 unique=True
+            ),
+            IndexModel(
+                [
+                    ("expires_at", 1),
+                ],
+                name="ttl_expires_at",
+                expireAfterSeconds=0,  # Delete immediately when expires_at is reached
+                partialFilterExpression={
+                    "trigger_status": {
+                        "$in": [
+                            TriggerStatusEnum.TRIGGERED,
+                            TriggerStatusEnum.FAILED
+                        ]
+                    }
+                }
             )
         ]
