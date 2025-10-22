@@ -42,9 +42,9 @@ class DatabaseTriggers(Document):
                 expireAfterSeconds=0,  # Delete immediately when expires_at is reached
                 partialFilterExpression={
                     "trigger_status": {
-                        "$nin": [
-                            TriggerStatusEnum.PENDING,
-                            TriggerStatusEnum.TRIGGERING
+                        "$in": [
+                            TriggerStatusEnum.TRIGGERED,
+                            TriggerStatusEnum.FAILED
                         ]
                     }
                 }
