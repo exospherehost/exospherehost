@@ -29,6 +29,8 @@ The Exosphere state manager is the core backend service that handles workflow ex
          -e MONGO_DATABASE_NAME="your-database-name" \
          -e STATE_MANAGER_SECRET="your-secret-key" \
          -e SECRETS_ENCRYPTION_KEY="your-base64-encoded-encryption-key" \
+         -e TRIGGER_WORKERS="1" \
+         -e TRIGGER_RETENTION_HOURS="720" \
          ghcr.io/exospherehost/exosphere-state-manager:latest
        ```
 
@@ -84,6 +86,8 @@ The Exosphere state manager is the core backend service that handles workflow ex
        export MONGO_DATABASE_NAME="your-database-name"
        export STATE_MANAGER_SECRET="your-secret-key"
        export SECRETS_ENCRYPTION_KEY="your-base64-encoded-encryption-key"
+       export TRIGGER_WORKERS="1"
+       export TRIGGER_RETENTION_HOURS="720"
        ```
 
     4. **Run the state manager**:
@@ -151,6 +155,8 @@ The state manager uri and key would be configured accordingly while setting up n
              - MONGO_DATABASE_NAME=${MONGO_DATABASE_NAME}
              - STATE_MANAGER_SECRET=${STATE_MANAGER_SECRET}
              - SECRETS_ENCRYPTION_KEY=${SECRETS_ENCRYPTION_KEY}
+             - TRIGGER_WORKERS=${TRIGGER_WORKERS:-1}
+             - TRIGGER_RETENTION_HOURS=${TRIGGER_RETENTION_HOURS:-720}
            deploy:
              replicas: 3
              update_config:
@@ -182,6 +188,8 @@ The state manager uri and key would be configured accordingly while setting up n
        data:
          MONGO_URI: "your-mongodb-connection-string"
          MONGO_DATABASE_NAME: "your-database-name"
+         TRIGGER_WORKERS: "1"
+         TRIGGER_RETENTION_HOURS: "720"
          LOG_LEVEL: "INFO"
        ```
 
@@ -215,6 +223,8 @@ The state manager uri and key would be configured accordingly while setting up n
 | `MONGO_DATABASE_NAME` | Database name | Yes | `exosphere` |
 | `STATE_MANAGER_SECRET` | Secret API key for authentication | Yes | - |
 | `SECRETS_ENCRYPTION_KEY` | Base64-encoded key for data encryption | Yes | - |
+| `TRIGGER_WORKERS` | Number of workers to run the trigger cron | No | `1` |
+| `TRIGGER_RETENTION_HOURS` | Number of hours to retain completed/failed triggers before cleanup | No | `720` (30 days) |
 | `LOG_LEVEL` | Logging level (DEBUG, INFO, WARNING, ERROR) | No | `INFO` |
 
 ## Monitoring and Health Checks
