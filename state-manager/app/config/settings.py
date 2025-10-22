@@ -23,7 +23,7 @@ class Settings(BaseModel):
             state_manager_secret=os.getenv("STATE_MANAGER_SECRET"), # type: ignore
             secrets_encryption_key=os.getenv("SECRETS_ENCRYPTION_KEY"), # type: ignore
             trigger_workers=int(os.getenv("TRIGGER_WORKERS", 1)), # type: ignore
-            trigger_retention_hours=int(os.getenv("TRIGGER_RETENTION_HOURS", 24)) # type: ignore
+            trigger_retention_hours=int(os.getenv("TRIGGER_RETENTION_HOURS", 720)) # type: ignore
         )
 
 
