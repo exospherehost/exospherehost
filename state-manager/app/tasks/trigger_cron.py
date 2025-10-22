@@ -45,12 +45,13 @@ async def mark_as_failed(trigger: DatabaseTriggers, retention_hours: int):
         }}
     )
 
-async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime):
+async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime, retention_hours: int):
     assert trigger.expression is not None
     iter = croniter.croniter(trigger.expression, trigger.trigger_time)
 
     while True:
         next_trigger_time = iter.get_next(datetime)
+        expires_at = next_trigger_time + timedelta(hours=retention_hours)
 
         try:
             await DatabaseTriggers(
@@ -59,7 +60,8 @@ async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime):
                 graph_name=trigger.graph_name,
                 namespace=trigger.namespace,
                 trigger_time=next_trigger_time,
-                trigger_status=TriggerStatusEnum.PENDING
+                trigger_status=TriggerStatusEnum.PENDING,
+                expires_at=expires_at
             ).insert()
         except DuplicateKeyError:
             logger.error(f"Duplicate trigger found for expression {trigger.expression}")
@@ -90,7 +92,7 @@ async def handle_trigger(cron_time: datetime, retention_hours: int):
             await mark_as_failed(trigger, retention_hours)
             logger.error(f"Error calling trigger graph: {e}")
         finally:
-            await create_next_triggers(trigger, cron_time)
+            await create_next_triggers(trigger, cron_time, retention_hours)
 
 async def trigger_cron():
     cron_time = datetime.now()
