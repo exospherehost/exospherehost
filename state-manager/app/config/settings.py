@@ -13,7 +13,7 @@ class Settings(BaseModel):
     state_manager_secret: str = Field(..., description="Secret key for API authentication")
     secrets_encryption_key: str = Field(..., description="Key for encrypting secrets")
     trigger_workers: int = Field(default=1, description="Number of workers to run the trigger cron")
-    trigger_retention_hours: int = Field(default=24, description="Number of hours to retain completed/failed triggers before cleanup")
+    trigger_retention_hours: int = Field(default=720, description="Number of hours to retain completed/failed triggers before cleanup")
     
     @classmethod
     def from_env(cls) -> "Settings":

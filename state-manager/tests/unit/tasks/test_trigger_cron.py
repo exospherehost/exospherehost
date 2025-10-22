@@ -167,7 +167,7 @@ async def test_create_next_triggers_creates_future_trigger():
         mock_instance.insert = AsyncMock()
         MockDatabaseTriggers.return_value = mock_instance
 
-        await create_next_triggers(trigger, cron_time)
+        await create_next_triggers(trigger, cron_time, 24)
 
         # Verify at least one trigger was created
         assert MockDatabaseTriggers.called
@@ -190,7 +190,7 @@ async def test_create_next_triggers_handles_duplicate_key_error():
         MockDatabaseTriggers.return_value = mock_instance
 
         # Should not raise exception
-        await create_next_triggers(trigger, cron_time)
+        await create_next_triggers(trigger, cron_time, 24)
 
 
 @pytest.mark.asyncio
@@ -209,7 +209,7 @@ async def test_create_next_triggers_raises_on_other_exceptions():
         MockDatabaseTriggers.return_value = mock_instance
 
         with pytest.raises(ValueError, match="test error"):
-            await create_next_triggers(trigger, cron_time)
+            await create_next_triggers(trigger, cron_time, 24)
 
 
 @pytest.mark.asyncio
