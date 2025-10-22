@@ -220,7 +220,7 @@ The state manager uri and key would be configured accordingly while setting up n
 | Variable | Description | Required | Default |
 |----------|-------------|----------|---------|
 | `MONGO_URI` | MongoDB connection string | Yes | - |
-| `MONGO_DATABASE_NAME` | Database name | Yes | `exosphere` |
+| `MONGO_DATABASE_NAME` | Database name | Yes | `exosphere-state-manager` |
 | `STATE_MANAGER_SECRET` | Secret API key for authentication | Yes | - |
 | `SECRETS_ENCRYPTION_KEY` | Base64-encoded key for data encryption | Yes | - |
 | `TRIGGER_WORKERS` | Number of workers to run the trigger cron | No | `1` |
