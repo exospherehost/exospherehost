@@ -368,7 +368,7 @@ wheels = [
 
 [[package]]
 name = "mkdocs-llmstxt"
-version = "0.3.2"
+version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -376,14 +376,14 @@ dependencies = [
     { name = "mdformat" },
     { name = "mdformat-tables" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/af/97/f96355dd47223527fff7a3dba220167a71ea5c31259ebde15314fb9b874a/mkdocs_llmstxt-0.3.2.tar.gz", hash = "sha256:dd63acb8257fca3244058fd820acd4700c1626dbe48ad3a1a2cc9c599f8e4b7f", size = 31497, upload-time = "2025-09-19T10:49:23.834Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bc/ed/5790e2b18349e17a61549114690ec6e48f5f673ccf8f4ca396412767ea2a/mkdocs_llmstxt-0.4.0.tar.gz", hash = "sha256:a7e4d20496bc8c55b6773b55c8d69cf552448a9ad38915b6e8c657ae3a46c8b8", size = 32048, upload-time = "2025-10-03T14:08:05.431Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1e/54/ed2319b98349352633b5f9797afe03c45c489422e87584a0283e2f2cc126/mkdocs_llmstxt-0.3.2-py3-none-any.whl", hash = "sha256:fb363205d6f1452411dc5069f62012cb6b29e1788f6db9cc17793bdca7eabea8", size = 11241, upload-time = "2025-09-19T10:49:21.99Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/70/8b87783592a81685c0422c076525acbb50d0ec71c16554a17ffa375c9d69/mkdocs_llmstxt-0.4.0-py3-none-any.whl", hash = "sha256:7244bf0ac917c9964030c93e9c3e26c02d2d14a0f66fc113416007125b6da0fc", size = 11463, upload-time = "2025-10-03T14:08:03.569Z" },
 ]
 
 [[package]]
 name = "mkdocs-material"
-version = "9.6.21"
+version = "9.6.22"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "babel" },
@@ -398,9 +398,9 @@ dependencies = [
     { name = "pymdown-extensions" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ff/d5/ab83ca9aa314954b0a9e8849780bdd01866a3cfcb15ffb7e3a61ca06ff0b/mkdocs_material-9.6.21.tar.gz", hash = "sha256:b01aa6d2731322438056f360f0e623d3faae981f8f2d8c68b1b973f4f2657870", size = 4043097, upload-time = "2025-09-30T19:11:27.517Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/5d/317e37b6c43325cb376a1d6439df9cc743b8ee41c84603c2faf7286afc82/mkdocs_material-9.6.22.tar.gz", hash = "sha256:87c158b0642e1ada6da0cbd798a3389b0bc5516b90e5ece4a0fb939f00bacd1c", size = 4044968, upload-time = "2025-10-15T09:21:15.409Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cf/4f/98681c2030375fe9b057dbfb9008b68f46c07dddf583f4df09bf8075e37f/mkdocs_material-9.6.21-py3-none-any.whl", hash = "sha256:aa6a5ab6fb4f6d381588ac51da8782a4d3757cb3d1b174f81a2ec126e1f22c92", size = 9203097, upload-time = "2025-09-30T19:11:24.063Z" },
+    { url = "https://files.pythonhosted.org/packages/cc/82/6fdb9a7a04fb222f4849ffec1006f891a0280825a20314d11f3ccdee14eb/mkdocs_material-9.6.22-py3-none-any.whl", hash = "sha256:14ac5f72d38898b2f98ac75a5531aaca9366eaa427b0f49fc2ecf04d99b7ad84", size = 9206252, upload-time = "2025-10-15T09:21:12.175Z" },
 ]
 
 [[package]]
