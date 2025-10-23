@@ -38,6 +38,9 @@ from .utils.check_database_health import check_database_health
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from .tasks.trigger_cron import trigger_cron
+
+# init tasks
+from .tasks.init_tasks import init_tasks
  
 # Define models list
 DOCUMENT_MODELS = [State, GraphTemplate, RegisteredNode, Store, Run, DatabaseTriggers]
@@ -58,6 +61,10 @@ async def lifespan(app: FastAPI):
     db = client[settings.mongo_database_name]
     await init_beanie(db, document_models=DOCUMENT_MODELS)
     logger.info("beanie dbs initialized")
+
+    # performing init tasks
+    await init_tasks()
+    logger.info("init tasks completed")
 
     # initialize secret
     if not settings.state_manager_secret:

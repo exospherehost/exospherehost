@@ -11,11 +11,15 @@ from app.models.db.registered_node import RegisteredNode
 from app.singletons.logs_manager import LogsManager
 from app.models.trigger_models import TriggerStatusEnum, TriggerTypeEnum
 from app.models.db.trigger import DatabaseTriggers
+from app.config.settings import get_settings
+from datetime import timedelta
 
 # Cache UTC timezone at module level to avoid repeated instantiation
 UTC = ZoneInfo("UTC")
 
 logger = LogsManager().get_logger()
+
+settings = get_settings()
 
 async def verify_node_exists(graph_template: GraphTemplate, registered_nodes: list[RegisteredNode]) -> list[str]:
     errors = []
@@ -129,7 +133,8 @@ async def create_crons(graph_template: GraphTemplate):
 
         # Convert back to UTC for storage (remove timezone info for storage)
         next_trigger_time = next_trigger_time_tz.astimezone(UTC).replace(tzinfo=None)
-
+        expires_at = next_trigger_time + timedelta(hours=settings.trigger_retention_hours)
+            
         new_db_triggers.append(
             DatabaseTriggers(
                 type=TriggerTypeEnum.CRON,
@@ -138,7 +143,8 @@ async def create_crons(graph_template: GraphTemplate):
                 graph_name=graph_template.name,
                 namespace=graph_template.namespace,
                 trigger_status=TriggerStatusEnum.PENDING,
-                trigger_time=next_trigger_time
+                trigger_time=next_trigger_time,
+                expires_at=expires_at
             )
         )
 
