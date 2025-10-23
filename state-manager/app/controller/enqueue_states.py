@@ -17,40 +17,6 @@ async def find_state(namespace_name: str, nodes: list[str]) -> State | None:
     current_time_ms = int(time.time() * 1000)
     settings = get_settings()
     
-    # Use pipeline to calculate timeout_at based on state-specific or global timeout
-    pipeline = [
-        {
-            "$match": {
-                "namespace_name": namespace_name,
-                "status": StateStatusEnum.CREATED,
-                "node_name": {"$in": nodes},
-                "enqueue_after": {"$lte": current_time_ms}
-            }
-        },
-        {
-            "$addFields": {
-                "status": StateStatusEnum.QUEUED,
-                "queued_at": current_time_ms,
-                "timeout_at": {
-                    "$add": [
-                        current_time_ms,
-                        {
-                            "$multiply": [
-                                {
-                                    "$ifNull": [
-                                        "$timeout_minutes", 
-                                        settings.node_timeout_minutes
-                                    ]
-                                },
-                                60000  # Convert minutes to milliseconds
-                            ]
-                        }
-                    ]
-                }
-            }
-        }
-    ]
-    
     data = await State.get_pymongo_collection().find_one_and_update(
         {
             "namespace_name": namespace_name,
