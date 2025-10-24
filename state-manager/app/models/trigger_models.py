@@ -37,7 +37,7 @@ class CronTrigger(BaseModel):
         return v
 
 # Union type for all trigger types - add new trigger types here
-TriggerValue = Annotated[Union[CronTrigger], Field(discriminator="type")]
+TriggerValue = Annotated[Union[CronTrigger], Field(discriminator="type")] # type: ignore
 
 class Trigger(BaseModel):
     """
