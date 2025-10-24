@@ -257,9 +257,10 @@ async def test_call_trigger_graph():
 @pytest.mark.asyncio
 async def test_create_next_triggers_creates_future_trigger():
     """Test create_next_triggers creates next trigger in the future"""
-    cron_time = datetime.now(timezone.utc)
+    cron_time = datetime.now(timezone.utc).replace(tzinfo=None)
     trigger = MagicMock(spec=DatabaseTriggers)
     trigger.expression = "0 9 * * *"
+    trigger.timezone = "UTC"
     trigger.trigger_time = cron_time - timedelta(days=1)
     trigger.graph_name = "test_graph"
     trigger.namespace = "test_ns"
@@ -357,9 +358,10 @@ async def test_create_next_triggers_creates_multiple_triggers():
 @pytest.mark.asyncio
 async def test_create_next_triggers_raises_on_other_exceptions():
     """Test create_next_triggers raises on non-DuplicateKeyError exceptions"""
-    cron_time = datetime.now(timezone.utc)
+    cron_time = datetime.now(timezone.utc).replace(tzinfo=None)
     trigger = MagicMock(spec=DatabaseTriggers)
     trigger.expression = "0 9 * * *"
+    trigger.timezone = "UTC"
     trigger.trigger_time = cron_time - timedelta(days=1)
     trigger.graph_name = "test_graph"
     trigger.namespace = "test_ns"
