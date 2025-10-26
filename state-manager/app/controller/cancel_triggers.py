@@ -1,12 +1,12 @@
 """
 Controller for cancelling pending triggers for a graph
 """
+import asyncio
 from app.models.cancel_trigger_models import CancelTriggerResponse
 from app.models.db.trigger import DatabaseTriggers
 from app.models.trigger_models import TriggerStatusEnum
 from app.singletons.logs_manager import LogsManager
 from app.config.settings import get_settings
-from fastapi import HTTPException, status
 from app.tasks.trigger_cron import mark_as_cancelled
 from beanie.operators import In
 
@@ -47,11 +47,11 @@ async def cancel_triggers(namespace_name: str, graph_name: str, x_exosphere_requ
         settings = get_settings()
         retention_hours = settings.trigger_retention_hours
         
-        # Cancel each trigger
-        cancelled_count = 0
-        for trigger in triggers:
-            await mark_as_cancelled(trigger, retention_hours)
-            cancelled_count += 1
+        # Cancel each trigger concurrently
+        cancelled_count = len(triggers)
+        cancellation_tasks = [mark_as_cancelled(trigger, retention_hours) for trigger in triggers]
+        if cancellation_tasks:
+            await asyncio.gather(*cancellation_tasks)
         
         logger.info(f"Cancelled {cancelled_count} triggers for graph {graph_name} in namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
         

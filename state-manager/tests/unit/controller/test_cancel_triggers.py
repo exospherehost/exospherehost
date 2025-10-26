@@ -8,7 +8,6 @@ from unittest.mock import patch, MagicMock, AsyncMock
 from app.controller.cancel_triggers import cancel_triggers
 from app.models.cancel_trigger_models import CancelTriggerResponse
 from app.models.db.trigger import DatabaseTriggers
-from app.models.trigger_models import TriggerStatusEnum
 
 
 @pytest.mark.asyncio
@@ -119,7 +118,7 @@ async def test_cancel_triggers_query_filters_correctly():
 
     with patch('app.controller.cancel_triggers.DatabaseTriggers') as mock_db, \
          patch('app.controller.cancel_triggers.get_settings') as mock_get_settings, \
-         patch('app.controller.cancel_triggers.mark_as_cancelled') as mock_mark_cancelled:
+         patch('app.controller.cancel_triggers.mark_as_cancelled'):
         
         mock_query = MagicMock()
         mock_query.to_list = AsyncMock(return_value=[])
