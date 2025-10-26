@@ -50,8 +50,7 @@ async def cancel_triggers(namespace_name: str, graph_name: str, x_exosphere_requ
         # Cancel each trigger concurrently
         cancelled_count = len(triggers)
         cancellation_tasks = [mark_as_cancelled(trigger, retention_hours) for trigger in triggers]
-        if cancellation_tasks:
-            await asyncio.gather(*cancellation_tasks)
+        await asyncio.gather(*cancellation_tasks)
         
         logger.info(f"Cancelled {cancelled_count} triggers for graph {graph_name} in namespace {namespace_name}", x_exosphere_request_id=x_exosphere_request_id)
         
