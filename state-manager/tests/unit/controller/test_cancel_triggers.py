@@ -210,8 +210,8 @@ async def test_cancel_triggers_handles_mark_error():
 
 
 @pytest.mark.asyncio
-async def test_cancel_triggers_multiple_triggers_correct_order():
-    """Test that multiple triggers are cancelled in sequence"""
+async def test_cancel_triggers_multiple_triggers_batch():
+    """Test that multiple triggers are cancelled in batch"""
     namespace_name = "test_namespace"
     graph_name = "test_graph"
     x_exosphere_request_id = "test_request_id"
@@ -242,7 +242,6 @@ async def test_cancel_triggers_multiple_triggers_correct_order():
 
         # Verify all triggers were processed
         assert mock_mark_cancelled.call_count == 3
-
 
 @pytest.mark.asyncio
 async def test_cancel_triggers_calls_get_settings():
