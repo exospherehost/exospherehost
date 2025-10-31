@@ -375,14 +375,14 @@ wheels = [
 
 [[package]]
 name = "json-schema-to-pydantic"
-version = "0.4.4"
+version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c2/d4/86db82d21fe3fd6f15e39337b9d27afdb037f4595de3354a2328aaccc699/json_schema_to_pydantic-0.4.4.tar.gz", hash = "sha256:fc6bc826762b86c71d6ed394dd450195a4637e606da8c22c2049db2f7372c093", size = 43452, upload-time = "2025-10-21T07:08:02.177Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/56/39/e7d190da630be2721841e8846a151a6baf2ad3415e105d3e09e711382675/json_schema_to_pydantic-0.4.6.tar.gz", hash = "sha256:5cbca5b02cb52435f5698981dc050acaf684a757434ec4393b81a402a4a9a08a", size = 47559, upload-time = "2025-10-30T21:20:06.021Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bf/76/1182227605cbd544becec6c1eb0842e2cb50f244cef6684a554cac127663/json_schema_to_pydantic-0.4.4-py3-none-any.whl", hash = "sha256:78ac54944eed67718531e6b8cfe0915def660c9f42b3b242dbc181d28ac2c56a", size = 13835, upload-time = "2025-10-21T07:08:00.81Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/bf/814ae8ccae6f17b82c404fbcbb959b57cd5f1175ae6786efa5735c54607f/json_schema_to_pydantic-0.4.6-py3-none-any.whl", hash = "sha256:e27faa9b886d3a55a9dfb32f9273efadd15d7400ccea26c82eefe1f3c5c4c944", size = 14075, upload-time = "2025-10-30T21:20:04.743Z" },
 ]
 
 [[package]]
