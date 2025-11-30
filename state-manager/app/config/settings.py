@@ -14,6 +14,7 @@ class Settings(BaseModel):
     secrets_encryption_key: str = Field(..., description="Key for encrypting secrets")
     trigger_workers: int = Field(default=1, description="Number of workers to run the trigger cron")
     trigger_retention_hours: int = Field(default=720, description="Number of hours to retain completed/failed triggers before cleanup")
+    ttl_days: int = Field(default=30, description="TTL in days for TTL indexes")
     
     @classmethod
     def from_env(cls) -> "Settings":
@@ -23,7 +24,8 @@ class Settings(BaseModel):
             state_manager_secret=os.getenv("STATE_MANAGER_SECRET"), # type: ignore
             secrets_encryption_key=os.getenv("SECRETS_ENCRYPTION_KEY"), # type: ignore
             trigger_workers=int(os.getenv("TRIGGER_WORKERS", 1)), # type: ignore
-            trigger_retention_hours=int(os.getenv("TRIGGER_RETENTION_HOURS", 720)) # type: ignore
+            trigger_retention_hours=int(os.getenv("TRIGGER_RETENTION_HOURS", 720)), # type: ignore
+            ttl_days=int(os.getenv("TTL_DAYS", 30)) # type: ignore
         )
 
 

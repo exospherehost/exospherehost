@@ -235,9 +235,30 @@ Create the runtime and register your nodes:
 
 Get Exosphere running locally in under 2 minutes:
 
+### 1. Set up environment variables
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Generate secure secrets (REQUIRED!)
+# For STATE_MANAGER_SECRET and EXOSPHERE_API_KEY:
+openssl rand -base64 32
+
+# For SECRETS_ENCRYPTION_KEY (must be a valid Fernet key):
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+
+# Edit .env and add your generated secrets
+nano .env
+```
+
+> **🔒 Security Note**: Never commit `.env` file or use default secrets in production! See [SECURITY_SETUP.md](SECURITY_SETUP.md) for detailed security configuration.
+
+### 2. Start the services
+
 ```bash
 # Option 1: With cloud MongoDB (recommended)
-echo "MONGO_URI=your-mongodb-connection-string" > .env
+# Ensure MONGO_URI is set in your .env file
 curl -O https://raw.githubusercontent.com/exospherehost/exospherehost/main/docker-compose/docker-compose.yml
 docker compose up -d
 
@@ -248,14 +269,15 @@ docker compose -f docker-compose-with-mongodb.yml up -d
 
 **Environment Configuration:**
 - Docker Compose automatically loads `.env` files from the working directory
-- Create your `.env` file in the same directory as your docker-compose file
+- All secrets must be configured before starting services
+- Use `.env.example` as a template - never commit `.env` to version control
 
 Access your services:
 
 - **Dashboard**: `http://localhost:3000`
 - **API**: `http://localhost:8000`
 
-> **📝 Note**: This configuration is for **development and testing only**. For production deployments, environment variable customization, and advanced configuration options, please read the complete **[Docker Compose Setup Guide](https://docs.exosphere.host/docker-compose-setup)**.
+> **📝 Note**: This configuration requires proper environment setup. For production deployments, environment variable customization, and advanced configuration options, please read the complete **[Docker Compose Setup Guide](https://docs.exosphere.host/docker-compose-setup)** and **[Security Setup Guide](SECURITY_SETUP.md)**.
 
 ## 📚 Documentation & Resources
 
