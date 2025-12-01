@@ -368,7 +368,7 @@ wheels = [
 
 [[package]]
 name = "mkdocs-llmstxt"
-version = "0.4.0"
+version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -376,9 +376,9 @@ dependencies = [
     { name = "mdformat" },
     { name = "mdformat-tables" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bc/ed/5790e2b18349e17a61549114690ec6e48f5f673ccf8f4ca396412767ea2a/mkdocs_llmstxt-0.4.0.tar.gz", hash = "sha256:a7e4d20496bc8c55b6773b55c8d69cf552448a9ad38915b6e8c657ae3a46c8b8", size = 32048, upload-time = "2025-10-03T14:08:05.431Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7f/f5/4c31cdffa7c09bf48d8c7a50d8342dc100abac98ac4150826bc11afc0c9f/mkdocs_llmstxt-0.5.0.tar.gz", hash = "sha256:b2fa9e6d68df41d7467e948a4745725b6c99434a36b36204857dbd7bb3dfe041", size = 33909, upload-time = "2025-11-20T14:02:24.861Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5d/70/8b87783592a81685c0422c076525acbb50d0ec71c16554a17ffa375c9d69/mkdocs_llmstxt-0.4.0-py3-none-any.whl", hash = "sha256:7244bf0ac917c9964030c93e9c3e26c02d2d14a0f66fc113416007125b6da0fc", size = 11463, upload-time = "2025-10-03T14:08:03.569Z" },
+    { url = "https://files.pythonhosted.org/packages/ad/2b/82928cc9e8d9269cd79e7ebf015efdc4945e6c646e86ec1d4dba1707f215/mkdocs_llmstxt-0.5.0-py3-none-any.whl", hash = "sha256:753c699913d2d619a9072604b26b6dc9f5fb6d257d9b107857f80c8a0b787533", size = 12040, upload-time = "2025-11-20T14:02:23.483Z" },
 ]
 
 [[package]]
