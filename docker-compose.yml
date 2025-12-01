@@ -14,6 +14,8 @@ services:
       - MONGO_DATABASE_NAME=${MONGO_DATABASE_NAME:-exosphere}
       - SECRETS_ENCRYPTION_KEY=${SECRETS_ENCRYPTION_KEY:?SECRETS_ENCRYPTION_KEY must be set}
       - TTL_DAYS=${TTL_DAYS:-30}
+      - RUN_TTL_DAYS=${RUN_TTL_DAYS:-${TTL_DAYS:-30}}
+
     ports:
       - "8000:8000"
     networks:
