@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pymongo import AsyncMongoClient
-from pymongo.database import Database
+from pymongo.asynchronous.database import AsyncDatabase
 from typing import List, Optional
 
 # injecting singletons
@@ -54,11 +54,11 @@ logger = LogsManager().get_logger()
 
 
 async def ensure_ttl_indexes(
-    db: Database,
+    db: AsyncDatabase,
     ttl_days: int = 30,
     collections: Optional[List[str]] = None,
     timestamp_field: str = "created_at"
-):
+) -> None:
     """
     Ensure TTL indexes exist on the specified collections.
     
@@ -89,13 +89,15 @@ async def ensure_ttl_indexes(
                 # Index exists, check if expireAfterSeconds differs
                 existing_ttl = existing_indexes[index_name].get("expireAfterSeconds")
                 
-                if existing_ttl is not None and existing_ttl != ttl_seconds:
+                if existing_ttl is None or existing_ttl != ttl_seconds:
                     # TTL value differs, update using collMod
                     logger.warning(
-                        "TTL index on collection '%s' exists with different expireAfterSeconds (current=%d, desired=%d). Updating...",
-                        coll_name,
-                        existing_ttl,
-                        ttl_seconds
+                        "ttl_index_exists_mismatch",
+                        collection=coll_name,
+                        index_name=index_name,
+                        timestamp_field=timestamp_field,
+                        existing_ttl=existing_ttl if existing_ttl is not None else None,
+                        desired_ttl=ttl_seconds,
                     )
                     
                     try:
@@ -103,28 +105,35 @@ async def ensure_ttl_indexes(
                         await db.command({
                             "collMod": coll_name,
                             "index": {
-                                "name": index_name,
+                                "keyPattern": { timestamp_field: 1 },
                                 "expireAfterSeconds": ttl_seconds
                             }
                         })
                         
                         logger.info(
-                            "Successfully updated TTL index on collection '%s' from %d to %d seconds",
-                            coll_name,
-                            existing_ttl,
-                            ttl_seconds
+                            "ttl_index_updated",
+                            collection=coll_name,
+                            index_name=index_name,
+                            timestamp_field=timestamp_field,
+                            previous_ttl=existing_ttl if existing_ttl is not None else None,
+                            new_ttl=ttl_seconds,
                         )
                     except Exception as mod_error:
                         logger.error(
-                            "Failed to update TTL index on collection '%s': %s. Will attempt to recreate.",
-                            coll_name,
-                            mod_error,
-                            exc_info=True
+                            "ttl_index_update_failed",
+                            collection=coll_name,
+                            index_name=index_name,
+                            error=str(mod_error),
+                            exc_info=True,
                         )
                         
                         # If collMod fails, drop and recreate
                         await coll.drop_index(index_name)
-                        logger.info("Dropped existing TTL index '%s' on collection '%s'", index_name, coll_name)
+                        logger.info(
+                            "ttl_index_dropped",
+                            collection=coll_name,
+                            index_name=index_name,
+                        )
                         
                         await coll.create_index(
                             [(timestamp_field, 1)],
@@ -133,16 +142,22 @@ async def ensure_ttl_indexes(
                         )
                         
                         logger.info(
-                            "Recreated TTL index on collection '%s' with expireAfterSeconds=%d",
-                            coll_name,
-                            ttl_seconds
+                            "ttl_index_recreated",
+                            collection=coll_name,
+                            index_name=index_name,
+                            timestamp_field=timestamp_field,
+                            ttl_seconds=ttl_seconds,
+                            ttl_days=ttl_days,
                         )
                 else:
                     # Index exists with correct TTL value
                     logger.info(
-                        "TTL index on collection '%s' already exists with correct expireAfterSeconds=%d",
-                        coll_name,
-                        ttl_seconds
+                        "ttl_index_exists_correct",
+                        collection=coll_name,
+                        index_name=index_name,
+                        timestamp_field=timestamp_field,
+                        ttl_seconds=ttl_seconds,
+                        ttl_days=ttl_days,
                     )
             else:
                 # Index doesn't exist, create it
@@ -153,30 +168,32 @@ async def ensure_ttl_indexes(
                 )
                 
                 logger.info(
-                    "Successfully created TTL index on collection '%s' with field '%s' (expireAfterSeconds=%d, ttl_days=%d)",
-                    coll_name,
-                    timestamp_field,
-                    ttl_seconds,
-                    ttl_days
+                    "ttl_index_created",
+                    collection=coll_name,
+                    index_name=index_name,
+                    timestamp_field=timestamp_field,
+                    ttl_seconds=ttl_seconds,
+                    ttl_days=ttl_days,
                 )
                 
         except Exception as e:
             # Log error but don't crash the server
             logger.error(
-                "Failed to ensure TTL index on collection '%s' with field '%s': %s",
-                coll_name,
-                timestamp_field,
-                e,
-                exc_info=True
+                "ttl_index_ensure_failed",
+                collection=coll_name,
+                index_name=index_name,
+                timestamp_field=timestamp_field,
+                error=str(e),
+                exc_info=True,
             )
 
-    logger.info("TTL index setup completed for collections: %s", collections)
+    logger.info("ttl_index_setup_completed", collections=collections, ttl_days=ttl_days, timestamp_field=timestamp_field)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # beginning of the server
-    logger.info("server starting")
+    logger.info("server_starting")
 
     # Get settings
     settings = get_settings()
@@ -187,29 +204,30 @@ async def lifespan(app: FastAPI):
 
     # Initialize beanie models (this registers document models / collections)
     await init_beanie(db, document_models=DOCUMENT_MODELS)
-    logger.info("beanie dbs initialized")
+    logger.info("beanie_initialized")
 
     # --- ENSURE TTL INDEXES (conservative, before init_tasks) ---
     # Start with 'runs' only to be safe. Add other collections once you confirm.
     # Uses 'created_at' field by default (can be customized via timestamp_field parameter)
-    logger.info("Starting TTL index creation...")
+    logger.info("ttl_index_creation_start")
     try:
-        await ensure_ttl_indexes(db, ttl_days=settings.ttl_days, collections=["runs"])
-        logger.info("TTL index creation completed successfully")
+        # Default TTL is 30 days; override via env var RUN_TTL_DAYS
+        await ensure_ttl_indexes(db, ttl_days=settings.run_ttl_days, collections=["runs"])
+        logger.info("ttl_index_creation_completed", collections=["runs"], ttl_days=settings.run_ttl_days)
     except Exception as e:
         # By default we log and continue. If you want fail-fast, replace with `raise`.
-        logger.exception("Error while ensuring TTL indexes: %s", e)
+        logger.error("ttl_index_creation_exception", error=str(e), exc_info=True)
 
     # performing init tasks
-    logger.info("Starting init tasks...")
+    logger.info("init_tasks_start")
     await init_tasks()
-    logger.info("init tasks completed")
+    logger.info("init_tasks_completed")
 
     # initialize secret
     if not settings.state_manager_secret:
         # this is critical — fail immediately
         raise ValueError("STATE_MANAGER_SECRET is not set")
-    logger.info("secret initialized")
+    logger.info("secret_initialized")
 
     # perform database health check
     await check_database_health(DOCUMENT_MODELS)
@@ -232,7 +250,7 @@ async def lifespan(app: FastAPI):
     # end of the server
     await client.close()
     scheduler.shutdown()
-    logger.info("server stopped")
+    logger.info("server_stopped")
 
 
 app = FastAPI(
@@ -250,13 +268,13 @@ app = FastAPI(
     },
 )
 
-# Add middlewares in inner-to-outer order (last added runs first on request):
-# 1) UnhandledExceptions (inner)
-app.add_middleware(UnhandledExceptionsMiddleware)
+# Add middlewares in outer-to-inner order (last added is outermost, runs first on request):
+# 1) CORS (innermost, closest to route handler)
+app.add_middleware(CORSMiddleware, **get_cors_config())
 # 2) Request ID (middle)
 app.add_middleware(RequestIdMiddleware)
-# 3) CORS (outermost)
-app.add_middleware(CORSMiddleware, **get_cors_config())
+# 3) UnhandledExceptions (outermost, global catch-all for exceptions from any middleware or route)
+app.add_middleware(UnhandledExceptionsMiddleware)
 
 
 @app.get("/health")

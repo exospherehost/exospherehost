@@ -1,3 +1,5 @@
+## Security: Configure via .env (local only). Never commit real secrets.
+## Use .env.example for placeholder values and copy to .env for local runs.
 services:
   exosphere-state-manager:
     build:

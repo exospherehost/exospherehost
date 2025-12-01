@@ -5,12 +5,11 @@ yarn-debug.log
 yarn-error.log
 package-lock.json
 
-# env
+# env (keep .env.example tracked as a safe template)
 .env
 .env.local
 .env.*.local
 .env.backup
-.env.example
 
 # python
 __pycache__/
