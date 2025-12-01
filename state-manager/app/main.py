@@ -268,7 +268,7 @@ app = FastAPI(
     },
 )
 
-# Add middlewares in outer-to-inner order (last added is outermost, runs first on request):
+# Add middlewares in inner-to-outer order (first added is innermost; last added runs first on request):
 # 1) CORS (innermost, closest to route handler)
 app.add_middleware(CORSMiddleware, **get_cors_config())
 # 2) Request ID (middle)
