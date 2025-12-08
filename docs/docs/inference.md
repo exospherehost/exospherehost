@@ -123,7 +123,7 @@ Example response:
 
 > **Note**: Auto retry policy will be triggered for transient failures without any additional cost.
 
-Exosphere inference APIs also supports the standard batch inference API format used by OpenAI, Gemini, and other providers. You can upload a JSONL file containing multiple inference requests, similar to OpenAI's batch API format and pass the file to `/infer/` API.
+Exosphere inference APIs also support the standard batch inference API format used by OpenAI, Gemini, and other providers. You can upload a JSONL file containing multiple inference requests, similar to OpenAI's batch API format and pass the file to the `/infer/` API.
 
 ### `PUT /v0/files/`
 This API is used to upload a file to the server. Example request:
