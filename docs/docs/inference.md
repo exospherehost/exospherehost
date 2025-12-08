@@ -46,7 +46,7 @@ Example response:
                 "input_tokens": 10,
                 "price_factor": 0.5
             },
-            "item_id": "88d68bc3-643c-4251-a003-6c2c14f76649"
+            "object_id": "88d68bc3-643c-4251-a003-6c2c14f76649"
         }
     ]
 }
