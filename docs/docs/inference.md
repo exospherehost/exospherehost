@@ -161,7 +161,7 @@ curl -X POST https://models.exosphere.host/v0/infer/ \
   ]'
 ```
 
-You can further request outputs as a file by pass the header `Output-Format: jsonl` to the API. Example request:
+You can further request outputs as a file by passing the header `Output-Format: jsonl` to the API. Example request:
 ```bash
 curl -X POST https://models.exosphere.host/v0/infer/ \
   -H "Content-Type: application/json" \
@@ -184,7 +184,7 @@ Example response:
 }
 ```
 
-You can download the output file from the `output_url` and the content should like:
+You can download the output file from the `output_url` and the content should look like:
 ```jsonl
 {"key": "object-1", "output": {"type": "text", "text": "Photosynthesis is the process by which plants, algae, and some bacteria convert light energy into chemical energy."}}
 {"key": "object-2", "output": {"type": "text", "text": "The main ingredients in a Margherita pizza are tomato sauce, mozzarella cheese, and basil."}}
