@@ -122,3 +122,70 @@ Example response:
 - The object_id is a unique identifier for the object. It is used to track the status of the object. In case of any failure individual object status will be available to track the failure. 
 
 > **Note**: Auto retry policy will be triggered for transient failures without any additional cost.
+
+Exosphere inference APIs also support the standard batch inference API format used by OpenAI, Gemini, and other providers. You can upload a JSONL file containing multiple inference requests, similar to OpenAI's batch API format and pass the file to the `/infer/` API.
+
+### `PUT /v0/files/`
+This API is used to upload a file to the server. Example request:
+```bash
+curl -X PUT https://models.exosphere.host/v0/files/mydata.jsonl \
+  -H "Authorization: Bearer <your-api-key>" \
+  -F file="@mydata.jsonl"
+```
+Example response:
+```json
+{
+    "file_id": "ae0b977c-76a0-4d71-81a5-05a6d8844852",
+    "file_name": "mydata.jsonl",
+    "bytes": 1000,
+    "mime_type": "application/jsonl"
+}
+```
+
+The expected file content should look like:
+```jsonl
+{"key": "object-1", "request": {"contents": [{"parts": [{"text": "Describe the process of photosynthesis."}]}], "generation_config": {"temperature": 0.7}, "model": "deepseek:r1-32b"}}
+{"key": "object-2", "request": {"contents": [{"parts": [{"text": "What are the main ingredients in a Margherita pizza?"}]}], "generation_config": {"temperature": 0.7}, "model": "openai:gpt-4o"}}
+```
+
+Now you can pass the file_id to the `/infer/` API to run inference on the file. Example request:
+```bash
+curl -X POST https://models.exosphere.host/v0/infer/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-api-key>" \
+  -d '[
+    {
+        "file_id": "ae0b977c-76a0-4d71-81a5-05a6d8844852",
+        "sla": 60
+    }
+  ]'
+```
+
+You can further request outputs as a file by passing the header `Output-Format: jsonl` to the API. Example request:
+```bash
+curl -X POST https://models.exosphere.host/v0/infer/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-api-key>" \
+  -H "Output-Format: jsonl" \
+  -d '[
+    {
+        "file_id": "ae0b977c-76a0-4d71-81a5-05a6d8844852",
+        "sla": 60
+    }
+  ]'
+```
+Example response:
+```json
+{
+    "status": "completed",
+    "task_id": "2f92fc35-07d6-4737-aefa-8ddffd32f3fc",
+    "total_items": 2,
+    "output_url": "https://files.exosphere.host/v0/files/ae0b977c-76a0-4d71-81a5-05a6d8844852.jsonl"
+}
+```
+
+You can download the output file from the `output_url` and the content should look like:
+```jsonl
+{"key": "object-1", "output": {"type": "text", "text": "Photosynthesis is the process by which plants, algae, and some bacteria convert light energy into chemical energy."}}
+{"key": "object-2", "output": {"type": "text", "text": "The main ingredients in a Margherita pizza are tomato sauce, mozzarella cheese, and basil."}}
+```
