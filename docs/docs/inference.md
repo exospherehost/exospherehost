@@ -114,7 +114,7 @@ Example response:
 }
 ```
 
-- The output is only available when the item is completed. If no SLA is provided, the item will be completed immediately and the output will be avilable immediately. 
+- The output is only available when the item is completed. If no SLA is provided, the item will be completed immediately and the output will be available immediately. 
 
 - The price factor is a multiplier for the base price of the model. It is used to calculate the cost of the item.
 
