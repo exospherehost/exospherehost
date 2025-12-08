@@ -84,8 +84,8 @@ Example response:
             "status": "submitted",
             "usage": {
                 "input_tokens": 10,
-                "price_factor": 0.5,
-            }        
+                "price_factor": 0.5
+            }
         }
     ]
 }
