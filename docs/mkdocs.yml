@@ -32,7 +32,7 @@ theme:
     # - navigation.instant.progress
     - navigation.prune
     # - navigation.sections
-    # - navigation.tabs
+    - navigation.tabs
     # - navigation.tabs.sticky
     # - navigation.top
     # - navigation.tracking
@@ -141,27 +141,29 @@ extra_css:
   - stylesheets/extra.css
 
 nav:
-  - Introduction: index.md
-  - Getting Started: getting-started.md
-  - Exosphere Concepts:
-    - Overview: exosphere/concepts.md
-    - Architecture: exosphere/architecture.md
-    - Fanout: exosphere/fanout.md
-    - Unite: exosphere/unite.md
-    - Signals: exosphere/signals.md
-    - Retry Policy: exosphere/retry-policy.md
-    - Store: exosphere/store.md
-    - Triggers: exosphere/triggers.md  
-  - Local Setup:
-      - Overview: exosphere/local-setup.md
-      - Docker Compose: docker-compose-setup.md
-      - State Manager Setup: exosphere/state-manager-setup.md
-      - Dashboard: exosphere/dashboard.md
-  - Register Node: exosphere/register-node.md
-  - Create Runtime: exosphere/create-runtime.md
-  - Create Graph:
-      - Overview: exosphere/create-graph.md
-      - Components: exosphere/graph-components.md
-      - Validation: exosphere/graph-validation.md
-      - Python SDK: exosphere/python-sdk-graph.md
-  - Trigger Graph: exosphere/trigger-graph.md 
+  - Orchestrator: 
+    - Introduction: index.md
+    - Getting Started: getting-started.md
+    - Exosphere Concepts:
+      - Overview: exosphere/concepts.md
+      - Architecture: exosphere/architecture.md
+      - Fanout: exosphere/fanout.md
+      - Unite: exosphere/unite.md
+      - Signals: exosphere/signals.md
+      - Retry Policy: exosphere/retry-policy.md
+      - Store: exosphere/store.md
+      - Triggers: exosphere/triggers.md  
+    - Local Setup:
+        - Overview: exosphere/local-setup.md
+        - Docker Compose: docker-compose-setup.md
+        - State Manager Setup: exosphere/state-manager-setup.md
+        - Dashboard: exosphere/dashboard.md
+    - Register Node: exosphere/register-node.md
+    - Create Runtime: exosphere/create-runtime.md
+    - Create Graph:
+        - Overview: exosphere/create-graph.md
+        - Components: exosphere/graph-components.md
+        - Validation: exosphere/graph-validation.md
+        - Python SDK: exosphere/python-sdk-graph.md
+    - Trigger Graph: exosphere/trigger-graph.md 
+  - Inference APIs: inference.md
