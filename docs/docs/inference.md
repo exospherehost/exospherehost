@@ -142,7 +142,7 @@ Example response:
 }
 ```
 
-expected file content should like:
+The expected file content should look like:
 ```jsonl
 {"key": "object-1", "request": {"contents": [{"parts": [{"text": "Describe the process of photosynthesis."}]}], "generation_config": {"temperature": 0.7}, "model": "deepseek:r1-32b"}}
 {"key": "object-2", "request": {"contents": [{"parts": [{"text": "What are the main ingredients in a Margherita pizza?"}]}], "generation_config": {"temperature": 0.7}, "model": "openai:gpt-4o"}}
