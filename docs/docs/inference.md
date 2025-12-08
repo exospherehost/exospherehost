@@ -8,7 +8,7 @@ You can use the following inference APIs to run inference on your data:
 
 ### `POST /v0/infer/`
 This is the main API for running inference. This will send your data to the inference engine and start the inference process. Example request:
-```json
+```bash
 curl -X POST https://models.exosphere.host/v0/infer/ \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-api-key>" \
