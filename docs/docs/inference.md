@@ -104,7 +104,8 @@ Example response:
     "status": "completed",
     "usage": {
         "input_tokens": 10,
-        "price_factor": 0.3
+        "price_factor": 0.3,
+        "output_tokens": 11
     },
     "error": null,
     "output": {
