@@ -17,5 +17,7 @@
       "state-manager"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "cursorpyright.analysis.autoImportCompletions": true,
+    "cursorpyright.analysis.typeCheckingMode": "basic"
 }
