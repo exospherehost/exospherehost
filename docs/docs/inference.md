@@ -1,7 +1,7 @@
 # Inference APIs
 
 ## Overview
-Exosphere provides a single inference API that adapts to your volume, SLA, and cost constraints. Designed for reliable volume inference, it enables you to run inference on any number of tokens with automatic sharding, batching, rate limiting and cost management. All apis are flexible SLA such that you can choose your SLA window and data volume to optimize cost and performance. Cost in percentage (calculated based on the combination of SLA and data volume) of base price could be upto 70% less.
+Exosphere provides a single inference API that adapts to your volume, SLA, and cost constraints. Designed for reliable volume inference, it enables you to run inference on any number of tokens with automatic sharding, batching, rate limiting and cost management. All APIs are flexible SLA such that you can choose your SLA window and data volume to optimize cost and performance. Cost in percentage (calculated based on the combination of SLA and data volume) of base price could be up to 70% less.
 
 ## Infer APIs
 You can use the following inference APIs to run inference on your data:
