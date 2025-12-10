@@ -10,7 +10,13 @@ from app.singletons.logs_manager import LogsManager
 logger = LogsManager().get_logger()
 
 
-async def delete_old_triggers():
+async def mark_old_triggers_cancelled() -> None:
+    """
+    Migrate legacy TRIGGERED/FAILED triggers that predate TTL.
+
+    These documents have expires_at = None, so we mark them as CANCELLED and
+    set expires_at so the TTL index can eventually clean them up.
+    """
     settings = get_settings()
     retention_hours = settings.trigger_retention_hours
     expires_at = datetime.now(timezone.utc) + timedelta(hours=retention_hours)
@@ -18,30 +24,31 @@ async def delete_old_triggers():
     # Use the same filter used before by delete_many()
     filter_query = {
         "trigger_status": {
-            "$in": [TriggerStatusEnum.TRIGGERED, TriggerStatusEnum.FAILED]
+            "$in": [
+                TriggerStatusEnum.TRIGGERED.value,
+                TriggerStatusEnum.FAILED.value,
+            ]
         },
-        "expires_at": None
+        "expires_at": None,
     }
 
     logger.info(
-        f"Init task marking triggers CANCELLED for filter={filter_query}, "
-        f"expires_at={expires_at.isoformat()}"
+        "Init task marking legacy TRIGGERED/FAILED triggers as CANCELLED "
+        f"for filter={filter_query}, expires_at={expires_at.isoformat()}"
     )
 
     await DatabaseTriggers.get_pymongo_collection().update_many(
         filter_query,
         {
             "$set": {
-                "trigger_status": TriggerStatusEnum.CANCELLED,
+                "trigger_status": TriggerStatusEnum.CANCELLED.value,
                 "expires_at": expires_at,
             }
         },
     )
 
 
-async def init_tasks():
+async def init_tasks() -> None:
     await asyncio.gather(
-        *[
-            delete_old_triggers(),
-        ]
+        mark_old_triggers_cancelled(),
     )

@@ -12,7 +12,6 @@ from app.config.settings import get_settings
 from fastapi import BackgroundTasks, HTTPException
 
 logger = LogsManager().get_logger()
-settings = get_settings()
 
 
 async def upsert_graph_template(
@@ -23,6 +22,8 @@ async def upsert_graph_template(
     background_tasks: BackgroundTasks,
 ) -> UpsertGraphTemplateResponse:
     try:
+        # Load settings at request time so runtime config changes are picked up
+        settings = get_settings()
         old_triggers = []
 
         graph_template = await GraphTemplate.find_one(
@@ -79,7 +80,7 @@ async def upsert_graph_template(
                 status_code=400,
                 detail=f"Error validating graph template: {str(e)}",
             )
-    
+
         # Previously:
         # await DatabaseTriggers.find(...).delete_many()
         #
@@ -100,6 +101,7 @@ async def upsert_graph_template(
                 await DatabaseTriggers.get_pymongo_collection().update_many(
                     {
                         "graph_name": graph_name,
+                        "namespace": namespace_name,  # ensure we only affect this namespace
                         "trigger_status": TriggerStatusEnum.PENDING.value,
                         "type": TriggerTypeEnum.CRON.value,
                         "expression": {"$in": cron_expressions},
@@ -135,4 +137,5 @@ async def upsert_graph_template(
             error=e,
             x_exosphere_request_id=x_exosphere_request_id,
         )
-        raise e
+        # re-raise with original traceback preserved
+        raise
