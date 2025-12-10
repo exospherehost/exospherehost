@@ -45,6 +45,22 @@ async def mark_as_failed(trigger: DatabaseTriggers, retention_hours: int):
         }}
     )
 
+async def mark_as_cancelled(trigger: DatabaseTriggers, retention_hours: int):
+    """
+    Mark a trigger as CANCELLED and set expires_at so MongoDB TTL will remove it
+    after `retention_hours`.
+    """
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=retention_hours)
+
+    await DatabaseTriggers.get_pymongo_collection().update_one(
+        {"_id": trigger.id},
+        {"$set": {
+            "trigger_status": TriggerStatusEnum.CANCELLED,
+            "expires_at": expires_at
+        }}
+    )
+
+
 async def create_next_triggers(trigger: DatabaseTriggers, cron_time: datetime, retention_hours: int):
     assert trigger.expression is not None
     iter = croniter.croniter(trigger.expression, trigger.trigger_time)
