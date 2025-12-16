@@ -1,6 +1,4 @@
 from beanie import PydanticObjectId
-from datetime import datetime
-
 from fastapi import HTTPException, status, BackgroundTasks
 
 from app.models.executed_models import ExecutedRequestModel, ExecutedResponseModel
