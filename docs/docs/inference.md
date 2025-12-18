@@ -9,7 +9,7 @@ You can use the following inference APIs to run inference on your data:
 ### `POST /v0/infer/`
 This is the main API for running inference. This will send your data to the inference engine and start the inference process. Example request:
 ```bash
-curl -X POST https://models.exosphere.host/v0/infer/ \
+curl -X POST https://wormhole.exosphere.host/v0/infer/ \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-api-key>" \
   -d '[
@@ -56,7 +56,7 @@ You can track the complete task status using the `GET /v0/infer/task/{task_id}` 
 ### `GET /v0/infer/task/{task_id}/`
 This API is used to track the complete task status. Example request:
 ```bash
-curl -X GET https://models.exosphere.host/v0/infer/task/2f92fc35-07d6-4737-aefa-8ddffd32f3fc \
+curl -X GET https://wormhole.exosphere.host/v0/infer/task/2f92fc35-07d6-4737-aefa-8ddffd32f3fc \
   -H "Authorization: Bearer <your-api-key>"
 ```
 Example response:
@@ -94,7 +94,7 @@ Example response:
 ### `GET /v0/infer/object/{object_id}/`
 This API is used to track the status of an individual object. Example request:
 ```bash
-curl -X GET https://models.exosphere.host/v0/infer/object/63bb0b28-edfe-4f5b-9e05-9232f63d76ec \
+curl -X GET https://wormhole.exosphere.host/v0/infer/object/63bb0b28-edfe-4f5b-9e05-9232f63d76ec \
   -H "Authorization: Bearer <your-api-key>"
 ```
 Example response:
@@ -128,7 +128,7 @@ Exosphere inference APIs also support the standard batch inference API format us
 ### `PUT /v0/files/`
 This API is used to upload a file to the server. Example request:
 ```bash
-curl -X PUT https://models.exosphere.host/v0/files/mydata.jsonl \
+curl -X PUT https://wormhole.exosphere.host/v0/files/mydata.jsonl \
   -H "Authorization: Bearer <your-api-key>" \
   -F file="@mydata.jsonl"
 ```
@@ -150,7 +150,7 @@ The expected file content should look like:
 
 Now you can pass the file_id to the `/infer/` API to run inference on the file. Example request:
 ```bash
-curl -X POST https://models.exosphere.host/v0/infer/ \
+curl -X POST https://wormhole.exosphere.host/v0/infer/ \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-api-key>" \
   -d '[
@@ -163,7 +163,7 @@ curl -X POST https://models.exosphere.host/v0/infer/ \
 
 You can further request outputs as a file by passing the header `Output-Format: jsonl` to the API. Example request:
 ```bash
-curl -X POST https://models.exosphere.host/v0/infer/ \
+curl -X POST https://wormhole.exosphere.host/v0/infer/ \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-api-key>" \
   -H "Output-Format: jsonl" \
