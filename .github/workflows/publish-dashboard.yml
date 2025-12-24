@@ -5,8 +5,6 @@ on:
     branches: [main]
     paths:
       - 'dashboard/**'
-  release:
-    types: [published]
   workflow_dispatch:
 
 env:
