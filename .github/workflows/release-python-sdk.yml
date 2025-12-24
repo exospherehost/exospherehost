@@ -3,10 +3,19 @@ name: Release Python SDK
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.2.3 or v1.2.3)'
+        required: true
+        type: string
 
 permissions:
   contents: write
   id-token: write
+
+env:
+  RELEASE_VERSION: ${{ github.event.inputs.version || github.ref_name }}
 
 jobs:
   test:
@@ -80,8 +89,8 @@ jobs:
 
       - name: Update version to release tag
         run: |
-          # Extract version from tag (remove 'v' or 'V' prefix if present)
-          RELEASE_VERSION="${{ github.ref_name }}"
+          # Extract version from input or tag (remove 'v' or 'V' prefix if present)
+          RELEASE_VERSION="${{ env.RELEASE_VERSION }}"
           
           # Handle empty or invalid tags
           if [[ -z "$RELEASE_VERSION" ]]; then
@@ -179,7 +188,7 @@ jobs:
           echo "You can verify this package's provenance on PyPI using:" >> sbom-summary.md
           echo '```bash' >> sbom-summary.md
           echo 'pip install sigstore' >> sbom-summary.md
-          echo 'python -m sigstore verify --bundle <bundle-file> exospherehost==${{ github.ref_name }}' >> sbom-summary.md
+          echo 'python -m sigstore verify --bundle <bundle-file> exospherehost==${{ env.RELEASE_VERSION }}' >> sbom-summary.md
           echo '```' >> sbom-summary.md
 
       - run: uv build
@@ -198,7 +207,7 @@ jobs:
       - name: Upload SBOM artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: sbom-artifacts-${{ github.ref_name }}
+          name: sbom-artifacts-${{ env.RELEASE_VERSION }}
           path: |
             python-sdk/sbom-cyclonedx.json
             python-sdk/sbom-cyclonedx.xml
