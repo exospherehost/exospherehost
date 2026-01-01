@@ -30,7 +30,7 @@
 ### **Smooth Developer Experience**
 - **Interactive Dashboard**: Visual workflow and agent creation, management, monitoring, and debugging tools
 - **Python-First**: Native Python support with Pydantic models for type-safe inputs/outputs
-- **Plug-and-Play Nodes**: Create reusable, atomic workflow components that can be mixed and matched
+- **Plug-and-Play Nodes & Marketplace**: Mix and match reusable atomic components or grab community-contributed tools from the built-in marketplace
 
 ### **Production Ready Infrastructure**
 - **Run Anywhere**: Deploy to any compute platform—including Kubernetes, VMs, bare metal, or serverless—with one-click hosting available on Exosphere Cloud
@@ -270,7 +270,16 @@ Exosphere is designed to make AI workflow development accessible, scalable, and 
 4. **📖 Read the docs** for comprehensive guides and examples
 5. **🤝 Contribute** to help us build the future of AI infrastructure
 
----
+
+## Release Cycle & Roadmap
+
+Exosphere follows a predictable, calendar-based release process:
+
+- **Monthly Releases**: A new stable version ships at the end of every month.
+- **Issue & PR Labelling**: Work intended for a release is tagged `YYYY:Mon` &mdash; for example, `2026:Jan`. Filter by this label in GitHub to see exactly what is planned.
+- **Living Roadmap**: The collection of items carrying the current month’s label is our public roadmap. Follow along in GitHub Projects to track progress in real time.
+
+
 
 ## Contributing
 
