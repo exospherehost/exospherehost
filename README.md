@@ -14,47 +14,36 @@
 
 ---
 
-# Exosphere: Distributed AI Workflow Infrastructure
+# Exosphere: Runtime for building and managing AI agents and Workflows
 
-**Exosphere** is an open-source, Kubernetes-native infrastructure platform designed to run distributed AI workflows and autonomous agents at scale. Built with Python and based on a flexible node-based architecture, Exosphere enables developers to create, deploy, and manage robust AI workflows that can handle large-scale data processing and long-running operations.
+**Exosphere** is an open-source runtime for creating, orchestrating, and managing the full life-cycle of AI agents and workflows. It is quick to learn, lightning-fast to build with, fault-tolerant by design, and ships with an intuitive, production-ready UI. From tiny single-node scripts to massive distributed systems, whether running locally or in the cloud, Exosphere scales effortlessly across every level of complexity, size, and latency requirement.
 
-![Example Workflow Run](/assets/workflow-run.png)
 
 ## 🚀 What Exosphere Can Do
 
-Exosphere provides a powerful foundation for building and orchestrating AI applications with these key capabilities:
-
-### **Reliable AI Workflows at Scale**
+### **Reliability at Scale**
 - **Infinite Parallel Agents**: Run multiple AI agents simultaneously across distributed infrastructure
 - **Dynamic State Management**: Create and manage state at runtime with persistent storage
 - **Fault Tolerance**: Built-in failure handling and recovery mechanisms for production reliability
-- **Core Concepts**: Fanout, Unite, Signals, Retry Policy, Store, Triggers
+- **Automatic Autoscaling & Back-Pressure**: Elastically scales resources and throttles workloads to maintain SLAs under heavy demand
 
 ### **Smooth Developer Experience**
-- **Plug-and-Play Nodes**: Create reusable, atomic workflow components that can be mixed and matched
+- **Interactive Dashboard**: Visual workflow and agent creation, management, monitoring, and debugging tools
 - **Python-First**: Native Python support with Pydantic models for type-safe inputs/outputs
-- **Interactive Dashboard**: Visual workflow management, monitoring, and debugging tools
+- **Plug-and-Play Nodes**: Create reusable, atomic workflow components that can be mixed and matched
 
 ### **Production Ready Infrastructure**
-- **Kubernetes Native**: Deploy seamlessly on Kubernetes clusters for enterprise-grade scalability
-- **State Persistence**: Maintain workflow state across restarts and failures
+- **Run Anywhere**: Deploy to any compute platform—including Kubernetes, VMs, bare metal, or serverless—with one-click hosting available on Exosphere Cloud
+- **State Persistence & Observability**: Persist every state change and let you query and monitor each step of your AI agents and workflows, even across restarts and failures
 - **API Integration**: Connect to external services and APIs through configurable nodes
 
 ### **Built for AI Agents**
-- **Autonomous Execution**: Build agents that can make decisions and execute complex workflows
-- **Data Processing**: Handle large datasets with distributed processing capabilities
-- **Long-Running Operations**: Support for workflows that run for hours, days, or indefinitely
+- **Autonomous & Self-Improving Execution**: Agents can plan, act, automatically evaluate outcomes, refine their own prompts, and improve over time.
+- **Safe Control Flow**: Blend deterministic logic with non-deterministic reasoning, complete with fallbacks and rollback mechanisms to recover from failed paths.
+- **Scalable Agent Lifecycles**: Sustain stateful agents of any scale-from single-function helpers to sprawling multi-agent collectives—over minutes, months, or more.
 
-Whether you're building data pipelines, AI agents, or complex workflow orchestrations, Exosphere provides the infrastructure backbone to make your AI applications production-ready and scalable.
+Whether you’re wiring up a simple helper, orchestrating a fleet of cooperative agents, or chaining together complex workflows, Exosphere gives you the rock-solid runtime to ship confidently at any scale.
 
-## 🎯 Use Cases & Applications
-
-Exosphere is perfect for a wide range of AI and automation scenarios:
-
-- **Data Processing & ETL Pipelines**
-- **AI Agent Orchestration**
-- **Content Generation & Analysis**
-- **API Integration & Automation**
 
 ##  Architecture Overview
 
@@ -81,36 +70,6 @@ Exosphere is built on a flexible, node-based architecture that makes it easy to 
 - **Store**: Persistent storage for workflow state and data
 - **Triggers**: Automatic scheduling with cron expressions
 
-## ⏰ Automatic Scheduling Example
-
-Schedule your workflows to run automatically using cron expressions:
-
-!!! info "Beta Feature"
-    Available in `beta-latest` Docker tag and SDK version `0.0.3b1`
-
-```python
-from exospherehost import StateManager, GraphNodeModel, CronTrigger
-
-# Define triggers for automatic execution
-triggers = [
-    CronTrigger(expression="0 9 * * 1-5"),  # Every weekday at 9 AM
-    CronTrigger(expression="0 */6 * * *")   # Every 6 hours
-]
-
-# Create graph with automatic scheduling
-result = await state_manager.upsert_graph(
-    graph_name="data-pipeline",
-    graph_nodes=graph_nodes,
-    secrets={"api_key": "your-key"},
-    triggers=triggers  # Enable automatic execution (Beta)
-)
-```
-
-### **Deployment Options**
-
-- **Local Development**: Run with Docker Compose for quick setup
-- **Kubernetes**: Production-ready deployment on K8s clusters
-- **Cloud**: Deploy on any cloud provider with Kubernetes support
 
 ## 🚀 Getting Started
 
