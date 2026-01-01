@@ -286,6 +286,3 @@ Exosphere follows a predictable, calendar-based release process:
 We welcome community contributions. For guidelines, refer to our [CONTRIBUTING.md](https://github.com/exospherehost/exospherehost/blob/main/CONTRIBUTING.md).
 
 ![exosphere.host Contributors](https://contrib.rocks/image?repo=exospherehost/exospherehost)
-
-
-
