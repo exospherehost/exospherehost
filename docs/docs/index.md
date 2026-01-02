@@ -1,4 +1,6 @@
-![exosphere logo](assets/logo-with-bg.png)
+<p align="center">
+<img src="assets/logo-with-bg.png" alt="exosphere logo" style="max-width: 50%;">
+</p>
 
 <p align="center">
   <a href="https://docs.exosphere.host"><img src="https://img.shields.io/badge/docs-latest-success" alt="Docs"></a>
@@ -11,33 +13,65 @@
 </p>
 
 
-# Exosphere: Distributed AI Workflow Infrastructure
+# Exosphere: Reliability runtime for AI agents
 
-**Exosphere** is an open-source, Kubernetes-native infrastructure platform designed to run distributed AI workflows and autonomous agents at scale. Built with Python and based on a flexible node-based architecture, Exosphere enables developers to create, deploy, and manage robust AI workflows that can handle large-scale data processing and long-running operations.
+**Exosphere** is a lightweight runtime to make AI agents resilient to failure and infinite scaling across distributed compute. With a few changes to your existing agent code, take your agent from demo to deployment.
 
-## What Exosphere Can Do
+## Why Exosphere?
 
 Exosphere provides a powerful foundation for building and orchestrating AI applications with these key capabilities:
 
-### **Scalable AI Workflows**
-- **Infinite Parallel Agents**: Run multiple AI agents simultaneously across distributed infrastructure
-- **Dynamic State Management**: Create and manage state at runtime with persistent storage
-- **Fault Tolerance**: Built-in failure handling and recovery mechanisms for production reliability
-- **Core Concepts**: [Fanout](./exosphere/fanout.md), [Unite](./exosphere/unite.md), [Signals](./exosphere/signals.md), [Retry Policy](./exosphere/retry-policy.md), [Store](./exosphere/store.md)
+<div class="feature-grid" markdown>
 
-### **Developer Experience**
-- **Plug-and-Play Nodes**: Create reusable, atomic workflow components that can be mixed and matched
-- **Python-First**: Native Python support with Pydantic models for type-safe inputs/outputs
+<div class="feature-card" markdown>
 
-### **Production Infrastructure**
-- **Kubernetes Native**: Deploy seamlessly on Kubernetes clusters for enterprise-grade scalability
-- **State Persistence**: Maintain workflow state across restarts and failures
-- **Interactive Dashboard**: Visual workflow management, monitoring, and debugging tools
+### [Lightweight Runtime](./exosphere/architecture.md)
 
-### **AI Agent Capabilities**
-- **Autonomous Execution**: Build agents that can make decisions and execute complex workflows
-- **Data Processing**: Handle large datasets with distributed processing capabilities
-- **API Integration**: Connect to external services and APIs through configurable nodes
+Execute workflows reliably with minimal overhead across distributed infrastructure using a state-based execution model.
+
+</div>
+
+<div class="feature-card" markdown>
+
+### [Inbuilt Failure Handling](./exosphere/retry-policy.md)
+
+Built-in retry policies with exponential backoff and jitter strategies for resilient, production-grade execution.
+
+</div>
+
+<div class="feature-card" markdown>
+
+### [Infinite Parallel Agents](./exosphere/fanout.md)
+
+Scale to unlimited parallel agents with automatic load distribution and dynamic fanout at runtime.
+
+</div>
+
+<div class="feature-card" markdown>
+
+### [Dynamic Execution Graphs](./exosphere/concepts.md)
+
+Durable execution designed for agentic flows with node based control of execution. 
+
+</div>
+
+<div class="feature-card" markdown>
+
+### [Native State Persistence](./exosphere/store.md)
+
+Persist workflow state across restarts and failures with graph-level key-value storage.
+
+</div>
+
+<div class="feature-card" markdown>
+
+### [Observability](./exosphere/dashboard.md)
+
+Visual monitoring, debugging, and management of workflows with real-time execution tracking.
+
+</div>
+
+</div>
 
 Whether you're building data pipelines, AI agents, or complex workflow orchestrations, Exosphere provides the infrastructure backbone to make your AI applications production-ready and scalable.
 
@@ -52,129 +86,48 @@ Whether you're building data pipelines, AI agents, or complex workflow orchestra
 
 ---
 
-## Requirements
+## Run your first agent
 
-Python 3.12+
+<div class="feature-grid" style="grid-template-columns: repeat(2, 1fr);" markdown>
 
-## Installation
+<div class="feature-card" markdown>
 
-```bash
-uv add exospherehost
-```
+### [Getting Started](./getting-started.md)
 
-## Example
+Get the Exosphere State Manager and Dashboard running locally for development.
 
-### Create
+</div>
 
-Create a file `main.py` with:
+<div class="feature-card" markdown>
 
-```python
-from exospherehost import Runtime, BaseNode
-from pydantic import BaseModel
+### [Run your first Node](./exosphere/register-node.md)
 
-class HelloWorldNode(BaseNode):
-    class Inputs(BaseModel):
-        name: str
+Create your first node and register it with the Exosphere runtime.
 
-    class Outputs(BaseModel):
-        message: str
+</div>
 
-    class Secrets(BaseModel):
-        pass
+<div class="feature-card" markdown>
 
-    async def execute(self) -> Outputs:
-        return self.Outputs(
-            message=f"Hello, {self.inputs.name}!"
-        )
+### [Trigger Agent](./exosphere/trigger-graph.md)
 
-# Initialize the runtime
-Runtime(
-    namespace="MyProject",
-    name="HelloWorld",
-    nodes=[HelloWorldNode]
-).start()  # Note: This blocks the main thread
-```
+Learn how to trigger your agent workflows and manage execution flows.
 
-!!! info "Interactive Environments"
-    If you're using Jupyter notebooks or Python REPLs, `Runtime.start()` will block your session. See the [Getting Started guide](./getting-started.md#important-blocking-behavior) for non-blocking alternatives.
+</div>
 
-### Run
+<div class="feature-card" markdown>
 
-Run the server with:
+### [Deploy & Monitor](./exosphere/dashboard.md)
 
-```bash
-uv run main.py
-```
+Deploy your agents and monitor their execution with the visual dashboard.
 
-### Check
+</div>
 
-Your runtime is now running and ready to process workflows!
-
-
-### Local Development
-
-Get the Exosphere State Manager and Dashboard ready to start building workflows locally.
-
-Ref: [Local Setup](./exosphere/local-setup.md)
-
-## Example graph
-
-Now modify the file `main.py` to add more complex processing:
-
-```python
-from exospherehost import Runtime, BaseNode
-from pydantic import BaseModel
-import json
-
-class DataProcessorNode(BaseNode):
-    class Inputs(BaseModel):
-        data: str
-        operation: str
-
-    class Outputs(BaseModel):
-        result: str
-        status: str
-
-    class Secrets(BaseModel):
-        api_key: str
-
-    async def execute(self) -> Outputs:
-        # Parse the input data
-        try:
-            data = json.loads(self.inputs.data)
-        except json.JSONDecodeError as e:
-            return self.Outputs(
-                result="",
-                status=f"error: invalid json (line {e.lineno}, column {e.colno})"
-            )
-
-        # Process based on operation
-        if self.inputs.operation == "transform":
-            result = {"transformed": data, "processed": True}
-        else:
-            result = {"original": data, "processed": False}
-
-        return self.Outputs(result=json.dumps(result), status="success")
-
-
-# Initialize the runtime
-Runtime(
-    namespace="MyProject",
-    name="DataProcessor",
-    nodes=[DataProcessorNode]
-).start()
-```
-
-The runtime will automatically reload and register the updated node.
+</div>
 
 
 ## Open Source Commitment
 
 We believe that humanity would not have been able to achieve the level of innovation and progress we have today without the support of open source and community, we want to be a part of this movement!
-
-1. We will be open sourcing majority of our codebase for exosphere.host and making it available to the community. We welcome all sort of contributions and feedback from the community and will be actively listening.
-2. For whatever the profits which we generate from exosphere.host, we will be donating a portion of it to open source projects and communities. If you have any questions, suggestions or ideas.
-3. We would be further collaborating with various open source student programs to provide with the support and encourage and mentor the next generation of open source contributors.
 
 Please feel free to reach out to us at [nivedit@exosphere.host](mailto:nivedit@exosphere.host). Let's push the boundaries of possibilities for humanity together!
 
@@ -182,4 +135,5 @@ Please feel free to reach out to us at [nivedit@exosphere.host](mailto:nivedit@e
 
 We welcome community contributions. For guidelines, refer to our [CONTRIBUTING.md](https://github.com/exospherehost/exospherehost/blob/main/CONTRIBUTING.md).
 
+Thanks to our awesome contributors!
 ![exosphere.host Contributors](https://contrib.rocks/image?repo=exospherehost/exospherehost)
