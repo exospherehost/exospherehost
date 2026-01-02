@@ -1,6 +1,6 @@
-# Exosphere Concepts
+# Concepts
 
-Exosphere is built around several core concepts that make it unique in the workflow orchestration space. This page provides an overview of these key features and how they work together.
+Exosphere is built around several core concepts that make it uniquely positioned for reliable orchestration of agents. This page provides an overview of these key features and how they work together.
 
 ## Core Concepts Overview
 

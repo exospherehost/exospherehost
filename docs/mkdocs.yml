@@ -121,6 +121,8 @@ plugins:
           - exosphere/architecture.md
 
 markdown_extensions:
+  - attr_list
+  - md_in_html
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -144,8 +146,8 @@ nav:
   - Orchestrator: 
     - Introduction: index.md
     - Getting Started: getting-started.md
-    - Exosphere Concepts:
-      - Overview: exosphere/concepts.md
+    - Why Exosphere?:
+      - Concepts Overview: exosphere/concepts.md
       - Architecture: exosphere/architecture.md
       - Fanout: exosphere/fanout.md
       - Unite: exosphere/unite.md
@@ -162,8 +164,8 @@ nav:
     - Create Runtime: exosphere/create-runtime.md
     - Create Graph:
         - Overview: exosphere/create-graph.md
-        - Components: exosphere/graph-components.md
-        - Validation: exosphere/graph-validation.md
+        - Graph Components: exosphere/graph-components.md
+        - Graph Validation: exosphere/graph-validation.md
         - Python SDK: exosphere/python-sdk-graph.md
     - Trigger Graph: exosphere/trigger-graph.md 
   - Inference APIs: inference.md
