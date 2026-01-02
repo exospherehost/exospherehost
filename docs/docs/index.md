@@ -13,7 +13,7 @@
 </p>
 
 
-# Exosphere: Reliablity runtime for AI agents
+# Exosphere: Reliability runtime for AI agents
 
 **Exosphere** is a lightweight runtime to make AI agents resilient to failure and infinite scaling across distributed compute. With a few changes to your existing agent code, take your agent from demo to deployment.
 
