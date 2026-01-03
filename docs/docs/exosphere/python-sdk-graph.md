@@ -57,7 +57,7 @@ async def create_graph():
         secrets={"api_key": "your-key"},
         retry_policy=retry_policy,
         store_config=store_config,
-        triggers=triggers  # Beta: SDK version 0.0.3b1
+        triggers=triggers
     )
     return result
 ```

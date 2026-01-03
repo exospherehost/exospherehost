@@ -82,34 +82,6 @@ Exosphere uses MongoDB as the database to manage states. You can either have mon
     - Exosphere State Manager: [http://localhost:8000](http://localhost:8000)
 
 
-## Beta Version
-
-To run the latest beta version of Exosphere with the newest features, replace container tags with `beta-latest`:
-
-=== ".env File"
-
-    ```bash
-    EXOSPHERE_TAG=beta-latest
-    ```
-=== "Environment Variables"
-
-    ```bash
-    export EXOSPHERE_TAG=beta-latest
-    ```
-
-Get the docker image running:
-
-=== "Cloud Mongodb"
-
-    ```bash
-    docker compose -f docker-compose.yml up -d
-    ```
-=== "Local Mongodb"
-
-    ```bash
-    docker compose -f docker-compose-with-mongodb.yml up -d
-    ```
-
 ## Access Your Services
 
 After running the Docker Compose command:
