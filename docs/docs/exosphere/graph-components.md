@@ -101,9 +101,6 @@ Graph-level key-value storage for shared state:
 
 Schedule automatic graph execution using cron expressions:
 
-!!! info "Beta Feature"
-    Available in `beta-latest` Docker tag and SDK version `0.0.3b1`
-
 ```json
 {
   "triggers": [
