@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node --test \"src/**/*.test.ts\""
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",

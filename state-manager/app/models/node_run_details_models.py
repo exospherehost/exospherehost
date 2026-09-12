@@ -16,4 +16,12 @@ class NodeRunDetailsResponse(BaseModel):
     error: Optional[str] = Field(None, description="Error message if any")
     parents: Dict[str, str] = Field(..., description="Parent node identifiers")
     created_at: str = Field(..., description="Creation timestamp")
-    updated_at: str = Field(..., description="Last update timestamp") 
+    updated_at: str = Field(..., description="Last update timestamp")
+    enqueue_after: Optional[int] = Field(
+        None,
+        description=(
+            "Unix time in milliseconds after which the state becomes eligible to be enqueued. "
+            "This is the stored eligibility time (set by start delays, retry policies and requeue signals), "
+            "not a guaranteed execution time: a worker picks the state up on its next poll after this instant."
+        ),
+    )

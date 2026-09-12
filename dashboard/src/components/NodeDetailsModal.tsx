@@ -14,6 +14,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GraphNode as GraphNodeType, NodeRunDetailsResponse } from '@/types/state-manager';
 import { clientApiService } from '@/services/clientApi';
+import { getNodeEligibility, formatEligibilityTime } from '@/lib/nodeEligibility';
+
+/** How often the eligibility row re-checks the clock so "scheduled" turns into "waiting" on time. */
+const ELIGIBILITY_TICK_MS = 5000;
 
 interface NodeDetailsModalProps {
   selectedNode: GraphNodeType | null;
@@ -37,6 +41,24 @@ export const NodeDetailsModal: React.FC<NodeDetailsModalProps> = ({
   const [retryState, setRetryState] = useState<'idle' | 'confirm' | 'loading' | 'success' | 'error'>('idle');
   const [retryError, setRetryError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
+  // Clock reading paired with the details it was taken for, so a node opened long after page
+  // load is classified against "now" and never against a stale reading for a previous node.
+  const [clock, setClock] = useState<{ details: NodeRunDetailsResponse | null; nowMs: number }>({ details: null, nowMs: 0 });
+
+  // Tick only while a node is waiting on an eligibility time; every timer is cleared when the
+  // details change (node picked up, node changed, modal closed) or the component unmounts.
+  useEffect(() => {
+    if (!selectedNodeDetails || getNodeEligibility(selectedNodeDetails, Date.now()) === null) return;
+    const tick = () => setClock({ details: selectedNodeDetails, nowMs: Date.now() });
+    const first = setTimeout(tick, 0);
+    const timer = setInterval(tick, ELIGIBILITY_TICK_MS);
+    return () => {
+      clearTimeout(first);
+      clearInterval(timer);
+    };
+  }, [selectedNodeDetails]);
+
+  const eligibility = clock.details === selectedNodeDetails ? getNodeEligibility(selectedNodeDetails, clock.nowMs) : null;
 
   // Reset retry state when modal closes or node changes
   useEffect(() => {
@@ -308,6 +330,21 @@ export const NodeDetailsModal: React.FC<NodeDetailsModalProps> = ({
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Updated:</span>
                         <span className="text-foreground text-xs">{new Date(selectedNodeDetails.updated_at).toLocaleString()}</span>
+                      </div>
+                    )}
+                    {eligibility && (
+                      <div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            {eligibility.kind === 'scheduled' ? 'Eligible after:' : 'Eligible since:'}
+                          </span>
+                          <span className="text-foreground text-xs">{formatEligibilityTime(eligibility.at)}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {eligibility.kind === 'scheduled'
+                            ? 'Delayed by a start delay, retry policy or requeue signal. A worker can pick this node up any time after this moment; it is not a guaranteed start time.'
+                            : 'Eligible to run and waiting for a worker to pick it up.'}
+                        </p>
                       </div>
                     )}
                   </div>

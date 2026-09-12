@@ -217,6 +217,8 @@ export interface NodeRunDetailsResponse {
   parents: Record<string, string>;
   created_at: string;
   updated_at: string;
+  /** Epoch milliseconds after which the state is eligible to be enqueued; absent on older records/servers. */
+  enqueue_after?: number | null;
 }
 
 // Runs Types

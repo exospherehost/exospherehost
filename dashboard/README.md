@@ -36,6 +36,7 @@ A modern Next.js dashboard for visualizing and managing the Exosphere State Mana
 - **Secret Management**: View and manage node secrets securely
 - **Schema Validation**: JSON schema rendering with type information
 - **Node Details Modal**: Comprehensive node information display
+- **Eligibility Time**: Delayed nodes show when they become eligible to run (local timezone), and past-due nodes show how long they have been waiting for a worker
 
 ## 🚀 Getting Started
 

@@ -71,7 +71,8 @@ async def get_node_run_details(namespace: str, graph_name: str, run_id: str, nod
             error=state.error,
             parents=parent_identifiers,
             created_at=state.created_at.isoformat() if state.created_at else "",
-            updated_at=state.updated_at.isoformat() if state.updated_at else ""
+            updated_at=state.updated_at.isoformat() if state.updated_at else "",
+            enqueue_after=state.enqueue_after
         )
         
         logger.info(f"Successfully retrieved node run details for node ID: {node_id}", x_exosphere_request_id=request_id)
