@@ -125,7 +125,7 @@ class StateManager:
                     raise Exception(f"Failed to get graph: {response.status} {await response.text()}")
                 return await response.json()
 
-    async def upsert_graph(self, graph_name: str, graph_nodes: list[GraphNodeModel], secrets: dict[str, str], retry_policy: RetryPolicyModel | None = None, store_config: StoreConfigModel | None = None, triggers: list[CronTrigger] | None = None, validation_timeout: int = 60, polling_interval: int = 1):
+    async def upsert_graph(self, graph_name: str, graph_nodes: list[GraphNodeModel], secrets: dict[str, str] | None = None, retry_policy: RetryPolicyModel | None = None, store_config: StoreConfigModel | None = None, triggers: list[CronTrigger] | None = None, validation_timeout: int = 60, polling_interval: int = 1):
         """
         Create or update a graph definition.
 
@@ -139,7 +139,11 @@ class StateManager:
         Args:
             graph_name (str): Graph identifier.
             graph_nodes (list[GraphNodeModel]): List of graph node models defining the workflow.
-            secrets (dict[str, str]): Secrets available to all nodes.
+            secrets (dict[str, str] | None): Secrets available to all nodes. Optional: a graph
+                that needs none can omit it. The state manager replaces a graph's stored
+                secrets on every upsert, so omitting (or passing an empty mapping) when
+                updating a graph that already has secrets clears them; pass the full
+                mapping to keep them. The mapping you pass is copied, never mutated.
             retry_policy (RetryPolicyModel | None): Optional per-node retry policy configuration.
             store_config (StoreConfigModel | None): Beta configuration for the
                 graph-level store (schema is subject to change).
@@ -160,7 +164,8 @@ class StateManager:
             "x-api-key": self._key
         }
         body = {
-            "secrets": secrets,
+            # The request model requires the field; an omitted argument is an empty mapping.
+            "secrets": dict(secrets) if secrets else {},
             "nodes": [node.model_dump() for node in graph_nodes]
         }
 
