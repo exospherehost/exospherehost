@@ -267,7 +267,7 @@ state_manager = StateManager(namespace="MyProject")
 
 **Parameters:**
 - `namespace` (str): The namespace for your project
-- `state_manager_uri` (str, optional): The URI of the state manager service. If not provided, reads from `EXOSPHERE_STATE_MANAGER_URI` environment variable
+- `state_manager_uri` (str, optional): The URI of the state manager service. If not provided, reads from `EXOSPHERE_STATE_MANAGER_URI` environment variable. A trailing slash is accepted and ignored (`http://localhost:8000/` and `http://localhost:8000` are equivalent)
 - `key` (str, optional): Your API key. If not provided, reads from `EXOSPHERE_API_KEY` environment variable
 - `state_manager_version` (str): The API version to use (default: "v0")
 
