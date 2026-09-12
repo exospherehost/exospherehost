@@ -349,7 +349,7 @@ async def create_graph():
 
 - `graph_name` (str): Name of the graph to create/update
 - `graph_nodes` (list[GraphNodeModel]): List of graph node models defining the workflow (beta)
-- `secrets` (dict[str, str]): Key/value secrets available to all nodes
+- `secrets` (dict[str, str], optional): Key/value secrets available to all nodes. Omit it for a graph that needs none. The state manager replaces stored secrets on every upsert, so omitting it when updating a graph that has secrets clears them
 - `retry_policy` (RetryPolicyModel | None): Optional retry policy configuration (beta)
 - `store_config` (StoreConfigModel | None): Graph-level store configuration (beta)
 - `triggers` (list[CronTrigger] | None): Optional list of cron triggers for automatic graph execution (beta: SDK version 0.0.3b1)
