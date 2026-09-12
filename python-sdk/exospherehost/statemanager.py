@@ -24,6 +24,12 @@ class StateManager:
             self._state_manager_uri = os.environ.get("EXOSPHERE_STATE_MANAGER_URI")
         if self._key is None:
             self._key = os.environ.get("EXOSPHERE_API_KEY")
+        # Normalise once, after the environment fallback, so "http://host:8000/" and
+        # "http://host:8000" build the same endpoints (issue #642). Only trailing
+        # separators go: scheme, authority, port and a deployment prefix are kept, and a
+        # missing URI stays missing.
+        if isinstance(self._state_manager_uri, str):
+            self._state_manager_uri = self._state_manager_uri.rstrip("/")
 
     def _get_trigger_state_endpoint(self, graph_name: str):
         return f"{self._state_manager_uri}/{self._state_manager_version}/namespace/{self._namespace}/graph/{graph_name}/trigger"
