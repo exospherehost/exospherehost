@@ -171,3 +171,57 @@ class TestGetNodeRunDetails:
             # Verify the result handles None timestamps
             assert result.created_at == ""
             assert result.updated_at == "" 
+    @pytest.mark.asyncio
+    async def test_get_node_run_details_exposes_stored_enqueue_after(self):
+        """A delayed node's stored enqueue_after (epoch ms) is passed through untouched"""
+        namespace = "test_namespace"
+        graph_name = "test_graph"
+        run_id = "test_run_id"
+        node_id = str(ObjectId())
+        request_id = "test_request_id"
+        stored_enqueue_after = 1_800_000_000_000  # 2027-01-15T08:00:00Z, epoch milliseconds
+
+        mock_state = MagicMock()
+        mock_state.id = ObjectId(node_id)
+        mock_state.node_name = "delayed_node"
+        mock_state.identifier = "delayed_identifier"
+        mock_state.graph_name = graph_name
+        mock_state.run_id = run_id
+        mock_state.status = StateStatusEnum.CREATED
+        mock_state.inputs = {}
+        mock_state.outputs = {}
+        mock_state.error = None
+        mock_state.parents = {}
+        mock_state.created_at = datetime.now()
+        mock_state.updated_at = datetime.now()
+        mock_state.enqueue_after = stored_enqueue_after
+
+        with patch('app.controller.get_node_run_details.State') as mock_state_class:
+            mock_state_class.find_one = AsyncMock(return_value=mock_state)
+
+            result = await get_node_run_details(namespace, graph_name, run_id, node_id, request_id)
+
+            assert result.status == StateStatusEnum.CREATED
+            assert result.enqueue_after == stored_enqueue_after
+            assert result.model_dump()["enqueue_after"] == stored_enqueue_after
+
+    def test_node_run_details_response_enqueue_after_is_optional(self):
+        """Older records/clients: the field is optional and serialises as null when absent"""
+        response = NodeRunDetailsResponse(
+            id=str(ObjectId()),
+            node_name="n",
+            identifier="i",
+            graph_name="g",
+            run_id="r",
+            status=StateStatusEnum.SUCCESS,
+            inputs={},
+            outputs={},
+            error=None,
+            parents={},
+            created_at="",
+            updated_at="",
+        )
+
+        assert response.enqueue_after is None
+        assert "enqueue_after" in response.model_dump()
+        assert response.model_dump()["enqueue_after"] is None

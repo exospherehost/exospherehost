@@ -169,6 +169,8 @@ View registered nodes, and graph templates on a namespace
 ![Runs Overview](../assets/DashboardSS-3.jpg)
 View graph runs and debug each node that was created.
 
+Nodes that are still `CREATED` show when they become eligible to run: a node delayed by a start delay, a retry policy or a `ReQueueAfterSignal`/`RequeueAtSignal` shows **Eligible after** with the time in your local timezone, and a node whose eligibility time has already passed shows **Eligible since** while it waits for a worker. This is the stored eligibility time, not a guaranteed start time; a worker picks the node up on its next poll after that moment.
+
 ## Using the Dashboard
 
 1. **Configure Connection**:
